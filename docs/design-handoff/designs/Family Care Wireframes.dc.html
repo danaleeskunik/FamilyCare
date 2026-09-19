@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/colors.css">
+<link href="https://fonts.googleapis.com/css2?family=Gveret+Levin&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f0eee9;font-family:Rubik,system-ui,sans-serif;direction:rtl}
+a{color:#0E9E96}a:hover{color:#0a7b75}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 Rubik,sans-serif;color:#1a1a1a}
+.dv-sub{font:500 12px/1.5 Rubik;color:rgba(0,0,0,.5);margin:0 0 22px}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:500 12px/1.4 Rubik;color:rgba(0,0,0,.6);max-width:640px}
+.dv-olabel b{font-weight:800;color:#1a1a1a}
+.dv-opt:target .dv-oid{background:#0E9E96;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.6 Rubik;color:rgba(0,0,0,.5)}
+.col{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.cap{font-family:'Gveret Levin',cursive;font-size:15px;color:#444;margin-bottom:6px}
+.wf{border:1.6px solid #2b2b2b;border-radius:14px;background:#fff;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.m{width:292px;height:534px}
+.d{width:616px;height:430px}
+.hd{background:#2b2b2b;color:#fff;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font:700 12px Rubik}
+.bd{flex:1;padding:11px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+.tb{display:flex;border-top:1.6px solid #2b2b2b;background:#fafafa}
+.tb span{flex:1;text-align:center;padding:9px 2px;font:600 10px Rubik;color:#777}
+.tb .on{color:#0E9E96;font-weight:800}
+.bx{border:1.4px solid #2b2b2b;border-radius:10px;padding:9px;background:#fff}
+.dash{border:1.4px dashed #9aa6b2;border-radius:10px;padding:9px;color:#8a95a1;font:500 11px Rubik;text-align:center}
+.ttl{font:800 13px Rubik;color:#1a1a1a}
+.sm{font:500 10.5px Rubik;color:#666;line-height:1.45}
+.xs{font:600 9.5px Rubik;color:#888}
+.btn{background:#0E9E96;color:#fff;border-radius:999px;padding:8px 12px;font:700 11.5px Rubik;text-align:center}
+.btn2{border:1.4px solid #2b2b2b;border-radius:999px;padding:7px 12px;font:600 11px Rubik;text-align:center;color:#2b2b2b}
+.gh{background:#e4e4e4;border-radius:4px;height:8px}
+.ph{background:#ececec;border-radius:8px;display:flex;align-items:center;justify-content:center;font:600 10px Rubik;color:#999}
+.circ{border-radius:50%;background:#e4e4e4;flex:none}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;align-items:center;gap:8px}
+.tile{border:1.4px solid #2b2b2b;border-radius:10px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;gap:5px;font:600 9.5px Rubik;color:#333;text-align:center}
+.rail{width:112px;background:#2b2b2b;padding:12px 9px;display:flex;flex-direction:column;gap:7px}
+.rail div{color:#cfd6dd;font:600 10.5px Rubik;padding:6px 7px;border-radius:7px}
+.rail .on{background:rgba(255,255,255,.14);color:#fff;font-weight:800}
+.tr{display:grid;gap:8px;align-items:center;border-bottom:1px solid #eee;padding:7px 0;font:500 10.5px Rubik;color:#444}
+.chip{border:1.2px solid #2b2b2b;border-radius:999px;padding:3px 9px;font:600 9.5px Rubik}
+.chipon{background:#0E9E96;border-color:#0E9E96;color:#fff}
+.tealtxt{color:#0E9E96;font-weight:800}
+</style></helmet>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">שלושה כיוונים למבנה וניווט — Family Care Services</span></div>
+<p class="dv-sub">לכל כיוון: שלושה מסכי מובייל למשפחה (בית · קטלוג · שקט נפשי) ומסך דסקטופ אחד לצוות (תיק לקוח / שיבוץ). ויירפריים — מבנה בלבד, לא עיצוב סופי.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a><span><b>פיד ראשון — "מה קורה עכשיו"</b> · מסך הבית הוא ציר זמן חי של הבית. הזמנה נמצאת בכפתור צף. ניווט בחמש לשוניות תחתונות.</span></div>
+<div class="col">
+
+<div>
+<div class="cap">בית — פיד חי</div>
+<div class="wf m">
+<div class="hd"><span>שרה לוי · אמא</span><span>≡</span></div>
+<div class="bd">
+<div class="bx" style="border-color:#0E9E96">
+<div class="row" style="justify-content:space-between"><span class="ttl">עכשיו בבית</span><span class="xs tealtxt">● חי</span></div>
+<div class="row" style="margin-top:7px"><div class="circ" style="width:30px;height:30px"></div><div style="flex:1"><div class="sm"><b>נועה נכנסה לבית</b> · 09:42</div><div class="xs">ליווי שבועי · 2 שעות מתוך המכסה</div></div></div>
+</div>
+<div class="xs">אתמול</div>
+<div class="bx"><div class="row"><div class="circ" style="width:26px;height:26px"></div><div style="flex:1"><div class="sm"><b>סיכום ביקור</b> — קניות במעדנייה, סידור מקרר</div><div class="row" style="gap:5px;margin-top:6px"><div class="ph" style="width:52px;height:38px">תמונה</div><div class="ph" style="width:52px;height:38px">תמונה</div></div></div></div></div>
+<div class="bx"><div class="sm"><b>התיקון הסתיים</b> — אינסטלטור, ‎1,210 ₪ כולל דמי ניהול</div><div class="xs" style="margin-top:4px">לאישור בחשבונית החודשית</div></div>
+<div class="bx"><div class="sm"><b>מונית VIP הגיעה</b> — הסעה לתיאטרון הבימה</div></div>
+<div class="btn" style="margin-top:auto">＋ הזמנת שירות</div>
+</div>
+<div class="tb"><span class="on">פיד</span><span>יומן</span><span>שירותים</span><span>המנוי</span><span>תיק</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">קטלוג — לפי תחום</div>
+<div class="wf m">
+<div class="hd"><span>הזמנת שירות</span><span>✕</span></div>
+<div class="bd">
+<div class="dash">חיפוש: "אינסטלטור", "ליווי לרופא"…</div>
+<div class="g2">
+<div class="tile"><div class="circ" style="width:26px;height:26px"></div>ניהול הבית</div>
+<div class="tile"><div class="circ" style="width:26px;height:26px"></div>אחזקה ותיקונים</div>
+<div class="tile"><div class="circ" style="width:26px;height:26px"></div>תרבות ופנאי</div>
+<div class="tile"><div class="circ" style="width:26px;height:26px"></div>דיגיטל</div>
+<div class="tile"><div class="circ" style="width:26px;height:26px"></div>משפטי</div>
+<div class="tile"><div class="circ" style="width:26px;height:26px"></div>רפואי</div>
+</div>
+<div class="xs" style="margin-top:2px">הוזמן לאחרונה</div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm">קניות מעדנייה · רביבה</span><span class="chip">שוב</span></div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm">ליווי לבדיקת דם</span><span class="chip">שוב</span></div></div>
+<div class="bx" style="margin-top:auto"><div class="xs">נותרו החודש</div><div class="row" style="justify-content:space-between;margin-top:4px"><span class="sm"><b>4 שעות ליווי</b> מתוך 12</span><span class="xs">Platinum</span></div><div class="gh" style="margin-top:6px"></div></div>
+</div>
+<div class="tb"><span>פיד</span><span>יומן</span><span class="on">שירותים</span><span>המנוי</span><span>תיק</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">שקט נפשי — סיכום ביקור</div>
+<div class="wf m">
+<div class="hd"><span>→ סיכום ביקור</span><span>שיתוף</span></div>
+<div class="bd">
+<div class="sm"><b>יום שלישי 15.9</b> · 09:40–11:45 · נועה ש.</div>
+<div class="ph" style="height:118px">תמונות מהביקור (3)</div>
+<div class="bx"><div class="ttl">מה נעשה</div><div class="sm" style="margin-top:6px">קניות במעדנייה, סידור המקרר ובדיקת תוקף, הליכה קצרה בשכונה וקפה.</div></div>
+<div class="bx"><div class="ttl">לתשומת לבכם</div><div class="sm" style="margin-top:6px">אמא התלוננה על כאב בברך. מומלץ לתאם רופא.</div><div class="row" style="gap:6px;margin-top:8px"><div class="btn" style="flex:1">תיאום רופא</div><div class="btn2" style="flex:1">לא כרגע</div></div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm">קבלות שנסרקו</span><span class="sm"><b>‎218 ₪</b></span></div></div>
+</div>
+<div class="tb"><span class="on">פיד</span><span>יומן</span><span>שירותים</span><span>המנוי</span><span>תיק</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">דסקטופ · שיבוץ מלווים (צוות)</div>
+<div class="wf d" style="flex-direction:row">
+<div class="rail"><div class="on">שיבוץ היום</div><div>לקוחות</div><div>מלווים</div><div>ספקים</div><div>חשבוניות</div><div>דוחות</div></div>
+<div class="bd">
+<div class="row" style="justify-content:space-between"><span class="ttl">שיבוץ · יום שלישי 15.9</span><span class="chip chipon">3 משימות ללא מלווה</span></div>
+<div class="row" style="gap:6px"><span class="chip chipon">רמת השרון</span><span class="chip">הרצליה</span><span class="chip">צפון ת"א</span></div>
+<div class="bx" style="flex:1;overflow:hidden">
+<div class="tr" style="grid-template-columns:1.2fr 1fr .8fr 1fr .8fr;font-weight:700;color:#222"><span>לקוח</span><span>משימה</span><span>שעה</span><span>מלווה מוצע</span><span></span></div>
+<div class="tr" style="grid-template-columns:1.2fr 1fr .8fr 1fr .8fr"><span>שרה לוי</span><span>ליווי לרופא</span><span>09:30</span><span>נועה ש. · 1.2 ק"מ</span><span class="chip chipon">שבץ</span></div>
+<div class="tr" style="grid-template-columns:1.2fr 1fr .8fr 1fr .8fr"><span>יעקב ברנע</span><span>קניות + מקרר</span><span>11:00</span><span>דניאל כ. · 2.4 ק"מ</span><span class="chip chipon">שבץ</span></div>
+<div class="tr" style="grid-template-columns:1.2fr 1fr .8fr 1fr .8fr"><span>מרים אדלר</span><span>הדרכת WhatsApp</span><span>16:00</span><span class="sm">אין התאמה</span><span class="chip">חפש</span></div>
+<div class="tr" style="grid-template-columns:1.2fr 1fr .8fr 1fr .8fr;border:0"><span>חנה פלד</span><span>ליווי לבית קפה</span><span>17:30</span><span>עדי ר. · 0.8 ק"מ</span><span class="chip chipon">שבץ</span></div>
+</div>
+<div class="dash">גרירה של משימה ללוח המלווה — התאמה לפי קרבה, שפה והעדפה אישית</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a><span><b>קונסיירג' ראשון — "מה תרצו שנעשה"</b> · מסך הבית הוא הקטלוג עצמו, בשש אריחי ליבה. העדכונים יושבים בפעמון ובכרטיס סטטוס אחד. ניווט בשלוש לשוניות בלבד.</span></div>
+<div class="col">
+
+<div>
+<div class="cap">בית — שש הליבות</div>
+<div class="wf m">
+<div class="hd"><span>Family Care</span><span>🔔 2</span></div>
+<div class="bd">
+<div class="sm">ערב טוב, רונית. <b>מה תרצי שנעשה עבור אמא?</b></div>
+<div class="g3">
+<div class="tile"><div class="circ" style="width:24px;height:24px"></div>ניהול הבית</div>
+<div class="tile"><div class="circ" style="width:24px;height:24px"></div>אחזקה</div>
+<div class="tile"><div class="circ" style="width:24px;height:24px"></div>תרבות ופנאי</div>
+<div class="tile"><div class="circ" style="width:24px;height:24px"></div>דיגיטל</div>
+<div class="tile"><div class="circ" style="width:24px;height:24px"></div>משפטי</div>
+<div class="tile"><div class="circ" style="width:24px;height:24px"></div>רפואי</div>
+</div>
+<div class="bx" style="border-color:#0E9E96"><div class="row" style="justify-content:space-between"><span class="ttl">מצב הבית</span><span class="xs tealtxt">עודכן 09:42</span></div><div class="sm" style="margin-top:6px">נועה נמצאת עכשיו בבית. הביקור הבא: חמישי 10:00.</div><div class="btn2" style="margin-top:8px">כל העדכונים ›</div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm">מסלול Platinum</span><span class="sm"><b>4 / 12 ש׳</b></span></div><div class="gh" style="margin-top:6px"></div></div>
+<div class="dash" style="margin-top:auto">🎙 להקליט בקשה במקום להקליד</div>
+</div>
+<div class="tb"><span class="on">שירותים</span><span>עדכונים</span><span>החשבון</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">הזמנה — שלושה צעדים</div>
+<div class="wf m">
+<div class="hd"><span>→ אחזקה ותיקונים</span><span>1/3</span></div>
+<div class="bd">
+<div class="row" style="gap:6px"><span class="chip chipon">מה</span><span class="chip">מתי</span><span class="chip">אישור</span></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm"><b>אינסטלטור</b></span><span class="xs">‎מ-1,000 ₪</span></div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm"><b>חשמלאי מורשה</b></span><span class="xs">‎מ-850 ₪</span></div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm"><b>הנדימן</b> · תליית מדף, מעקה</span><span class="xs">‎מ-400 ₪</span></div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="sm"><b>תיקון מזגן</b></span><span class="xs">‎מ-550 ₪</span></div></div>
+<div class="bx" style="border-color:#0E9E96;margin-top:6px"><div class="xs">תמחור שקוף</div><div class="sm" style="margin-top:5px">עלות בעל המקצוע + 10% דמי ניהול + שעות ליווי נציג — שורה אחת בחשבונית.</div></div>
+<div class="btn" style="margin-top:auto">המשך לבחירת מועד</div>
+</div>
+<div class="tb"><span class="on">שירותים</span><span>עדכונים</span><span>החשבון</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">עדכונים — מקובץ לפי יום</div>
+<div class="wf m">
+<div class="hd"><span>עדכונים</span><span>סינון</span></div>
+<div class="bd">
+<div class="row" style="gap:6px"><span class="chip chipon">הכל</span><span class="chip">ביקורים</span><span class="chip">תיקונים</span><span class="chip">כספים</span></div>
+<div class="xs">היום</div>
+<div class="bx"><div class="sm"><b>09:42</b> · נועה נכנסה לבית</div></div>
+<div class="bx"><div class="sm"><b>08:15</b> · המונית הגיעה לאיסוף</div></div>
+<div class="xs">אתמול</div>
+<div class="bx"><div class="sm"><b>סיכום ביקור</b> — קניות, מקרר, הליכה</div><div class="row" style="gap:5px;margin-top:6px"><div class="ph" style="width:48px;height:36px">תמונה</div><div class="ph" style="width:48px;height:36px">תמונה</div><div class="ph" style="width:48px;height:36px">+1</div></div></div>
+<div class="bx"><div class="sm"><b>קבלה נסרקה</b> — בית מרקחת ‎94 ₪</div></div>
+<div class="dash" style="margin-top:auto">אלבום חוויות — כל התמונות במקום אחד ›</div>
+</div>
+<div class="tb"><span>שירותים</span><span class="on">עדכונים</span><span>החשבון</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">דסקטופ · תיק לקוח (צוות)</div>
+<div class="wf d">
+<div class="hd"><span>תיק לקוח · שרה לוי, 84 · רמת השרון</span><span>Platinum</span></div>
+<div class="bd" style="flex-direction:row;gap:11px">
+<div style="width:150px;display:flex;flex-direction:column;gap:7px">
+<div class="row"><div class="circ" style="width:42px;height:42px"></div><div><div class="ttl">שרה לוי</div><div class="xs">תלות קלה · הליכון</div></div></div>
+<div class="bx"><div class="xs">אנשי קשר</div><div class="sm">רונית (בת) · מאיר (בן)</div></div>
+<div class="bx"><div class="xs">קוד לבניין</div><div class="sm">2580#</div></div>
+<div class="dash">מסמכים משפטיים — גישה למורשים בלבד</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<div class="row" style="gap:6px"><span class="chip chipon">רפואי</span><span class="chip">העדפות</span><span class="chip">היסטוריית שירות</span><span class="chip">כספים</span></div>
+<div class="g2">
+<div class="bx"><div class="xs">תרופות קבועות</div><div class="sm">אליקוויס · לוסארטן · ויטמין D</div></div>
+<div class="bx"><div class="xs">אלרגיות</div><div class="sm">פניצילין</div></div>
+<div class="bx"><div class="xs">ניידות</div><div class="sm">הליכון · מדרגות בקושי</div></div>
+<div class="bx"><div class="xs">קוגניטיבי</div><div class="sm">צלולה · שכחה קלה</div></div>
+</div>
+<div class="bx" style="flex:1"><div class="xs">ביקורים אחרונים</div>
+<div class="tr" style="grid-template-columns:.7fr 1fr 1.4fr .6fr"><span>15.9</span><span>נועה ש.</span><span>קניות + מקרר</span><span>2:05</span></div>
+<div class="tr" style="grid-template-columns:.7fr 1fr 1.4fr .6fr"><span>11.9</span><span>דניאל כ.</span><span>ליווי לרופא</span><span>3:10</span></div>
+<div class="tr" style="grid-template-columns:.7fr 1fr 1.4fr .6fr;border:0"><span>8.9</span><span>נועה ש.</span><span>בית קפה + דואר</span><span>2:00</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a><span><b>כרטיס ההורה — "יום אחד בכל פעם"</b> · הבית הוא היום של ההורה: ציר שעות, מכסה, ומצב. ניווט בתפריט צד, ואותו מבנה מתהפך למסך "מצב הורה" בפונט גדול.</span></div>
+<div class="col">
+
+<div>
+<div class="cap">בית — היום של אמא</div>
+<div class="wf m">
+<div class="hd"><span>☰ היום · שלישי 15.9</span><span>רונית</span></div>
+<div class="bd">
+<div class="bx" style="border-color:#0E9E96"><div class="row"><div class="circ" style="width:38px;height:38px"></div><div style="flex:1"><div class="ttl">שרה לוי, 84</div><div class="xs">רמת השרון · Platinum · 4/12 שעות</div></div></div><div class="gh" style="margin-top:8px"></div></div>
+<div class="xs">ציר היום</div>
+<div class="bx"><div class="row"><span class="xs" style="width:34px">09:30</span><div style="flex:1"><div class="sm"><b>ליווי לרופא</b> · נועה ש.</div><div class="xs tealtxt">מתקיים עכשיו</div></div></div></div>
+<div class="bx"><div class="row"><span class="xs" style="width:34px">13:00</span><div style="flex:1"><div class="sm"><b>משלוח מרשמים</b></div><div class="xs">בדרך</div></div></div></div>
+<div class="bx"><div class="row"><span class="xs" style="width:34px">17:30</span><div style="flex:1"><div class="sm"><b>קפה עם חנה</b> · מונית VIP מתואמת</div></div></div></div>
+<div class="dash">שישי — חלה, עיתון ופרחים (הטבת מסלול)</div>
+<div class="row" style="gap:7px;margin-top:auto"><div class="btn" style="flex:1">הזמנת שירות</div><div class="btn2" style="flex:1">יומן השבוע</div></div>
+</div>
+<div class="tb"><span class="on">היום</span><span>יומן</span><span>שירותים</span><span>תיק</span><span>חשבון</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">מצב הורה — נגיש, פונט גדול</div>
+<div class="wf m">
+<div class="hd" style="background:#0E9E96"><span style="font-size:14px">שלום שרה</span><span>🔊</span></div>
+<div class="bd" style="gap:12px">
+<div class="bx" style="padding:14px"><div style="font:800 19px Rubik">היום ב-9:30</div><div style="font:600 16px Rubik;color:#333;margin-top:6px">נועה מגיעה לקחת אותך לרופא</div></div>
+<div class="bx" style="padding:14px;display:flex;align-items:center;gap:10px"><div class="circ" style="width:44px;height:44px"></div><div style="font:700 17px Rubik">להתקשר לרונית</div></div>
+<div class="bx" style="padding:14px;display:flex;align-items:center;gap:10px"><div class="circ" style="width:44px;height:44px"></div><div style="font:700 17px Rubik">אני צריכה עזרה</div></div>
+<div class="bx" style="padding:14px;display:flex;align-items:center;gap:10px;border-color:#0E9E96"><div class="circ" style="width:44px;height:44px;background:#cdeceb"></div><div style="font:700 17px Rubik">להקליט בקשה</div></div>
+<div class="dash" style="margin-top:auto">כפתורים 44px+ · ניגודיות גבוהה · הקראה קולית</div>
+</div>
+</div>
+</div>
+
+<div>
+<div class="cap">קטלוג — רשימה ארוכה עם חיפוש</div>
+<div class="wf m">
+<div class="hd"><span>☰ שירותים</span><span>🎙</span></div>
+<div class="bd">
+<div class="dash">חיפוש שירות</div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="ttl">ניהול משק הבית</span><span class="xs">7 ›</span></div><div class="sm" style="margin-top:5px">קניות · כביסה · מקרר · דואר · ארנונה</div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="ttl">אחזקה ותיקונים</span><span class="xs">9 ›</span></div><div class="sm" style="margin-top:5px">הנדימן · אינסטלטור · מזגן · מעקה בטיחות</div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="ttl">ביחד — תרבות ופנאי</span><span class="xs">6 ›</span></div><div class="sm" style="margin-top:5px">בית קפה · הצגות · סיורים · חופשות</div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="ttl">דיגיטל וטכנולוגיה</span><span class="xs">5 ›</span></div><div class="sm" style="margin-top:5px">הדרכה אישית · טכנאי · סיסמאות</div></div>
+<div class="bx"><div class="row" style="justify-content:space-between"><span class="ttl">משפטי ורפואי</span><span class="xs">8 ›</span></div></div>
+</div>
+<div class="tb"><span>היום</span><span>יומן</span><span class="on">שירותים</span><span>תיק</span><span>חשבון</span></div>
+</div>
+</div>
+
+<div>
+<div class="cap">דסקטופ · לוח יום של המוקד</div>
+<div class="wf d" style="flex-direction:row">
+<div class="rail"><div class="on">לוח יומי</div><div>לקוחות</div><div>מלווים</div><div>ספקים</div><div>כספים</div></div>
+<div class="bd">
+<div class="row" style="justify-content:space-between"><span class="ttl">לוח יום · 15.9</span><span class="chip">4 מלווים בשטח</span></div>
+<div class="bx" style="flex:1;display:flex;flex-direction:column;gap:0">
+<div class="tr" style="grid-template-columns:.8fr repeat(4,1fr);font-weight:700;color:#222"><span></span><span>09:00</span><span>11:00</span><span>13:00</span><span>16:00</span></div>
+<div class="tr" style="grid-template-columns:.8fr repeat(4,1fr)"><span>נועה ש.</span><span class="ph" style="height:22px;background:#cdeceb">ש. לוי</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px;background:#e9e9e9">ח. פלד</span><span class="ph" style="height:22px">—</span></div>
+<div class="tr" style="grid-template-columns:.8fr repeat(4,1fr)"><span>דניאל כ.</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px;background:#e9e9e9">י. ברנע</span><span class="ph" style="height:22px;background:#e9e9e9">י. ברנע</span><span class="ph" style="height:22px">—</span></div>
+<div class="tr" style="grid-template-columns:.8fr repeat(4,1fr)"><span>עדי ר.</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px;background:#cdeceb">חנה פ.</span></div>
+<div class="tr" style="grid-template-columns:.8fr repeat(4,1fr);border:0"><span class="sm">לא משובץ</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px">—</span><span class="ph" style="height:22px">—</span><span class="dash" style="padding:3px;font-size:9.5px">מ. אדלר · הדרכה</span></div>
+</div>
+<div class="row" style="gap:7px"><div class="dash" style="flex:1">חריגה שדווחה: י. ברנע — ירידה בתיאבון</div><div class="btn" style="width:120px">פתיחת תחקיר</div></div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<p class="dv-next">אפשר להמשיך עם: "תרחיבי את <a class="dv-oid" href="#1b">1b</a> לכל המסכים" · "שלבי את מסך הבית של <a class="dv-oid" href="#1c">1c</a> עם הקטלוג של <a class="dv-oid" href="#1b">1b</a>" · "כיוונים נוספים למסך השקט הנפשי" · "עברי לעיצוב מלא של <a class="dv-oid" href="#1a">1a</a>"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:1100}}"></script>
+</body>
+</html>

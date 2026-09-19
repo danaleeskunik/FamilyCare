@@ -1,0 +1,22 @@
+/* Kunik Design — corner radii. Soft, generous, never sharp. */
+
+:root {
+  --radius-2: 2px;    /* logo bars (small) */
+  --radius-3: 3px;    /* logo bars (large) */
+  --radius-5: 5px;    /* practice-sheet checkbox */
+  --radius-6: 6px;    /* interactive checkbox */
+  --radius-8: 8px;    /* small chip / table icon button */
+  --radius-9: 9px;    /* header control */
+  --radius-10: 10px;  /* form field, tip callout */
+  --radius-11: 11px;  /* quick-action icon tile */
+  --radius-12: 12px;  /* list row, nav item */
+  --radius-13: 13px;  /* domain icon tile */
+  --radius-14: 14px;  /* content card */
+  --radius-16: 16px;  /* print card / flier panel */
+  --radius-18: 18px;  /* home card, chart panel */
+  --radius-20: 20px;  /* modal */
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  --radius-tab: 10px 10px 0 0; /* @kind radius */
+}

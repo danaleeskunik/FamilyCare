@@ -1,0 +1,88 @@
+/* Kunik Design — colour. Every value lifted verbatim from the source project
+   (טק בגובה העיניים + kunikHome). Nothing rounded or re-derived. */
+
+:root {
+  /* ---- Navy: the brand anchor. Headers, sidebars, hero, logo bar 3. ---- */
+  --navy-900: #0A2340;
+  --navy-800: #0F2E52;   /* THE brand colour */
+  --navy-700: #1B4C88;   /* hero gradient highlight */
+
+  /* ---- Action blue: links, primary buttons, level 1 ---- */
+  --blue-700: #003C80;   /* link hover in kunikHome */
+  --blue-600: #0055B2;   /* hover / pressed, blue text on pale */
+  --blue-500: #006EE5;   /* DEFAULT action blue */
+  --blue-400: #3D9AFF;   /* logo bar 2 */
+  --blue-300: #9CC7F5;   /* logo bar 1, subheads on navy */
+  --blue-200: #C3D4E8;   /* dashed empty-state border */
+  --blue-150: #C9D9EE;   /* body copy on navy */
+  --blue-120: #D7E6F8;   /* lede on navy */
+  --blue-100: #EAF2FD;   /* pale blue surface */
+
+  /* ---- Green: success, teaching, money-in, level 2 ---- */
+  --green-700: #00764A;  /* green text / icon on pale */
+  --green-500: #00A563;  /* success */
+  --green-100: #EAF7F1;  /* pale green surface */
+  --whatsapp: #25D366;
+  --whatsapp-ink: #0A2E17;
+
+  /* ---- Orange: tips, warnings, level 3 ---- */
+  --orange-700: #8A4A11; /* tip body copy */
+  --orange-600: #B84E14; /* tip label / icon */
+  --orange-500: #E1631B; /* warning, 4px callout edge */
+  --orange-100: #FDEEE6; /* warning surface */
+  --orange-50:  #FFF6E5; /* tip surface */
+
+  /* ---- Red: destructive / critical ---- */
+  --red-600: #BE0000;
+  --red-500: #B23A48;    /* health domain, delete icon */
+  --red-100: #FBEAEC;
+  --red-border: #F3D6D6;
+
+  /* ---- Domain accents (kunikHome). One hue + one pale surface each. ---- */
+  --domain-insurance: #0055B2;   --domain-insurance-bg: #EAF2FD;
+  --domain-savings:   #0A7A82;   --domain-savings-bg:   #E6F5F6;
+  --domain-health:    #B23A48;   --domain-health-bg:    #FBEAEC;
+  --domain-vehicles:  #1F5F8B;   --domain-vehicles-bg:  #E8F1F8;
+  --domain-documents: #9C6B12;   --domain-documents-bg: #FBF1E1;
+  --domain-payments:  #6E4FA3;   --domain-payments-bg:  #F1ECFA;
+  --domain-income:    #00764A;   --domain-income-bg:    #EAF7F1;
+
+  /* ---- Neutrals: ink ---- */
+  --ink-1: #121213;   /* primary text */
+  --ink-2: #2A2D30;   /* long-form body, task text */
+  --ink-3: #3F4245;
+  --ink-4: #4A4D50;   /* list items, field labels */
+  --ink-5: #585B5E;   /* icon-button glyph */
+  --ink-6: #6A6D70;   /* secondary / subtitle */
+  --ink-7: #8D9296;   /* tertiary, meta */
+  --ink-8: #9AA0A6;   /* footer, disabled label */
+  --ink-9: #A9B4BF;   /* empty checkbox stroke */
+
+  /* ---- Neutrals: surface ---- */
+  --surface-canvas: #F4F7FB;  /* every app background */
+  --surface-card:   #FFFFFF;
+  --surface-sunken: #F7F9FC;  /* field fill, table head, step row */
+  --surface-muted:  #F2F5F9;  /* secondary button, disabled pill */
+  --surface-hover:  #EFF0F1;
+
+  /* ---- Borders ---- */
+  --border-card:   #E4EAF1;  /* the 1px card border */
+  --border-field:  #DFE2E4;  /* 2px field border */
+  --border-hair:   #F0F3F7;  /* table row divider */
+  --border-rule:   #DDE3EB;  /* section rule */
+
+  /* ---- Semantic aliases ---- */
+  --text-body: var(--ink-1);
+  --text-secondary: var(--ink-6);
+  --text-meta: var(--ink-7);
+  --text-on-navy: #FFFFFF;
+  --text-on-navy-soft: var(--blue-300);
+  --brand: var(--navy-800);
+  --accent: var(--blue-500);
+  --accent-hover: var(--blue-600);
+  --link: var(--blue-500);
+  --link-hover: var(--blue-600);
+  --success: var(--green-500);
+  --warning: var(--orange-500);
+  --danger: var(--red-600);
+}

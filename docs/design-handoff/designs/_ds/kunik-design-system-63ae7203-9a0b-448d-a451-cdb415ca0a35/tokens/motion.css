@@ -1,0 +1,10 @@
+/* Kunik Design — motion. Almost none. One 150ms ease on card lift and
+   chevron rotation; nothing bounces, nothing slides in. */
+
+:root {
+  --dur-fast: 150ms; /* @kind other */
+  --ease-standard: ease; /* @kind other */
+  --transition-card: transform 150ms ease, box-shadow 150ms ease; /* @kind other */
+  --transition-chevron: transform 150ms; /* @kind other */
+  --hover-lift: translateY(-3px); /* @kind other */
+}

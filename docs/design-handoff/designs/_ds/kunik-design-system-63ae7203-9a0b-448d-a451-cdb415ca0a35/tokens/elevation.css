@@ -1,0 +1,22 @@
+/* Kunik Design — elevation. Cards are almost flat; the navy tint in the
+   shadow is what makes the whole system feel cool rather than grey. */
+
+:root {
+  --shadow-card: 0 2px 8px rgba(15, 46, 82, .06);       /* every card, at rest */
+  --shadow-card-hover: 0 14px 30px rgba(15, 46, 82, .14); /* lift on hover */
+  --shadow-header: 0 2px 8px rgba(15, 46, 82, .18);     /* sticky navy header */
+  --shadow-print: 0 4px 6px rgba(0, 0, 0, .1);          /* print/flier panel */
+  --shadow-fab: 0 4px 10px rgba(0, 0, 0, .22);          /* home pill */
+  --shadow-portrait: 0 4px 6px rgba(0, 0, 0, .25);
+
+  --scrim-modal: rgba(15, 25, 40, .45);
+  --on-navy-fill: rgba(255, 255, 255, .07);
+  --on-navy-fill-strong: rgba(255, 255, 255, .08);
+  --on-navy-border: rgba(255, 255, 255, .22);
+  --on-navy-divider: rgba(255, 255, 255, .12);
+
+  /* Hero dot texture — the one repeating pattern in the brand */
+  --hero-dots: radial-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px); /* @kind other */
+  --hero-dots-size: 22px 22px; /* @kind other */
+  --hero-gradient: radial-gradient(120% 130% at 85% 0%, #1B4C88 0%, #0F2E52 60%, #0A2340 100%); /* @kind other */
+}

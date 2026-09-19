@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/radius.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/tokens/motion.css">
+<link rel="stylesheet" href="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/styles.css">
+<script src="_ds/kunik-design-system-63ae7203-9a0b-448d-a451-cdb415ca0a35/_ds_bundle.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..900&family=Heebo:wght@300..900&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#F4F7FB;direction:rtl;font-family:var(--font-ui,Rubik),system-ui,sans-serif}a{color:#0E7C77;text-decoration:none}a:hover{color:#0A5F5B}</style>
+</helmet>
+
+<div style="direction:rtl;min-height:100%;background:#F4F7FB;color:var(--ink-1,#14202E);padding-bottom:40px">
+
+<div style="background:#0E4F4C;color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 1px 0 rgba(0,0,0,.08)">
+<div style="max-width:1240px;margin:0 auto;padding:16px clamp(14px,4vw,24px) 0">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:13px">
+<img src="assets/logo-white.png" alt="Family Care — always with you" style="height:46px;display:block">
+<span style="width:1px;height:22px;background:rgba(255,255,255,.22)"></span>
+<div>
+<div style="font:800 15.5px/1.25 Rubik,sans-serif">תיק לקוח · שרה לוי, 84</div>
+<div style="font:500 12.5px/1.3 Rubik,sans-serif;color:#9FD6D2">רמת השרון · לקוחה מאז 03.24 · מנהלת תיק: ליאת ב.</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px">
+<span style="display:inline-flex;align-items:center;gap:6px;background:#2BC4BC;color:#06302E;font:800 12.5px Rubik,sans-serif;padding:6px 13px;border-radius:999px">מסלול פלטינום</span>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Button" variant="onNavy" size="sm" icon="message" hint-size="auto,36px">הודעה למשפחה</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Button" size="sm" icon="plus" color="#16A5A0" hint-size="auto,36px">הזמנת שירות</x-import>
+</div>
+</div>
+<div style="display:flex;gap:4px;margin-top:16px;overflow-x:auto">
+<div onClick="{{ goMed }}" style="flex:none;padding:12px 22px;border-radius:10px 10px 0 0;font:700 15px Rubik,sans-serif;cursor:pointer;white-space:nowrap;color:#9FD6D2;background:{{ bgMed }};color:{{ fgMed }}">רפואי ותפקודי</div>
+<div onClick="{{ goPref }}" style="flex:none;padding:12px 22px;border-radius:10px 10px 0 0;font:700 15px Rubik,sans-serif;cursor:pointer;white-space:nowrap;color:#9FD6D2;background:{{ bgPref }};color:{{ fgPref }}">העדפות אישיות</div>
+<div onClick="{{ goHist }}" style="flex:none;padding:12px 22px;border-radius:10px 10px 0 0;font:700 15px Rubik,sans-serif;cursor:pointer;white-space:nowrap;color:#9FD6D2;background:{{ bgHist }};color:{{ fgHist }}">היסטוריית שירות</div>
+<div onClick="{{ goFin }}" style="flex:none;padding:12px 22px;border-radius:10px 10px 0 0;font:700 15px Rubik,sans-serif;cursor:pointer;white-space:nowrap;color:#9FD6D2;background:{{ bgFin }};color:{{ fgFin }}">כספים ומנוי</div>
+</div>
+</div>
+</div>
+
+<div style="max-width:1240px;margin:0 auto;padding:22px clamp(14px,4vw,24px);display:grid;grid-template-columns:288px minmax(0,1fr);gap:18px;align-items:start">
+
+<aside style="display:flex;flex-direction:column;gap:13px;position:sticky;top:132px">
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,200px">
+<div style="display:flex;align-items:center;gap:13px">
+<div style="width:62px;height:62px;border-radius:50%;background:#E3EAF2;flex:none;display:flex;align-items:center;justify-content:center;font:800 20px Rubik,sans-serif;color:#0E4F4C">ש"ל</div>
+<div>
+<div style="font:800 18px/1.2 Rubik,sans-serif">שרה לוי</div>
+<div style="font:500 13.5px/1.4 Rubik,sans-serif;color:#5B6B7C">84 · תלות קלה · הליכון</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;justify-content:space-between;font:500 13.5px Rubik,sans-serif;color:#5B6B7C"><span>טלפון</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:700;color:#14202E;direction:ltr">052-441-8830</span></div>
+<div style="display:flex;justify-content:space-between;font:500 13.5px Rubik,sans-serif;color:#5B6B7C"><span>כתובת</span><span style="font-weight:700;color:#14202E">ז'בוטינסקי 18, רמת השרון</span></div>
+<div style="display:flex;justify-content:space-between;font:500 13.5px Rubik,sans-serif;color:#5B6B7C"><span>קוד לבניין</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:900;color:#14202E;direction:ltr">2580#</span></div>
+</div>
+</x-import>
+
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" size="sm" hint-size="100%,170px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899;letter-spacing:.3px">אנשי קשר</div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:50%;background:#E6F5F4;flex:none"></div><div style="flex:1"><div style="font:700 14px Rubik,sans-serif">רונית לוי־שדה</div><div style="font:500 12.5px Rubik,sans-serif;color:#5B6B7C">בת · מזמינת השירות · הרשאה מלאה</div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:50%;background:#EEF2F7;flex:none"></div><div style="flex:1"><div style="font:700 14px Rubik,sans-serif">מאיר לוי</div><div style="font:500 12.5px Rubik,sans-serif;color:#5B6B7C">בן · צפייה בלבד</div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:50%;background:#FDEEE4;flex:none"></div><div style="flex:1"><div style="font:700 14px Rubik,sans-serif">ד"ר גיל אבידן</div><div style="font:500 12.5px Rubik,sans-serif;color:#5B6B7C">רופא מטפל · מכבי רמת השרון</div></div></div>
+</div>
+</x-import>
+
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" size="sm" hint-size="100%,150px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899;letter-spacing:.3px">מסמכים משפטיים</div>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="neutral" size="sm" hint-size="auto,22px">מורשים בלבד</x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #E4EAF1;border-radius:12px;font:600 13.5px Rubik,sans-serif"><x-import component-from-global-scope="KunikDesignSystem_63ae72.Icon" name="document" size="17" hint-size="17px,17px"></x-import>ייפוי כוח מתמשך</div>
+<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #E4EAF1;border-radius:12px;font:600 13.5px Rubik,sans-serif"><x-import component-from-global-scope="KunikDesignSystem_63ae72.Icon" name="document" size="17" hint-size="17px,17px"></x-import>ייפוי כוח רפואי</div>
+<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px dashed #C3D4E8;border-radius:12px;font:600 13.5px Rubik,sans-serif;color:#8A95A1">אין הנחיות מקדימות. אפשר להעלות מסמך.</div>
+</div>
+</x-import>
+</aside>
+
+<main style="display:flex;flex-direction:column;gap:14px">
+
+<sc-if value="{{ isMed }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,140px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">תרופות קבועות</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;font:600 15px Rubik,sans-serif"><span>אליקוויס 5 מ"ג</span><span style="color:#5B6B7C;font-weight:500;font-size:13.5px">בוקר וערב</span></div>
+<div style="display:flex;justify-content:space-between;font:600 15px Rubik,sans-serif"><span>לוסארטן 50 מ"ג</span><span style="color:#5B6B7C;font-weight:500;font-size:13.5px">בוקר</span></div>
+<div style="display:flex;justify-content:space-between;font:600 15px Rubik,sans-serif"><span>ויטמין D</span><span style="color:#5B6B7C;font-weight:500;font-size:13.5px">פעם בשבוע</span></div>
+</div>
+<div style="font:500 13px Rubik,sans-serif;color:#5B6B7C">מרשמים מתחדשים ב-1 לחודש · איסוף על ידי המלווה</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,140px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">רגישויות ואלרגיות</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap">
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="red" hint-size="auto,26px">פניצילין</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="orange" hint-size="auto,26px">לקטוז</x-import>
+</div>
+<div style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">מופיע אוטומטית בתדריך לכל מלווה ולכל ספק רפואי שמגיע לבית.</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,130px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">ניידות</div>
+<div style="font:600 15px Rubik,sans-serif">הליכון · מדרגות בקושי · מעלית בבניין</div>
+<div style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">מעקה בטיחות הותקן במקלחת 04.25. הסעות — מונית VIP בלבד.</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,130px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">מצב קוגניטיבי</div>
+<div style="font:600 15px Rubik,sans-serif">צלולה · שכחה קלה</div>
+<div style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">מומלץ להזכיר תורים יום מראש בשיחה, לא בהודעה בלבד.</div>
+</x-import>
+</div>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Callout" tone="warning" title="חריגה שדווחה 15.9" hint-size="100%,90px">נועה דיווחה על כאב בברך ימין בעלייה במדרגות. ממתין לתיאום ביקור רופא/ה עד הבית.</x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPref }}">
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,150px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">אוכל ומעדניות</div>
+<div style="font:600 15px Rubik,sans-serif">רביבה וסיליה · דליקטסן בן יהודה</div>
+<div style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">אוהבת: מרק עוף, גבינה בולגרית, עוגת גבינה. לא אוכלת חריף.</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,150px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">תרבות ופנאי</div>
+<div style="font:600 15px Rubik,sans-serif">הבימה · הקאמרי · מוזיקה קלאסית</div>
+<div style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">עיתון "הארץ" בשישי. מעדיפה מופעי בוקר.</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,150px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">הרגלי יום־יום</div>
+<div style="font:500 14.5px/1.6 Rubik,sans-serif;color:#14202E">קמה ב-7:00 · קפה הפוך ב-8:00 · מנוחה אחר הצהריים 14:00–16:00 · לא לתאם ביקורים אחרי 19:00.</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,150px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">העדפות למלווה</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap">
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="neutral" hint-size="auto,26px">מלווה אישה</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="neutral" hint-size="auto,26px">עברית ורוסית</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="green" hint-size="auto,26px">נועה ש. — מלווה קבועה</x-import>
+</div>
+<div style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">רצוי אותו פרצוף. החלפה — רק בתיאום מראש עם רונית.</div>
+</x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHist }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="background:#fff;border:1px solid #E4EAF1;border-radius:16px;box-shadow:0 2px 8px rgba(15,46,82,.06);overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid #E4EAF1">
+<div style="font:800 15.5px Rubik,sans-serif">ביקורים ושירותים אחרונים</div>
+<div style="font:500 13px Rubik,sans-serif;color:#5B6B7C">ספטמבר 2026 · 9 ביקורים · 18:40 שעות</div>
+</div>
+<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th style="text-align:start;padding:11px 18px;font:800 12.5px Rubik,sans-serif;color:#7A8899;background:#F7F9FC;border-bottom:1px solid #E4EAF1">תאריך</th>
+<th style="text-align:start;padding:11px 18px;font:800 12.5px Rubik,sans-serif;color:#7A8899;background:#F7F9FC;border-bottom:1px solid #E4EAF1">מלווה / ספק</th>
+<th style="text-align:start;padding:11px 18px;font:800 12.5px Rubik,sans-serif;color:#7A8899;background:#F7F9FC;border-bottom:1px solid #E4EAF1">מה נעשה</th>
+<th style="text-align:start;padding:11px 18px;font:800 12.5px Rubik,sans-serif;color:#7A8899;background:#F7F9FC;border-bottom:1px solid #E4EAF1">משך</th>
+<th style="text-align:start;padding:11px 18px;font:800 12.5px Rubik,sans-serif;color:#7A8899;background:#F7F9FC;border-bottom:1px solid #E4EAF1">עלות</th>
+<th style="text-align:start;padding:11px 18px;font:800 12.5px Rubik,sans-serif;color:#7A8899;background:#F7F9FC;border-bottom:1px solid #E4EAF1"></th>
+</tr></thead>
+<tbody>
+<tr><td style="padding:13px 18px;font:600 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">15.9</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">נועה ש.</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">קניות במעדנייה, סידור מקרר, הליכה</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">2:05</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">‎550 ₪</td><td style="padding:13px 18px;border-bottom:1px solid #F0F3F7"><a href="#">סיכום ביקור</a></td></tr>
+<tr><td style="padding:13px 18px;font:600 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">12.9</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">אבי מ. · אינסטלטור</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">תיקון נזילה במטבח</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">1:20</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">‎1,210 ₪</td><td style="padding:13px 18px;border-bottom:1px solid #F0F3F7"><a href="#">חשבונית</a></td></tr>
+<tr><td style="padding:13px 18px;font:600 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">11.9</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">דניאל כ.</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">ליווי לרופא + איסוף מרשמים</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">3:10</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">‎850 ₪</td><td style="padding:13px 18px;border-bottom:1px solid #F0F3F7"><a href="#">סיכום ביקור</a></td></tr>
+<tr><td style="padding:13px 18px;font:600 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">8.9</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">נועה ש.</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif;border-bottom:1px solid #F0F3F7">בית קפה, סידור דואר וארנונה</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">2:00</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif;border-bottom:1px solid #F0F3F7">‎550 ₪</td><td style="padding:13px 18px;border-bottom:1px solid #F0F3F7"><a href="#">סיכום ביקור</a></td></tr>
+<tr><td style="padding:13px 18px;font:600 14px Rubik,sans-serif">4.9</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif">מוניות אלון · VIP</td><td style="padding:13px 18px;font:500 14px Rubik,sans-serif">הסעה לתיאטרון הבימה וחזרה</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif">—</td><td style="padding:13px 18px;font:700 14px Heebo,Rubik,sans-serif">‎264 ₪</td><td style="padding:13px 18px"><a href="#">חשבונית</a></td></tr>
+</tbody>
+</table>
+</div>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" size="sm" hint-size="100%,90px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">דירוג איכות ממוצע</div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:900 26px Heebo,Rubik,sans-serif;letter-spacing:-.5px;color:#0E7C77">4.8</span><span style="font:500 13.5px Rubik,sans-serif;color:#5B6B7C">מתוך 9 משובים של המשפחה החודש</span></div>
+</x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFin }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,120px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">דמי חברות חודשיים</div>
+<div style="font:900 26px Heebo,Rubik,sans-serif;letter-spacing:-.5px">‎3,500 ₪</div>
+<div style="font:500 13px Rubik,sans-serif;color:#5B6B7C">נגבה ב-1.9 · כרטיס מסתיים ב-4417</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,120px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">מפגשים שנוצלו החודש</div>
+<div style="font:900 26px Heebo,Rubik,sans-serif;letter-spacing:-.5px;direction:ltr;unicode-bidi:isolate;text-align:right">5 / 8</div>
+<div style="height:8px;border-radius:999px;background:#EEF2F7;overflow:hidden"><div style="width:62%;height:100%;background:#16A5A0"></div></div>
+<div style="font:500 13px Rubik,sans-serif;color:#5B6B7C">פעמיים בשבוע · 3 שעות למפגש</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,120px">
+<div style="font:700 12.5px Rubik,sans-serif;color:#7A8899">חיובים נוספים החודש</div>
+<div style="font:900 26px Heebo,Rubik,sans-serif;letter-spacing:-.5px">‎2,318 ₪</div>
+<div style="font:500 13px Rubik,sans-serif;color:#5B6B7C">קבלנים, נסיעות וקבלות שנסרקו</div>
+</x-import>
+</div>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,220px">
+<div style="display:flex;align-items:center;justify-content:space-between"><div style="font:800 15.5px Rubik,sans-serif">פירוט לחשבונית ספטמבר</div><x-import component-from-global-scope="KunikDesignSystem_63ae72.Button" variant="secondary" size="sm" icon="export" hint-size="auto,36px">הפקת דוח חודשי</x-import></div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F0F3F7;font:500 14.5px Rubik,sans-serif"><span>אינסטלטור — עלות בעל מקצוע</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:700">‎1,000 ₪</span></div>
+<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F0F3F7;font:500 14.5px Rubik,sans-serif;color:#5B6B7C"><span>תוספת זמינות 10%</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:700">‎100 ₪</span></div>
+<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F0F3F7;font:500 14.5px Rubik,sans-serif;color:#5B6B7C"><span>דמי ניהול 10%</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:700">‎110 ₪</span></div>
+<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F0F3F7;font:500 14.5px Rubik,sans-serif"><span>שעות ליווי מעבר למכסה (1 + 2)</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:700">‎800 ₪</span></div>
+<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F0F3F7;font:500 14.5px Rubik,sans-serif"><span>נסיעות ומוניות VIP</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:700">‎264 ₪</span></div>
+<div style="display:flex;justify-content:space-between;padding:11px 0;font:800 15.5px Rubik,sans-serif"><span>סה"כ לחיוב</span><span style="font-family:Heebo,Rubik,sans-serif;font-weight:900">‎2,318 ₪</span></div>
+</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Card" hint-size="100%,170px">
+<div style="display:flex;align-items:center;justify-content:space-between"><div style="font:800 15.5px Rubik,sans-serif">הטבות המסלול · פלטינום</div><x-import component-from-global-scope="KunikDesignSystem_63ae72.Badge" tone="green" hint-size="auto,26px">תגמול נקודות בקצב גבוה</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">
+<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #E4EAF1;border-radius:12px;font:600 14px Rubik,sans-serif">מפגשי בוקר — קפה ומאפה</div>
+<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #E4EAF1;border-radius:12px;font:600 14px Rubik,sans-serif">ביקור שישי חודשי — חלה, עיתון, פרחים</div>
+<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #E4EAF1;border-radius:12px;font:600 14px Rubik,sans-serif">רכב יוקרה או מונית VIP לבילויים</div>
+<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #E4EAF1;border-radius:12px;font:600 14px Rubik,sans-serif">ליווי נציג בכל ביקור טכנאי</div>
+<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #E4EAF1;border-radius:12px;font:600 14px Rubik,sans-serif">תיאום מראש — 3 ימים</div>
+<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #E4EAF1;border-radius:12px;font:600 14px Rubik,sans-serif">אחזקת הבית — עד יום אחד</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="KunikDesignSystem_63ae72.Callout" tone="info" title="תקרה תקציבית" hint-size="100%,80px">רונית הגדירה תקרה של ‎3,000 ₪ לחודש מעבר לדמי החברות. נותרו ‎682 ₪ — התראה תישלח בהתקרבות לרף.</x-import>
+</div>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { tab: 'med' };
+  set(t) { return () => this.setState({ tab: t }); }
+  renderVals() {
+    const t = this.state.tab;
+    const on = (k) => (t === k ? '#F4F7FB' : 'transparent');
+    const fg = (k) => (t === k ? '#0E4F4C' : '#9FD6D2');
+    return {
+      isMed: t === 'med', isPref: t === 'pref', isHist: t === 'hist', isFin: t === 'fin',
+      goMed: this.set('med'), goPref: this.set('pref'), goHist: this.set('hist'), goFin: this.set('fin'),
+      bgMed: on('med'), bgPref: on('pref'), bgHist: on('hist'), bgFin: on('fin'),
+      fgMed: fg('med'), fgPref: fg('pref'), fgHist: fg('hist'), fgFin: fg('fin'),
+    };
+  }
+}
+</script>
+</body>
+</html>

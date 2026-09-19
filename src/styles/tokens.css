@@ -1,0 +1,53 @@
+/* Family Care tokens. Brand hue is teal (replaces Kunik navy); everything else follows the Kunik system. */
+@font-face { font-family: "Rubik"; src: url("/fonts/Rubik.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Heebo"; src: url("/fonts/Heebo.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+
+:root {
+  --font-ui: "Rubik", system-ui, sans-serif;
+  --font-num: "Heebo", sans-serif;
+
+  --brand-deep: #0A3B39;
+  --brand-header: #0E4F4C;
+  --brand-action: #16A5A0;
+  --brand-bright: #2BC4BC;
+  --brand-link: #0E7C77;
+  --brand-link-hover: #0A5F5B;
+  --on-brand-2: #9FD6D2;
+  --on-brand-3: #CFECEA;
+  --on-bright: #06302E;
+  --tint: #E6F5F4;
+
+  --canvas: #F4F7FB;
+  --card: #FFFFFF;
+  --field: #F7F9FC;
+  --inert: #EEF2F7;
+
+  --ink-1: #14202E;
+  --ink-2: #5B6B7C;
+  --ink-3: #7A8899;
+  --ink-4: #8A95A1;
+
+  --success: #00A563;
+  --warning: #E1631B;
+  --warning-bg: #FDF1E7;
+  --warning-ink: #7A3B12;
+  --danger: #BE0000;
+  --blue-300: #9CC7F5;
+  --blue-500: #006EE5;
+  --blue-100: #EAF2FD;
+  --green-100: #EAF7F1;
+  --green-700: #00764A;
+  --orange-100: #FDEEE6;
+  --orange-700: #8A4A11;
+  --red-100: #FBEAEC;
+
+  --border-card: #E4EAF1;
+  --border-field: #DFE2E4;
+  --border-hair: #F0F3F7;
+  --border-dashed: #C3D4E8;
+
+  --shadow-card: 0 2px 8px rgba(15, 46, 82, 0.06);
+  --shadow-lift: 0 14px 30px rgba(15, 46, 82, 0.14);
+
+  --gutter: clamp(14px, 4vw, 24px);
+}

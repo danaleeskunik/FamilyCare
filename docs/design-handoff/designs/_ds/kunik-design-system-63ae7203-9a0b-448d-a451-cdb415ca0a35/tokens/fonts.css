@@ -1,0 +1,20 @@
+/* Kunik Design — webfonts.
+   Rubik carries all UI text (Hebrew + Latin). Heebo is used ONLY for numerals:
+   phone numbers, times, stat figures, sheet numbers. Both files are the
+   variable TTFs shipped with the source project (final/Rubik.ttf, final/Heebo.ttf). */
+
+@font-face {
+  font-family: "Rubik";
+  src: url("../assets/fonts/Rubik.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Heebo";
+  src: url("../assets/fonts/Heebo.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
