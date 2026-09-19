@@ -9,6 +9,8 @@ const ICONS: Record<string, string> = {
   bell: 'M12 3a5 5 0 0 0-5 5v3c0 1.2-.5 2.3-1.4 3.1L4 16h16l-1.6-1.9C17.5 13.3 17 12.2 17 11V8a5 5 0 0 0-5-5zM9.5 19a2.5 2.5 0 0 0 5 0',
   warning: 'M12 4l9 16H3zM12 10v4M12 17h.01',
   calendar: 'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4',
+  'chevron-left': 'M14 6l-6 6 6 6',
+  'chevron-right': 'M10 6l6 6-6 6',
   image: 'M3 5h18v14H3zM7 13l3-3 4 4 3-2M8.5 7.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z',
 }
 
@@ -65,14 +67,19 @@ export function Callout({ tone = 'info', title, children }: { tone?: 'info' | 'w
   )
 }
 
-export function StatCard({ label, figure, note, color }: { label: string; figure: ReactNode; note: string; color?: string }) {
-  return (
-    <Card size="sm">
+export function StatCard({ label, figure, note, color, onClick }: { label: string; figure: ReactNode; note: string; color?: string; onClick?: () => void }) {
+  const inner = (
+    <>
       <div className="card-label">{label}</div>
       <div className="stat-figure" style={color ? { color } : undefined}>{figure}</div>
       <div className="card-meta">{note}</div>
-    </Card>
+      {onClick && <div className="more">לפירוט ←</div>}
+    </>
   )
+  if (onClick) {
+    return <button type="button" className="card sm interactive stat" onClick={onClick}>{inner}</button>
+  }
+  return <Card size="sm">{inner}</Card>
 }
 
 /** Numeric run that must read LTR inside RTL text (ratios, durations, phones, codes). */

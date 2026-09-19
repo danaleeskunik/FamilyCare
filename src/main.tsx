@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './styles/base.css'
 import App from './App'
+import { AppStoreProvider } from './store/AppStore'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <App />
+      <AppStoreProvider>
+        <App />
+      </AppStoreProvider>
     </BrowserRouter>
   </StrictMode>,
 )

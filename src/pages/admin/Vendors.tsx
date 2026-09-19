@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { Badge, Button, Callout, Card, CardHead, StatCard, money } from '../../components/ui'
-import { vendors } from '../../data/mock'
+import { useStore } from '../../store/AppStore'
 
 export default function Vendors() {
+  const { vendors, openForm } = useStore()
+  const frozen = vendors.filter((v) => v.licBad).length
   const [q, setQ] = useState('')
   const rows = vendors.filter((v) => [v.name, v.field, v.area].some((s) => s.includes(q.trim())))
 
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="ספקים מאושרים" figure="28" note="ב-11 תחומי מקצוע" />
-        <StatCard label="רישיון או ביטוח שפג" figure="2" note="מוקפאים עד חידוש" color="var(--danger)" />
+        <StatCard label="ספקים מאושרים" figure={22 + vendors.length} note="ב-11 תחומי מקצוע" />
+        <StatCard label="רישיון או ביטוח שפג" figure={frozen} note="מוקפאים עד חידוש" color="var(--danger)" />
         <StatCard label="דירוג ממוצע" figure="4.6" note="מ-146 משובי לקוחות ומלווים" />
         <StatCard label="דמי ניהול שנצברו" figure={money(8940)} note="10% על עבודות קבלנים בספטמבר" />
       </div>
@@ -22,7 +24,7 @@ export default function Vendors() {
       <Card flush>
         <CardHead title="מאגר בעלי מקצוע מאושרים">
           <input className="search" placeholder="חיפוש לפי תחום, שם או אזור" aria-label="חיפוש בעלי מקצוע" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Button size="sm" icon="plus">ספק חדש</Button>
+          <Button size="sm" icon="plus" onClick={() => openForm('vendor')}>ספק חדש</Button>
         </CardHead>
         <div className="table-wrap">
           <table>
@@ -31,7 +33,7 @@ export default function Vendors() {
             </thead>
             <tbody>
               {rows.map((v) => (
-                <tr key={v.name}>
+                <tr key={v.id}>
                   <td style={{ fontWeight: 600 }}>{v.name}</td>
                   <td>{v.field}</td>
                   <td>{v.area}</td>

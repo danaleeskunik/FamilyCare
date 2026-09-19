@@ -1,18 +1,19 @@
 import { Badge, Button, Card, CardHead, Ltr, StatCard, money } from '../../components/ui'
-import { staff } from '../../data/mock'
+import { useStore } from '../../store/AppStore'
 
 export default function Staff() {
+  const { staff, openForm } = useStore()
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="מלווים פעילים" figure="9" note={'2 עו"ס · 5 סטודנטים · 2 מלווים'} />
+        <StatCard label="מלווים פעילים" figure={5 + staff.length} note={'2 עו"ס · 5 סטודנטים · 2 מלווים'} />
         <StatCard label="שעות במשמרת היום" figure={<Ltr>21:40</Ltr>} note="6 מלווים בשטח" />
         <StatCard label="שכר מוערך לחודש" figure={money(38600)} note={`כולל מקדם 1.3 ונסיעות ${money(30)} ליום`} />
         <StatCard label="דירוג ממוצע מהמשפחות" figure="4.8" note="מתוך 63 משובים בספטמבר" />
       </div>
 
       <Card flush>
-        <CardHead title="צוות המלווים"><Button size="sm" icon="plus">מלווה חדש/ה</Button></CardHead>
+        <CardHead title="צוות המלווים"><Button size="sm" icon="plus" onClick={() => openForm('staff')}>מלווה חדש/ה</Button></CardHead>
         <div className="table-wrap">
           <table>
             <thead>
@@ -20,7 +21,7 @@ export default function Staff() {
             </thead>
             <tbody>
               {staff.map((s) => (
-                <tr key={s.name}>
+                <tr key={s.id}>
                   <td style={{ fontWeight: 600 }}>{s.name}</td>
                   <td>{s.role}</td>
                   <td>{s.areas}</td>

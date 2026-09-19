@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Header } from '../layouts/AdminLayout'
 import { Badge, Button, Callout, Card, Empty, Icon, Ltr, Progress, money } from '../components/ui'
 import { visitHistory } from '../data/mock'
+import { useStore } from '../store/AppStore'
 
 const TABS = [
   ['med', 'רפואי ותפקודי'],
@@ -189,27 +190,31 @@ function Finance() {
 
 export default function ClientFile() {
   const { id } = useParams()
+  const { clients, openForm } = useStore()
   const [tab, setTab] = useState<TabKey>('med')
+  const client = clients.find((c) => c.id === id)
 
-  if (id !== 'sara-levi') {
+  if (!client) {
     return (
       <main className="container page-body">
-        <Empty text="תיק הלקוח הזה עוד לא הוקם. אפשר לחזור לרשימת הלקוחות ולפתוח את התיק של שרה לוי." action={<Link to="/admin/clients">חזרה ללקוחות</Link>} />
+        <Empty text="לא מצאנו את הלקוח/ה הזה/זו. אפשר לחזור לרשימה ולבחור מחדש." action={<Link to="/admin/clients">חזרה ללקוחות</Link>} />
       </main>
     )
   }
+
+  const full = client.id === 'sara-levi'
 
   return (
     <>
       <Header
         lead={<span style={{ width: 1, height: 22, background: 'rgba(255,255,255,.22)' }} />}
-        title="תיק לקוח · שרה לוי, 84"
-        sub="רמת השרון · לקוחה מאז 03.24 · מנהלת תיק: ליאת ב."
+        title={`תיק לקוח · ${client.name}, ${client.age}`}
+        sub={full ? 'רמת השרון · לקוחה מאז 03.24 · מנהלת תיק: ליאת ב.' : `${client.area} · מזמין/ת השירות: ${client.orderer}`}
         actions={
           <>
-            <span className="plan-pill">מסלול פלטינום</span>
+            <span className="plan-pill">{client.plan[1] === 'תקופת היכרות' ? client.plan[1] : `מסלול ${client.plan[1]}`}</span>
             <Button variant="on-navy" size="sm" icon="message">הודעה למשפחה</Button>
-            <Button size="sm" icon="plus">הזמנת שירות</Button>
+            <Button size="sm" icon="plus" onClick={() => openForm('task', { client: client.name })}>הזמנת שירות</Button>
           </>
         }
         tabs={
@@ -221,15 +226,35 @@ export default function ClientFile() {
         }
       />
       <main className="container page-body">
-        <div className="file-grid">
-          <Sidebar />
-          <div className="stack">
-            {tab === 'med' && <Medical />}
-            {tab === 'pref' && <Preferences />}
-            {tab === 'hist' && <History />}
-            {tab === 'fin' && <Finance />}
+        {full ? (
+          <div className="file-grid">
+            <Sidebar />
+            <div className="stack">
+              {tab === 'med' && <Medical />}
+              {tab === 'pref' && <Preferences />}
+              {tab === 'hist' && <History />}
+              {tab === 'fin' && <Finance />}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="stack">
+            <Card>
+              <div className="row" style={{ gap: 12, marginBottom: 6 }}>
+                <span className="avatar" style={{ width: 62, height: 62, background: '#E3EAF2', fontSize: 20 }}>{client.name.split(' ').map((w) => w[0]).join('"')}</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 18 }}>{client.name}</div>
+                  <div className="card-meta">{client.age} · {client.area} · <Badge tone={client.plan[0]}>{client.plan[1]}</Badge></div>
+                </div>
+              </div>
+              <div className="kv"><span className="muted">מלווה קבוע/ה</span><span style={{ fontWeight: 700 }}>{client.companion ?? 'עדיין ללא'}</span></div>
+              <div className="kv"><span className="muted">מפגשים החודש</span><Ltr style={{ fontWeight: 700 }}>{client.used}</Ltr></div>
+            </Card>
+            <Empty
+              text="עוד לא הוזנו פרטים רפואיים, העדפות והיסטוריית שירות. אפשר להתחיל בהזמנת השירות הראשון."
+              action={<Button size="sm" icon="plus" onClick={() => openForm('task', { client: client.name })}>הזמנת שירות</Button>}
+            />
+          </div>
+        )}
       </main>
     </>
   )

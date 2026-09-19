@@ -1,17 +1,22 @@
-import { useState } from 'react'
 import { Badge, Button, Callout, Card, CardHead, StatCard, money } from '../../components/ui'
-import { boardTasks, regions } from '../../data/mock'
+import { TODAY, regions } from '../../data/mock'
+import { useStore } from '../../store/AppStore'
 
 export default function Board() {
-  const [region, setRegion] = useState<string | null>('רמת השרון')
+  const { tasks, regionFilter: region, setRegionFilter: setRegion } = useStore()
+  const today = tasks.filter((t) => t.date === TODAY).sort((a, b) => a.time.localeCompare(b.time))
   // Region chips are single-select; toggling the active chip shows all regions.
-  const rows = region ? boardTasks.filter((t) => t.region === region) : boardTasks
+  const rows = region ? today.filter((t) => t.region === region) : today
+  const unassigned = tasks.filter((t) => !t.who)
+  const unassignedToday = today.filter((t) => !t.who)
+  const unassignedNote = unassignedToday.length === 0 ? 'אף אחת מהן לא להיום'
+    : unassignedToday.length === 1 ? `אחת מהן להיום ${unassignedToday[0].time}` : `${unassignedToday.length} מהן להיום`
 
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="משימות היום" figure="9" note="4 הושלמו · 5 בהמשך היום" />
-        <StatCard label="ממתין לשיבוץ" figure="3" note="אחת מהן להיום 16:00" color="var(--danger)" />
+        <StatCard label="משימות היום" figure={4 + today.length} note={`4 הושלמו · ${today.length} בהמשך היום`} />
+        <StatCard label="ממתין לשיבוץ" figure={2 + unassigned.length} note={unassignedNote} color="var(--danger)" />
         <StatCard label="חריגות פתוחות" figure="2" note="דורשות תחקיר ומענה למשפחה" color="var(--warning)" />
         <StatCard label="הכנסות ספטמבר" figure={money(112400)} note="דמי חברות + העמסות" />
       </div>
@@ -35,7 +40,7 @@ export default function Board() {
             </thead>
             <tbody>
               {rows.map((t) => (
-                <tr key={t.time + t.client}>
+                <tr key={t.id}>
                   <td className="num" style={{ fontWeight: 500 }}>{t.time}</td>
                   <td style={{ fontWeight: 600 }}>{t.client}</td>
                   <td>{t.task}</td>

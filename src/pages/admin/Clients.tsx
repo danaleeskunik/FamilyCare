@@ -1,25 +1,27 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge, Button, Callout, Card, CardHead, Ltr, StatCard } from '../../components/ui'
-import { clients } from '../../data/mock'
+import { useStore } from '../../store/AppStore'
 
 export default function Clients() {
+  const { clients, openForm } = useStore()
+  const trial = clients.filter((c) => c.plan[1] === 'תקופת היכרות').length
   const [q, setQ] = useState('')
   const rows = clients.filter((c) => [c.name, c.area, c.plan[1]].some((s) => s.includes(q.trim())))
 
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="לקוחות פעילים" figure="14" note="יעד שנתיים: 100 משפחות" />
-        <StatCard label="בתקופת היכרות" figure="3" note="חודש ראשון ללא התחייבות" />
-        <StatCard label="ניצול מכסה — ממוצע כל 14 הלקוחות" figure="71%" note="מהמפגשים שבמסלול נוצלו החודש" />
+        <StatCard label="לקוחות פעילים" figure={9 + clients.length} note="יעד שנתיים: 100 משפחות" />
+        <StatCard label="בתקופת היכרות" figure={2 + trial} note="חודש ראשון ללא התחייבות" />
+        <StatCard label={`ניצול מכסה — ממוצע כל ${9 + clients.length} הלקוחות`} figure="71%" note="מהמפגשים שבמסלול נוצלו החודש" />
         <StatCard label="פגישות היכרות השבוע" figure="2" note="ביקור ראשון חינם" />
       </div>
 
       <Card flush>
         <CardHead title="כל הלקוחות">
           <input className="search" placeholder="חיפוש לפי שם, אזור או מסלול" aria-label="חיפוש לקוחות" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Button size="sm" icon="plus">לקוח/ה חדש/ה</Button>
+          <Button size="sm" icon="plus" onClick={() => openForm('client')}>לקוח/ה חדש/ה</Button>
         </CardHead>
         <div className="table-wrap">
           <table>

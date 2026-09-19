@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Button } from '../components/ui'
+import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Button, Icon } from '../components/ui'
+import { useStore } from '../store/AppStore'
 
 const TABS = [
   { to: '/admin', label: 'לוח היום', end: true },
@@ -33,15 +34,16 @@ export function Header({ title, sub, actions, tabs, lead }: {
 }
 
 export default function AdminLayout() {
+  const { openForm, clients } = useStore()
   return (
     <>
       <Header
         title="שלום אלון — מוקד התפעול"
-        sub="שלישי 15.9 · 14 לקוחות פעילים · 6 מלווים במשמרת"
+        sub={`שלישי 15.9 · ${9 + clients.length} לקוחות פעילים · 6 מלווים במשמרת`}
         actions={
           <>
-            <Button variant="on-navy" size="sm" icon="calendar">לוח שבועי</Button>
-            <Button size="sm" icon="plus">משימה חדשה</Button>
+            <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>
+            <Button size="sm" icon="plus" onClick={() => openForm('task')}>משימה חדשה</Button>
           </>
         }
         tabs={
