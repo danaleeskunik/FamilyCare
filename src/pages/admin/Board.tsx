@@ -1,9 +1,9 @@
 import { Badge, Button, Callout, Card, CardHead, StatCard, money } from '../../components/ui'
-import { TODAY, regions } from '../../data/mock'
+import { TODAY } from '../../data/model'
 import { useStore } from '../../store/AppStore'
 
 export default function Board() {
-  const { tasks, regionFilter: region, setRegionFilter: setRegion } = useStore()
+  const { tasks, regions, regionFilter: region, setRegionFilter: setRegion } = useStore()
   const today = tasks.filter((t) => t.date === TODAY).sort((a, b) => a.time.localeCompare(b.time))
   // Region chips are single-select; toggling the active chip shows all regions.
   const rows = region ? today.filter((t) => t.region === region) : today
@@ -27,7 +27,7 @@ export default function Board() {
 
       <Card flush>
         <CardHead title="משימות היום">
-          {regions.map((r) => (
+          {regions.map((r) => r.name).map((r) => (
             <button key={r} className={`chip ${region === r ? 'active' : ''}`} onClick={() => setRegion(region === r ? null : r)} aria-pressed={region === r}>
               {r}
             </button>

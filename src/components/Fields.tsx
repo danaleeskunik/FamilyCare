@@ -38,3 +38,26 @@ export function SelectField({ label, error, value, onChange, options, placeholde
     </Wrap>
   )
 }
+
+export function CheckGroup({ label, error, options, value, onChange }: {
+  label: string; error?: string; options: { value: number; label: string }[]; value: number[]; onChange: (v: number[]) => void
+}) {
+  const id = useId()
+  return (
+    <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }} aria-describedby={error ? `${id}-d` : undefined}>
+      <legend style={{ font: '700 13px var(--font-ui)', marginBottom: 5, padding: 0 }}>{label}</legend>
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        {options.map((o) => {
+          const on = value.includes(o.value)
+          return (
+            <label key={o.value} className={`chip ${on ? 'active' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 14px' }}>
+              <input type="checkbox" checked={on} onChange={() => onChange(on ? value.filter((x) => x !== o.value) : [...value, o.value])} style={{ position: 'absolute', opacity: 0 }} />
+              {o.label}
+            </label>
+          )
+        })}
+      </div>
+      {error && <div className="err" id={`${id}-d`} role="alert">{error}</div>}
+    </fieldset>
+  )
+}

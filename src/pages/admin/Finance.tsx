@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Badge, Button, Callout, Card, CardHead, Progress, StatCard, money } from '../../components/ui'
 import Modal from '../../components/Modal'
-import { invoices } from '../../data/mock'
+import { useStore } from '../../store/AppStore'
+import type { InvoiceRow } from '../../data/model'
 
 type Detail = 'fees' | 'hours' | 'expenses' | 'profit'
 
@@ -10,7 +11,7 @@ const Row = ({ label, value, faint, total }: { label: string; value: string; fai
 )
 const Note = ({ children }: { children: string }) => <p className="card-meta" style={{ marginTop: 12, lineHeight: 1.5 }}>{children}</p>
 
-function DetailBody({ kind }: { kind: Detail }) {
+function DetailBody({ kind, invoices }: { kind: Detail; invoices: InvoiceRow[] }) {
   if (kind === 'fees') {
     const plans = [['בסיסי', 5, 1600], ['פלטינום', 7, 3500], ['טופ פלטינום', 2, 10000]] as const
     return (
@@ -30,7 +31,7 @@ function DetailBody({ kind }: { kind: Detail }) {
         <div className="card-label" style={{ margin: '16px 0 4px' }}>לפי מזמין/ת שירות — החשבוניות שבטבלה</div>
         <div className="table-wrap"><table>
           <thead><tr><th>מזמין/ת השירות</th><th>שעות ליווי</th><th>ספקים + ניהול</th></tr></thead>
-          <tbody>{invoices.map((i) => <tr key={i.orderer}><td style={{ fontWeight: 600 }}>{i.orderer}</td><td className="num nowrap">{money(i.hours)}</td><td className="num nowrap">{money(i.vendors)}</td></tr>)}</tbody>
+          <tbody>{invoices.map((i) => <tr key={i.id}><td style={{ fontWeight: 600 }}>{i.orderer}</td><td className="num nowrap">{money(i.hours)}</td><td className="num nowrap">{money(i.vendors)}</td></tr>)}</tbody>
         </table></div>
         <Note>הפירוט לפי מזמינים מכסה רק את החשבוניות בטבלה. נתוני דמו.</Note>
       </>
@@ -63,6 +64,7 @@ const TITLES: Record<Detail, string> = {
 }
 
 export default function Finance() {
+  const { invoices } = useStore()
   const [detail, setDetail] = useState<Detail | null>(null)
   return (
     <>
@@ -83,7 +85,7 @@ export default function Finance() {
               </thead>
               <tbody>
                 {invoices.map((i) => (
-                  <tr key={i.orderer}>
+                  <tr key={i.id}>
                     <td style={{ fontWeight: 600 }}>{i.orderer}</td>
                     <td className="num nowrap">{money(i.fee)}</td>
                     <td className="num nowrap">{money(i.hours)}</td>
@@ -92,6 +94,7 @@ export default function Finance() {
                     <td><Badge tone={i.status[0]}>{i.status[1]}</Badge></td>
                   </tr>
                 ))}
+                {invoices.length === 0 && <tr><td colSpan={6} className="muted">אין עדיין חשבוניות לחודש הזה. הן ייווצרו בסגירת החודש.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -123,7 +126,7 @@ export default function Finance() {
       <Callout tone="warning" title="גבייה">
         הכרטיס של גלית אדלר נדחה בסליקת ה-1.9. נשלחה בקשה לעדכון אמצעי תשלום; {money(3800)} פתוחים.
       </Callout>
-    {detail && <Modal title={TITLES[detail]} onClose={() => setDetail(null)}><DetailBody kind={detail} /></Modal>}
+    {detail && <Modal title={TITLES[detail]} onClose={() => setDetail(null)}><DetailBody kind={detail} invoices={invoices} /></Modal>}
     </>
   )
 }

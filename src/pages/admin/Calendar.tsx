@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Button, Card, Icon } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 import { DAY_NAMES, addDays, formatDM, monthLabel, parseISO, startOfWeek, toISO } from '../../lib/dates'
-import { TODAY, type Task } from '../../data/mock'
+import { TODAY, type Task } from '../../data/model'
 
 type View = 'week' | 'month'
 
