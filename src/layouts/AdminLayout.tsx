@@ -2,12 +2,16 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { Button, Callout, Icon } from '../components/ui'
 import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
+import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
+import { TODAY } from '../data/model'
 
 const TABS = [
   { to: '/admin', label: 'לוח היום', end: true },
   { to: '/admin/vendors', label: 'ספקים ובעלי מקצוע' },
   { to: '/admin/clients', label: 'לקוחות' },
   { to: '/admin/staff', label: 'מלווים' },
+  { to: '/admin/schedule', label: 'לו"ז מלווים' },
+  { to: '/admin/planning', label: 'לוח ניהול' },
   { to: '/admin/finance', label: 'כספים' },
 ]
 
@@ -41,7 +45,7 @@ export default function AdminLayout() {
     <>
       <Header
         title={`${fullName ? `שלום ${fullName}` : 'שלום'} — מוקד התפעול`}
-        sub={`שלישי 15.9 · ${9 + clients.length} לקוחות פעילים · 6 מלווים במשמרת`}
+        sub={`${DAY_NAMES[parseISO(TODAY).getDay()]} ${formatDM(parseISO(TODAY))} · ${9 + clients.length} לקוחות פעילים · 6 מלווים במשמרת`}
         actions={
           <>
             <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>

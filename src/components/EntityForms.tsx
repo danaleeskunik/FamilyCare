@@ -3,8 +3,8 @@ import Modal from './Modal'
 import { Button } from './ui'
 import { CheckGroup, SelectField, TextAreaField, TextField } from './Fields'
 import { useStore } from '../store/AppStore'
-import { DEPENDENCY_LEVELS, JOB_TITLES, TASK_STATUSES, TODAY } from '../data/model'
-import { formatDM, parseISO } from '../lib/dates'
+import { DEPENDENCY_LEVELS, ITEM_KINDS, ITEM_STATUSES, JOB_TITLES, TASK_STATUSES, TODAY } from '../data/model'
+import { DAY_NAMES, addDays, formatDM, parseISO, toISO } from '../lib/dates'
 import { fetchClientForEdit, fetchStaffForEdit, fetchVendorForEdit, shortName } from '../lib/queries'
 
 type Errors = Record<string, string>
@@ -69,6 +69,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
     date: existing?.date ?? preset.date ?? TODAY, time: existing?.time ?? '', clientId: existing?.clientId ?? preset.clientId ?? '',
     task: existing?.task ?? '', staffId: existing?.staffId ?? '', vendorId: existing?.vendorId ?? '',
     regionId: existing?.regionId ? String(existing.regionId) : '', status: existing?.statusKey ?? 'planned',
+    checkedIn: existing?.checkedIn ?? '', checkedOut: existing?.checkedOut ?? '',
   })
   const [err, setErr] = useState<Errors>({})
   const set = (k: keyof typeof v) => (val: string) => setV((s) => ({ ...s, [k]: val }))
@@ -89,9 +90,11 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
     if (!v.clientId) e.clientId = 'בחרי לקוח/ה'
     if (!v.task.trim()) e.task = REQUIRED
     if (!v.regionId) e.regionId = 'בחרי אזור'
+    if (v.checkedOut && !v.checkedIn) e.checkedIn = 'הזיני גם שעת כניסה'
+    if (v.checkedIn && v.checkedOut && v.checkedOut <= v.checkedIn) e.checkedOut = 'שעת היציאה חייבת להיות אחרי הכניסה'
     setErr(e)
     if (Object.keys(e).length) return
-    const ok = await saveTask(editId, { clientId: v.clientId, date: v.date, time: v.time, title: v.task.trim(), regionId: Number(v.regionId), staffId: v.staffId, vendorId: v.vendorId, status: v.status })
+    const ok = await saveTask(editId, { clientId: v.clientId, date: v.date, time: v.time, title: v.task.trim(), regionId: Number(v.regionId), staffId: v.staffId, vendorId: v.vendorId, status: v.status, checkedIn: v.checkedIn, checkedOut: v.checkedOut })
     if (!ok) return
     const region = regions.find((r) => r.id === Number(v.regionId))
     if (v.date === TODAY && region) setRegionFilter(region.name)
@@ -109,6 +112,8 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
       <SelectField label="ספק" value={v.vendorId} onChange={set('vendorId')} options={vendorOptions} placeholder="ללא ספק" />
       <SelectField label="אזור" value={v.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} placeholder="בחרי אזור" error={err.regionId} />
       {editId && <SelectField label="סטטוס" value={v.status} onChange={set('status')} options={TASK_STATUSES} />}
+      {editId && <TextField label="שעת כניסה בפועל" type="time" value={v.checkedIn} onChange={(e) => set('checkedIn')(e.target.value)} error={err.checkedIn} hint="לתיקון ידני אם המלווה/ת לא דיווח/ה" />}
+      {editId && <TextField label="שעת יציאה בפועל" type="time" value={v.checkedOut} onChange={(e) => set('checkedOut')(e.target.value)} error={err.checkedOut} />}
       {!v.staffId && !v.vendorId && <div className="full notice">בלי מלווה/ת או ספק המשימה תופיע כ"ללא שיבוץ" ותחכה לשיבוץ.</div>}
     </FormShell>
   )
@@ -247,9 +252,12 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
 function StaffForm({ editId, initial }: { editId: string | null; initial?: { staff: Record<string, unknown>; regionIds: number[] } }) {
   const { staff, regions, saveStaff, closeForm, notify } = useStore()
   const s0 = initial?.staff ?? {}
+  const prof = s0.profiles as { email: string | null } | { email: string | null }[] | null | undefined
+  const currentEmail = (Array.isArray(prof) ? prof[0]?.email : prof?.email) ?? null
   const [v, setV] = useState({
     name: (s0.full_name as string) ?? '', jobTitle: (s0.job_title as string) ?? JOB_TITLES[0].value, gender: (s0.gender as string) ?? 'f',
     phone: (s0.phone as string) ?? '', languages: ((s0.languages as string[]) ?? []).join(', '), regionIds: initial?.regionIds ?? ([] as number[]),
+    email: currentEmail ?? '',
   })
   const [err, setErr] = useState<Errors>({})
   const set = <K extends keyof typeof v>(k: K) => (val: (typeof v)[K]) => setV((s) => ({ ...s, [k]: val }))
@@ -261,9 +269,10 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
     else if (staff.some((x) => x.name === name && x.id !== editId)) e.name = 'מלווה בשם הזה כבר קיים/ת'
     if (!v.languages.trim()) e.languages = REQUIRED
     if (!v.regionIds.length) e.regionIds = 'בחרי לפחות אזור אחד'
+    if (v.email.trim() && !/^\S+@\S+\.\S+$/.test(v.email.trim())) e.email = 'כתובת אימייל לא תקינה'
     setErr(e)
     if (Object.keys(e).length) return
-    const ok = await saveStaff(editId, { name, jobTitle: v.jobTitle, gender: v.gender, phone: v.phone, languages: v.languages, regionIds: v.regionIds })
+    const ok = await saveStaff(editId, { name, jobTitle: v.jobTitle, gender: v.gender, phone: v.phone, languages: v.languages, regionIds: v.regionIds, email: v.email, currentEmail })
     if (!ok) return
     notify(editId ? 'פרטי המלווה עודכנו' : `נוסף/ה מלווה: ${shortName(name)}`)
     closeForm()
@@ -277,6 +286,117 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
       <TextField label="טלפון" type="tel" dir="ltr" value={v.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="052-000-0000" />
       <TextField label="שפות" value={v.languages} onChange={(e) => set('languages')(e.target.value)} error={err.languages} placeholder="עברית, אנגלית" hint="מופרדות בפסיק" />
       <div className="full"><CheckGroup label="אזורי פעילות" options={regions.map((r) => ({ value: r.id, label: r.name }))} value={v.regionIds} onChange={set('regionIds')} error={err.regionIds} /></div>
+      <div className="full"><TextField label="אימייל להתחברות לאפליקציה" type="email" dir="ltr" value={v.email} onChange={(e) => set('email')(e.target.value)} error={err.email}
+        hint={currentEmail ? 'החשבון מחובר. מחיקת האימייל תנתק את הגישה.' : 'קודם יוצרים משתמש ב-Supabase ← Authentication ← Add user, ואז מזינים כאן את אותו אימייל.'} /></div>
+    </FormShell>
+  )
+}
+
+
+// ---------------------------------------------------------------- Recurring visit slot
+const minutes = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+
+function SlotForm({ editId, preset }: { editId: string | null; preset: Record<string, string> }) {
+  const { slots, clients, staff, tasks, saveSlot, closeForm, notify } = useStore()
+  const existing = editId ? slots.find((x) => x.id === editId) : undefined
+  const initialClient = existing?.clientId ?? preset.clientId ?? ''
+  const [v, setV] = useState({
+    clientId: initialClient, weekday: String(existing?.weekday ?? 0), start: existing?.start ?? '', end: existing?.end ?? '', purpose: existing?.purpose ?? '',
+    staffId: existing ? (existing.staffId ?? '') : (clients.find((c) => c.id === initialClient)?.companionId ?? ''),
+    validFrom: existing?.validFrom ?? TODAY, validTo: existing?.validTo ?? '', active: existing?.active ?? true,
+  })
+  const [err, setErr] = useState<Errors>({})
+  const set = <K extends keyof typeof v>(k: K) => (val: (typeof v)[K]) => setV((s) => ({ ...s, [k]: val }))
+
+  // Heads-up (not a block): the chosen companion already has a visit at that time on that weekday in the coming weeks.
+  const clash = (() => {
+    if (!v.staffId || !v.start) return null
+    const from = minutes(v.start), to = v.end ? minutes(v.end) : from + 120
+    const horizon = toISO(addDays(parseISO(TODAY), 35))
+    return tasks.find((t) => t.staffId === v.staffId && t.slotId !== editId && t.date >= TODAY && t.date <= horizon
+      && parseISO(t.date).getDay() === Number(v.weekday) && t.statusKey !== 'cancelled'
+      && minutes(t.time) < to && (t.end ? minutes(t.end) : minutes(t.time) + 120) > from) ?? null
+  })()
+
+  const submit = async () => {
+    const e: Errors = {}
+    if (!v.clientId) e.clientId = 'בחרי לקוח/ה'
+    if (!v.start) e.start = REQUIRED
+    if (v.end && v.start && v.end <= v.start) e.end = 'שעת הסיום חייבת להיות אחרי ההתחלה'
+    if (!v.purpose.trim()) e.purpose = 'כתבי את מטרת הביקור'
+    if (!v.validFrom) e.validFrom = REQUIRED
+    if (v.validTo && v.validFrom && v.validTo < v.validFrom) e.validTo = 'התאריך חייב להיות אחרי ההתחלה'
+    setErr(e)
+    if (Object.keys(e).length) return
+    const ok = await saveSlot(editId, { clientId: v.clientId, weekday: Number(v.weekday), start: v.start, end: v.end, purpose: v.purpose, staffId: v.staffId, validFrom: v.validFrom, validTo: v.validTo, active: v.active })
+    if (!ok) return
+    notify(editId ? 'הביקור הקבוע עודכן, והביקורים העתידיים התעדכנו' : 'נוסף ביקור קבוע. הביקורים נוצרו בלו"ז לחודש הקרוב')
+    closeForm()
+  }
+
+  return (
+    <FormShell title={editId ? 'עריכת ביקור קבוע' : 'ביקור קבוע חדש'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספה'}>
+      <div className="full"><SelectField label="לקוח/ה" value={v.clientId} onChange={(id) => setV((s) => ({ ...s, clientId: id, staffId: s.staffId || (clients.find((c) => c.id === id)?.companionId ?? '') }))} options={clients.map((c) => ({ value: c.id, label: c.name }))} placeholder="בחרי לקוח/ה" error={err.clientId} /></div>
+      <SelectField label="יום בשבוע" value={v.weekday} onChange={set('weekday')} options={DAY_NAMES.map((n, i) => ({ value: String(i), label: n }))} />
+      <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={staff.map((s) => ({ value: s.id, label: s.name }))} placeholder="עדיין ללא" />
+      <TextField label="שעת התחלה" type="time" value={v.start} onChange={(e) => set('start')(e.target.value)} error={err.start} />
+      <TextField label="שעת סיום" type="time" value={v.end} onChange={(e) => set('end')(e.target.value)} error={err.end} hint="בלי שעת סיום לא ניתן לחשב תוספת זמן" />
+      <div className="full"><TextField label="מטרת הביקור" value={v.purpose} onChange={(e) => set('purpose')(e.target.value)} error={err.purpose} placeholder="למשל: ליווי לרופא, קניות, הליכה" /></div>
+      <TextField label="בתוקף מתאריך" type="date" value={v.validFrom} onChange={(e) => set('validFrom')(e.target.value)} error={err.validFrom} />
+      <TextField label="עד תאריך (אופציונלי)" type="date" value={v.validTo} onChange={(e) => set('validTo')(e.target.value)} error={err.validTo} />
+      {editId && (
+        <label className="full row" style={{ gap: 10, font: '600 14px var(--font-ui)', minHeight: 44 }}>
+          <input type="checkbox" checked={v.active} onChange={(e) => set('active')(e.target.checked)} style={{ width: 20, height: 20 }} />
+          פעיל (כיבוי מסיר את הביקורים העתידיים שטרם התקיימו)
+        </label>
+      )}
+      {clash && <div className="full notice">למלווה/ת כבר יש ביקור באותו יום ובשעות חופפות: {clash.client}, {formatDM(parseISO(clash.date))} {clash.time}. אפשר לשמור, אבל כדאי לבדוק.</div>}
+    </FormShell>
+  )
+}
+
+// ---------------------------------------------------------------- Office planning item
+function ItemForm({ editId, preset }: { editId: string | null; preset: Record<string, string> }) {
+  const { items, clients, vendors, admins, saveItem, closeForm, notify } = useStore()
+  const existing = editId ? items.find((x) => x.id === editId) : undefined
+  const [v, setV] = useState({
+    clientId: existing?.clientId ?? preset.clientId ?? '', kind: existing?.kind ?? preset.kind ?? 'transport', title: existing?.title ?? '',
+    eventDate: existing?.eventDate ?? preset.date ?? '', dueDate: existing?.dueDate ?? '', assigneeId: existing?.assigneeId ?? '',
+    vendorId: existing?.vendorId ?? '', status: existing?.status ?? 'new', notes: existing?.notes ?? '',
+  })
+  const [dueTouched, setDueTouched] = useState(!!existing?.dueDate)
+  const [err, setErr] = useState<Errors>({})
+  const set = <K extends keyof typeof v>(k: K) => (val: (typeof v)[K]) => setV((s) => ({ ...s, [k]: val }))
+  const vendorOptions = vendors.filter((x) => !x.licBad || x.id === existing?.vendorId).map((x) => ({ value: x.id, label: x.licBad ? `${x.name} (מוקפא)` : x.name }))
+
+  // Default deadline: 3 days before the event (the plan promises 3 days' notice), until the user picks one.
+  const pickEventDate = (d: string) => setV((s) => ({ ...s, eventDate: d, dueDate: dueTouched || !d ? s.dueDate : toISO(addDays(parseISO(d), -3)) }))
+
+  const submit = async () => {
+    const e: Errors = {}
+    if (!v.clientId) e.clientId = 'בחרי לקוח/ה'
+    if (!v.title.trim()) e.title = REQUIRED
+    if (!v.eventDate) e.eventDate = REQUIRED
+    if (v.dueDate && v.eventDate && v.dueDate > v.eventDate) e.dueDate = 'המועד לסיום התיאום חייב להיות לפני האירוע'
+    setErr(e)
+    if (Object.keys(e).length) return
+    const ok = await saveItem(editId, { clientId: v.clientId, kind: v.kind, title: v.title, eventDate: v.eventDate, dueDate: v.dueDate, assigneeId: v.assigneeId, vendorId: v.vendorId, status: v.status, notes: v.notes })
+    if (!ok) return
+    notify(editId ? 'הפריט עודכן' : 'הפריט נוסף ללוח הניהול')
+    closeForm()
+  }
+
+  return (
+    <FormShell title={editId ? 'עריכת פריט תיאום' : 'פריט תיאום חדש'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספה'}>
+      <div className="full"><SelectField label="לקוח/ה" value={v.clientId} onChange={set('clientId')} options={clients.map((c) => ({ value: c.id, label: c.name }))} placeholder="בחרי לקוח/ה" error={err.clientId} /></div>
+      <SelectField label="סוג" value={v.kind} onChange={set('kind')} options={ITEM_KINDS} />
+      <SelectField label="סטטוס" value={v.status} onChange={set('status')} options={ITEM_STATUSES.map((s) => ({ value: s.value, label: s.label }))} />
+      <div className="full"><TextField label="מה צריך לתאם" value={v.title} onChange={(e) => set('title')(e.target.value)} error={err.title} placeholder="למשל: מונית VIP להצגה + המתנה" /></div>
+      <TextField label="תאריך האירוע" type="date" value={v.eventDate} onChange={(e) => pickEventDate(e.target.value)} error={err.eventDate} />
+      <TextField label="לסיים לתאם עד" type="date" value={v.dueDate} onChange={(e) => { setDueTouched(true); set('dueDate')(e.target.value) }} error={err.dueDate} hint="ברירת מחדל: שלושה ימים לפני האירוע" />
+      <SelectField label="בטיפול של" value={v.assigneeId} onChange={set('assigneeId')} options={admins.map((a) => ({ value: a.id, label: a.name }))} placeholder="עוד לא הוקצה" />
+      <SelectField label="ספק" value={v.vendorId} onChange={set('vendorId')} options={vendorOptions} placeholder="ללא ספק" />
+      <div className="full"><TextAreaField label="הערות" value={v.notes} onChange={set('notes')} /></div>
     </FormShell>
   )
 }
@@ -290,6 +410,8 @@ export default function FormHost() {
   // key resets local state each time a form is opened
   switch (form.kind) {
     case 'task': return <TaskForm key={`task-${id}`} editId={id} preset={preset} />
+    case 'slot': return <SlotForm key={`slot-${id}`} editId={id} preset={preset} />
+    case 'item': return <ItemForm key={`item-${id}`} editId={id} preset={preset} />
     case 'client':
       return id
         ? <EditLoader key={`c-${id}`} title="עריכת פרטי לקוח/ה" load={() => fetchClientForEdit(id)}>
@@ -307,7 +429,7 @@ export default function FormHost() {
   }
 }
 
-const KIND_LABEL = { task: 'המשימה', client: 'הלקוח/ה', vendor: 'הספק', staff: 'המלווה' } as const
+const KIND_LABEL = { task: 'המשימה', client: 'הלקוח/ה', vendor: 'הספק', staff: 'המלווה', slot: 'הביקור הקבוע', item: 'הפריט' } as const
 
 export function DeleteHost() {
   const { pendingDelete, cancelDelete, confirmDelete } = useStore()

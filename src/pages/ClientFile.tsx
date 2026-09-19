@@ -7,7 +7,7 @@ import { TextAreaField, SelectField } from '../components/Fields'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/AppStore'
 import { loadClientDetail, shortName, type ClientDetail } from '../lib/queries'
-import { formatDM, parseISO } from '../lib/dates'
+import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
 import { TODAY } from '../data/model'
 
 const TABS = [
@@ -201,14 +201,14 @@ function Finance({ d }: { d: ClientDetail }) {
   const extras = lines.filter((l) => l.kind !== 'membership').reduce((a, l) => a + Number(l.amount), 0)
   const quota = plan?.monthly_sessions ?? 0
   const pct = quota ? Math.min(100, Math.round((d.sessionsUsed / quota) * 100)) : 0
-  const cap = c.monthly_budget_cap ? Number(c.monthly_budget_cap) : null
+  const cap = d.billing?.monthly_budget_cap != null ? Number(d.billing.monthly_budget_cap) : null
   return (
     <>
       <div className="grid cols-3">
         <Card size="sm">
           <div className="card-label">דמי חברות חודשיים</div>
           <div className="stat-figure">{plan ? money(Number(plan.monthly_price)) : '—'}</div>
-          <div className="card-meta">{c.card_last4 ? <>נגבה ב-1 לחודש · כרטיס מסתיים ב-<Ltr>{c.card_last4}</Ltr></> : 'עוד לא הוגדר אמצעי תשלום'}</div>
+          <div className="card-meta">{d.billing?.card_last4 ? <>נגבה ב-1 לחודש · כרטיס מסתיים ב-<Ltr>{d.billing.card_last4}</Ltr></> : 'עוד לא הוגדר אמצעי תשלום'}</div>
         </Card>
         <Card size="sm">
           <div className="card-label">מפגשים שנוצלו החודש</div>
@@ -248,6 +248,33 @@ function Finance({ d }: { d: ClientDetail }) {
   )
 }
 
+
+function Slots({ clientId }: { clientId: string }) {
+  const { slots, openForm, askDelete } = useStore()
+  const mine = slots.filter((s) => s.clientId === clientId)
+  return (
+    <Card>
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+        <div className="card-title">ביקורים קבועים — מה הלקוח/ה ביקש/ה</div>
+        <Button variant="secondary" size="sm" icon="plus" onClick={() => openForm('slot', { clientId })}>הוספת ביקור קבוע</Button>
+      </div>
+      <p className="card-meta" style={{ marginBottom: 10 }}>יום, שעות ומטרה. המערכת יוצרת מהם ביקורים בלו"ז עד חודש קדימה, והמלווה/ת רואה אותם באפליקציה.</p>
+      {mine.length === 0 ? <Empty text="עוד לא הוגדרו ביקורים קבועים. אפשר להוסיף את הראשון." /> : (
+        <div className="stack" style={{ gap: 8 }}>
+          {mine.map((s) => (
+            <div key={s.id} className="item-box row" style={{ gap: 10, justifyContent: 'space-between', opacity: s.active ? 1 : 0.6 }}>
+              <div>
+                <div style={{ fontWeight: 800 }}>{DAY_NAMES[s.weekday]} <Ltr>{s.start}{s.end ? `–${s.end}` : ''}</Ltr>{!s.active && ' · כבוי'}</div>
+                <div className="card-meta">{s.purpose || 'ביקור'} · {s.staff ? shortName(s.staff) : 'עדיין ללא מלווה/ת'}{s.validTo ? ` · עד ${formatDM(parseISO(s.validTo))}` : ''}</div>
+              </div>
+              <RowActions what={`הביקור הקבוע של ${DAY_NAMES[s.weekday]}`} onEdit={() => openForm('slot', { id: s.id })} onDelete={() => askDelete('slot', s.id)} />
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
 
 function Notes({ d, onChanged }: { d: ClientDetail; onChanged: () => void }) {
   const { notify } = useStore()
@@ -373,6 +400,7 @@ export default function ClientFile() {
         <div className="file-grid">
           <Sidebar d={d} />
           <div className="stack">
+            <Slots clientId={c.id} />
             <Notes d={d} onChanged={refetch} />
             {tab === 'med' && <Medical d={d} />}
             {tab === 'pref' && <Preferences d={d} />}

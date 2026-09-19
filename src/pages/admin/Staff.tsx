@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Badge, Button, Card, CardHead, Ltr, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
@@ -22,7 +23,7 @@ export default function Staff() {
             <tbody>
               {staff.map((s) => (
                 <tr key={s.id}>
-                  <td style={{ fontWeight: 600 }}>{s.name}</td>
+                  <td style={{ fontWeight: 600 }}><Link to={`/admin/staff/${s.id}`} aria-label={`דוח חודשי של ${s.name}`}>{s.name}</Link>{s.email && <div className="card-meta">מחובר/ת לאפליקציה</div>}</td>
                   <td>{s.role}</td>
                   <td>{s.areas}</td>
                   <td>{s.langs}</td>

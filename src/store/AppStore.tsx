@@ -1,26 +1,30 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { Client, InvoiceRow, Plan, Region, Staff, Task, Vendor } from '../data/model'
+import type { AdminUser, Client, InvoiceRow, OvertimeDecision, Plan, PlanItem, PricingSettings, Region, Slot, Staff, Task, Vendor } from '../data/model'
 import { supabase } from '../lib/supabase'
 import { loadAll } from '../lib/queries'
-import { formatDM, parseISO } from '../lib/dates'
+import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
 import { useAuth } from './AuthStore'
 
-export type TaskInput = { clientId: string; date: string; time: string; title: string; regionId: number; staffId: string; vendorId: string; status: string }
+export type TaskInput = { clientId: string; date: string; time: string; title: string; regionId: number; staffId: string; vendorId: string; status: string; checkedIn: string; checkedOut: string }
+export type SlotInput = { clientId: string; weekday: number; start: string; end: string; purpose: string; staffId: string; validFrom: string; validTo: string; active: boolean }
 export type ClientInput = {
   name: string; birthDate: string; regionId: number; planId: string; trialEndsOn: string | null; companionId: string; orderer: string
   phone: string; address: string; buildingCode: string; dependency: string; mobilityNotes: string; cognitiveNotes: string; cap: string; cardLast4: string
 }
 export type VendorInput = { name: string; trade: string; regionIds: number[]; licenseExpiry: string; insuranceExpiry: string; prices: { id?: string; label: string; amount: number }[] }
-export type StaffInput = { name: string; jobTitle: string; gender: string; phone: string; languages: string; regionIds: number[] }
+export type StaffInput = { name: string; jobTitle: string; gender: string; phone: string; languages: string; regionIds: number[]; email: string; currentEmail: string | null }
 
-export type FormKind = 'task' | 'client' | 'vendor' | 'staff'
+export type ItemInput = { clientId: string; kind: string; title: string; eventDate: string; dueDate: string; assigneeId: string; vendorId: string; status: string; notes: string }
+export type FormKind = 'task' | 'client' | 'vendor' | 'staff' | 'slot' | 'item'
 /** preset.id present = edit that record; absent = create. */
 export type FormState = { kind: FormKind; preset?: Record<string, string> } | null
 export type PendingDelete = { kind: FormKind; id: string; name: string; warning: string } | null
 
 type Store = {
   regions: Region[]; plans: Plan[]
-  tasks: Task[]; clients: Client[]; vendors: Vendor[]; staff: Staff[]; invoices: InvoiceRow[]
+  tasks: Task[]; clients: Client[]; vendors: Vendor[]; staff: Staff[]; invoices: InvoiceRow[]; slots: Slot[]
+  decisions: Record<string, OvertimeDecision>; pricing: PricingSettings
+  items: PlanItem[]; admins: AdminUser[]
   loading: boolean
   loadError: boolean
   reload: () => void
@@ -31,6 +35,17 @@ type Store = {
   saveClient: (id: string | null, c: ClientInput) => Promise<boolean>
   saveVendor: (id: string | null, v: VendorInput) => Promise<boolean>
   saveStaff: (id: string | null, s: StaffInput) => Promise<boolean>
+  saveSlot: (id: string | null, s: SlotInput) => Promise<boolean>
+  /** Assign (or clear) the companion on a recurring slot; future planned visits follow. */
+  assignSlot: (slotId: string, staffId: string | null) => Promise<boolean>
+  /** Create the visits for the next 30 days from the recurring slots (idempotent). */
+  generateNow: () => Promise<void>
+  saveItem: (id: string | null, i: ItemInput) => Promise<boolean>
+  setItemStatus: (id: string, status: string) => Promise<boolean>
+  setItemAssignee: (id: string, assigneeId: string | null) => Promise<boolean>
+  /** End-of-day decision on a visit that ran over: bill the client or waive. Resolves the charge, or null on failure. */
+  decideOvertime: (taskId: string, bill: boolean) => Promise<number | null>
+  revertOvertime: (taskId: string) => Promise<boolean>
   pendingDelete: PendingDelete
   askDelete: (kind: FormKind, id: string) => void
   cancelDelete: () => void
@@ -43,8 +58,11 @@ type Store = {
 }
 
 const Ctx = createContext<Store | null>(null)
-const EMPTY = { regions: [] as Region[], plans: [] as Plan[], tasks: [] as Task[], clients: [] as Client[], vendors: [] as Vendor[], staff: [] as Staff[], invoices: [] as InvoiceRow[] }
-const TABLE: Record<FormKind, string> = { task: 'tasks', client: 'clients', vendor: 'vendors', staff: 'staff_members' }
+const EMPTY = { regions: [] as Region[], plans: [] as Plan[], tasks: [] as Task[], clients: [] as Client[], vendors: [] as Vendor[], staff: [] as Staff[], invoices: [] as InvoiceRow[], slots: [] as Slot[],
+  decisions: {} as Record<string, OvertimeDecision>,
+  pricing: { wage: 70, socialFactor: 1.3, travelPerDay: 30, graceMinutes: 15, firstHour: 300, additionalHour: 250 } as PricingSettings,
+  items: [] as PlanItem[], admins: [] as AdminUser[] }
+const TABLE: Record<FormKind, string> = { task: 'tasks', client: 'clients', vendor: 'vendors', staff: 'staff_members', slot: 'client_visit_slots', item: 'coordination_items' }
 const nul = (s: string) => (s.trim() ? s.trim() : null)
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
@@ -67,7 +85,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     setLoading(true)
     setLoadError(false)
-    loadAll()
+    // Keep the rolling month of visits topped up (idempotent); a failure must not block loading.
+    Promise.resolve(supabase.rpc('generate_tasks_from_slots')).catch(() => null).then(() => loadAll())
       .then((d) => { if (!cancelled) setData(d) })
       .catch((e) => { console.error('load failed', e); if (!cancelled) setLoadError(true) })
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -113,6 +132,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const row = {
       client_id: t.clientId, scheduled_date: t.date, start_time: t.time, title: t.title, region_id: t.regionId,
       staff_id: t.staffId || null, vendor_id: t.vendorId || null, status: t.status,
+      checked_in_at: t.checkedIn ? new Date(`${t.date}T${t.checkedIn}:00`).toISOString() : null,
+      checked_out_at: t.checkedOut ? new Date(`${t.date}T${t.checkedOut}:00`).toISOString() : null,
     }
     const { error } = id
       ? await supabase.from('tasks').update(row).eq('id', id)
@@ -127,8 +148,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       full_name: c.name, birth_date: c.birthDate, region_id: c.regionId, plan_id: c.planId, trial_ends_on: c.trialEndsOn,
       regular_companion_id: c.companionId || null, phone: nul(c.phone), address: nul(c.address), building_code: nul(c.buildingCode),
       dependency_level: c.dependency || null, mobility_notes: nul(c.mobilityNotes), cognitive_notes: nul(c.cognitiveNotes),
-      monthly_budget_cap: c.cap.trim() ? Number(c.cap) : null, card_last4: nul(c.cardLast4),
     }
+    const billing = { card_last4: nul(c.cardLast4), monthly_budget_cap: c.cap.trim() ? Number(c.cap) : null }
     if (id) {
       const { error } = await supabase.from('clients').update(row).eq('id', id)
       if (error) return fail('update client', error)
@@ -137,6 +158,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ? await supabase.from('family_contacts').update({ full_name: c.orderer }).eq('id', cur.data.id)
         : await supabase.from('family_contacts').insert({ client_id: id, full_name: c.orderer, permission: 'full', is_orderer: true })
       if (r.error) return fail('save orderer', r.error)
+      if (billing.card_last4 || billing.monthly_budget_cap !== null) {
+        const b = await supabase.from('client_billing').upsert({ client_id: id, ...billing })
+        if (b.error) return fail('save billing', b.error)
+      } else {
+        await supabase.from('client_billing').delete().eq('client_id', id) // cleared in the form; ignore if the table does not exist yet
+      }
     } else {
       const { data: created, error } = await supabase.from('clients').insert({ ...row, member_since: new Date().toISOString().slice(0, 10) }).select('id').single()
       if (error) return fail('create client', error)
@@ -144,6 +171,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       if (e2) {
         await supabase.from('clients').delete().eq('id', created.id) // no half-created client without an orderer
         return fail('create orderer', e2)
+      }
+      if (billing.card_last4 || billing.monthly_budget_cap !== null) {
+        const b = await supabase.from('client_billing').insert({ client_id: created.id, ...billing })
+        if (b.error) {
+          await supabase.from('clients').delete().eq('id', created.id)
+          return fail('create billing', b.error)
+        }
       }
     }
     await refresh()
@@ -206,9 +240,102 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       if (!id) await supabase.from('staff_members').delete().eq('id', sid!)
       return fail('staff regions', linkErr)
     }
+    // Sign-in account: link / unlink only when the email changed. The staff record is already saved, so a
+    // failure here is reported but does not undo it.
+    const email = s.email.trim().toLowerCase()
+    if (email !== (s.currentEmail ?? '').toLowerCase()) {
+      const { error } = email
+        ? await supabase.rpc('link_staff_account', { p_staff: sid, p_email: email })
+        : await supabase.rpc('unlink_staff_account', { p_staff: sid })
+      if (error) {
+        console.error('link account failed', error)
+        notify(error.message.includes('No user') ? 'המלווה/ת נשמר/ה, אבל לא נמצא משתמש עם האימייל הזה. יוצרים אותו קודם ב-Supabase ← Authentication ← Add user.'
+          : error.message.includes('already linked') ? 'המלווה/ת נשמר/ה, אבל החשבון הזה כבר מחובר למלווה אחר.'
+          : error.message.includes('admin') ? 'המלווה/ת נשמר/ה, אבל זה חשבון מנהל ואי אפשר לחבר אותו למלווה.'
+          : 'המלווה/ת נשמר/ה, אבל חיבור החשבון נכשל. נסי שוב מעריכת המלווה.')
+      }
+    }
     await refresh()
     return true
-  }, [fail, refresh, syncLinks])
+  }, [fail, refresh, syncLinks, notify])
+
+  const generateNow = useCallback(async () => {
+    const { data: n, error } = await supabase.rpc('generate_tasks_from_slots')
+    if (error) { console.error('generate failed', error); notify('לא הצלחנו לעדכן את הלו"ז. נסי שוב.'); return }
+    await refresh()
+    notify(n > 0 ? `נוצרו ${n} ביקורים חדשים לחודש הקרוב` : 'הלו"ז מעודכן, אין ביקורים חדשים ליצור')
+  }, [notify, refresh])
+
+  const saveSlot = useCallback(async (id: string | null, sl: SlotInput) => {
+    const row = {
+      client_id: sl.clientId, weekday: sl.weekday, start_time: sl.start, end_time: sl.end || null, purpose: sl.purpose.trim(),
+      staff_id: sl.staffId || null, valid_from: sl.validFrom, valid_to: sl.validTo || null, is_active: sl.active,
+    }
+    const { error } = id ? await supabase.from('client_visit_slots').update(row).eq('id', id) : await supabase.from('client_visit_slots').insert(row)
+    if (error) return fail('save slot', error)
+    const g = await supabase.rpc('generate_tasks_from_slots')
+    if (g.error) console.error('generate after slot save failed', g.error)
+    await refresh()
+    return true
+  }, [fail, refresh])
+
+  const saveItem = useCallback(async (id: string | null, i: ItemInput) => {
+    const row = {
+      client_id: i.clientId, kind: i.kind, title: i.title.trim(), event_date: i.eventDate, due_date: i.dueDate || null,
+      assignee_id: i.assigneeId || null, vendor_id: i.vendorId || null, status: i.status, notes: nul(i.notes),
+      completed_at: i.status === 'done' ? new Date().toISOString() : null,
+    }
+    const { error } = id ? await supabase.from('coordination_items').update(row).eq('id', id)
+      : await supabase.from('coordination_items').insert({ ...row, created_by: session?.user.id ?? null })
+    if (error) return fail('save item', error)
+    await refresh()
+    return true
+  }, [fail, refresh, session])
+
+  const setItemStatus = useCallback(async (id: string, status: string) => {
+    const { error } = await supabase.from('coordination_items').update({ status, completed_at: status === 'done' ? new Date().toISOString() : null }).eq('id', id)
+    if (error) return fail('item status', error)
+    await refresh()
+    return true
+  }, [fail, refresh])
+
+  const setItemAssignee = useCallback(async (id: string, assigneeId: string | null) => {
+    const { error } = await supabase.from('coordination_items').update({ assignee_id: assigneeId }).eq('id', id)
+    if (error) return fail('item assignee', error)
+    await refresh()
+    return true
+  }, [fail, refresh])
+
+  const decideOvertime = useCallback(async (taskId: string, bill: boolean) => {
+    const { data: charge, error } = await supabase.rpc('decide_visit_overtime', { p_task: taskId, p_bill: bill })
+    if (error) {
+      console.error('overtime decision failed', error)
+      notify(error.message.includes('already paid') ? 'החשבונית של החודש כבר שולמה, אי אפשר להוסיף לה חיוב.'
+        : error.message.includes('Already decided') ? 'כבר התקבלה החלטה על הביקור הזה.'
+        : 'לא הצלחנו לשמור את ההחלטה. נסי שוב.')
+      return null
+    }
+    await refresh()
+    return Number(charge)
+  }, [notify, refresh])
+
+  const revertOvertime = useCallback(async (taskId: string) => {
+    const { error } = await supabase.rpc('revert_visit_overtime', { p_task: taskId })
+    if (error) {
+      console.error('overtime revert failed', error)
+      notify(error.message.includes('already paid') ? 'החשבונית כבר שולמה, אי אפשר לבטל את החיוב.' : 'לא הצלחנו לבטל. נסי שוב.')
+      return false
+    }
+    await refresh()
+    return true
+  }, [notify, refresh])
+
+  const assignSlot = useCallback(async (slotId: string, staffId: string | null) => {
+    const { error } = await supabase.from('client_visit_slots').update({ staff_id: staffId }).eq('id', slotId)
+    if (error) return fail('assign slot', error)
+    await refresh()
+    return true
+  }, [fail, refresh])
 
   const askDelete = useCallback((kind: FormKind, id: string) => {
     if (kind === 'task') {
@@ -220,6 +347,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     } else if (kind === 'vendor') {
       const v = data.vendors.find((x) => x.id === id)
       if (v) setPendingDelete({ kind, id, name: v.name, warning: 'המשימות שמשויכות לספק יישארו, בלי ספק.' })
+    } else if (kind === 'item') {
+      const it = data.items.find((x) => x.id === id)
+      if (it) setPendingDelete({ kind, id, name: `${it.title} — ${it.client}`, warning: 'הפריט יימחק מלוח הניהול.' })
+    } else if (kind === 'slot') {
+      const sl = data.slots.find((x) => x.id === id)
+      if (sl) setPendingDelete({ kind, id, name: `${sl.client} — ${DAY_NAMES[sl.weekday]} ${sl.start}`, warning: 'הביקורים העתידיים שתוכננו ממנו יימחקו. ביקורים שכבר התקיימו נשארים בהיסטוריה.' })
     } else {
       const s = data.staff.find((x) => x.id === id)
       if (s) setPendingDelete({ kind, id, name: s.name, warning: 'המשימות שלו/ה יהפכו ל"ללא שיבוץ" והוא/היא יוסרו כמלווה קבוע/ה.' })
@@ -246,13 +379,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     ...data, loading, loadError,
     reload: () => setNonce((n) => n + 1),
     regionFilter, setRegionFilter,
-    saveTask, saveClient, saveVendor, saveStaff,
+    saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime,
     pendingDelete, askDelete, cancelDelete: () => setPendingDelete(null), confirmDelete,
     form,
     openForm: (kind, preset) => setForm({ kind, preset }),
     closeForm: () => setForm(null),
     toast, notify,
-  }), [data, loading, loadError, regionFilter, saveTask, saveClient, saveVendor, saveStaff, pendingDelete, askDelete, confirmDelete, form, toast, notify])
+  }), [data, loading, loadError, regionFilter, saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime, pendingDelete, askDelete, confirmDelete, form, toast, notify])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

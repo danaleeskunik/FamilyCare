@@ -3,18 +3,19 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Button, Card } from '../components/ui'
 import { TextField } from '../components/Fields'
 import { useAuth } from '../store/AuthStore'
+import { homeFor } from '../components/RequireRole'
 
 export default function Login() {
   const { session, role, signIn } = useAuth()
   const nav = useNavigate()
   const loc = useLocation()
-  const from = (loc.state as { from?: string } | null)?.from ?? '/admin'
+  const from = (loc.state as { from?: string } | null)?.from ?? homeFor(role)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  if (session && role) return <Navigate to={from} replace />
+  if (session && (role === 'admin' || role === 'companion')) return <Navigate to={homeFor(role)} replace />
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -23,7 +24,7 @@ export default function Login() {
     const err = await signIn(email, password)
     setBusy(false)
     if (err) setError(err)
-    else nav(from, { replace: true })
+    else nav(from === '/login' ? '/' : from, { replace: true })
   }
 
   return (

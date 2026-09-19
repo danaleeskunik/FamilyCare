@@ -1,6 +1,7 @@
 import { Badge, Button, Callout, Card, CardHead, RowActions, StatCard, money } from '../../components/ui'
 import { TODAY } from '../../data/model'
 import { useStore } from '../../store/AppStore'
+import DaySummary from './DaySummary'
 
 export default function Board() {
   const { tasks, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete } = useStore()
@@ -56,6 +57,8 @@ export default function Board() {
           </table>
         </div>
       </Card>
+
+      <DaySummary />
 
       <div className="grid cols-3" style={{ alignItems: 'start' }}>
         <Card>
