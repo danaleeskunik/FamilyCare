@@ -17,14 +17,11 @@
 
 ## הקמת Supabase
 
-1. ב-SQL Editor להריץ `supabase/schema.sql`, ואז `supabase/seed.sql` (נתוני דמו, אופציונלי).
-2. ב-Authentication → Users → Add user ליצור משתמש/ת עם אימייל וסיסמה (לסמן Auto Confirm).
-3. להגדיר אותו/ה כמנהל/ת (להחליף את האימייל):
-   ```sql
-   insert into public.profiles (id, role, full_name)
-   select id, 'admin', 'אלון' from auth.users where email = 'you@example.com';
-   ```
-4. `.env` מכיל את ה-URL וה-publishable key (גלויים בכוונה). ההגנה על הנתונים היא RLS + התחברות. לעולם לא לשים כאן service_role או סיסמת DB.
+הוראות מלאות, מפת הישויות והכללים ב-[`supabase/README.md`](supabase/README.md).
+בקצרה: להריץ `supabase/full_setup.sql` ב-SQL Editor, ליצור משתמש/ת ולהגדיר אותו/ה כ-admin.
+`.env` מכיל את ה-URL וה-publishable key (גלויים בכוונה). ההגנה על הנתונים היא RLS + התחברות. לעולם לא לשים כאן service_role או סיסמת DB.
+
+> הסכימה החדשה יחסית (מזהי uuid וקשרים בין הטבלאות). קוד האפליקציה עדיין עובד עם המודל השטוח הישן ועובר התאמה.
 
 ## הרצה
 

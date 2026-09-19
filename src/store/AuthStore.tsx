@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
-export type Role = 'admin' | 'companion' | 'client'
+export type Role = 'admin' | 'companion' | 'family'
 type Auth = {
   session: Session | null
   role: Role | null
