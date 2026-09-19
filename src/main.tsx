@@ -4,13 +4,16 @@ import { BrowserRouter } from 'react-router-dom'
 import './styles/base.css'
 import App from './App'
 import { AppStoreProvider } from './store/AppStore'
+import { AuthProvider } from './store/AuthStore'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <AppStoreProvider>
-        <App />
-      </AppStoreProvider>
+      <AuthProvider>
+        <AppStoreProvider>
+          <App />
+        </AppStoreProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

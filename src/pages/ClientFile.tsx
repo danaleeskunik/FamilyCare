@@ -190,9 +190,11 @@ function Finance() {
 
 export default function ClientFile() {
   const { id } = useParams()
-  const { clients, openForm } = useStore()
+  const { clients, openForm, loading } = useStore()
   const [tab, setTab] = useState<TabKey>('med')
   const client = clients.find((c) => c.id === id)
+
+  if (loading) return <main className="container page-body"><p className="muted" role="status">טוענת נתונים…</p></main>
 
   if (!client) {
     return (

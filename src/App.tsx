@@ -10,13 +10,16 @@ import CompanionApp from './pages/CompanionApp'
 import ClientApp from './pages/ClientApp'
 import Calendar from './pages/admin/Calendar'
 import FormHost, { Toast } from './components/EntityForms'
+import RequireAdmin from './components/RequireAdmin'
+import Login from './pages/Login'
 
 // Role resolution (admin / companion / client) will come from auth; until then each surface has its own route.
 export default function App() {
   return (
     <>
     <Routes>
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/login" element={<Login />} />
+      <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
         <Route index element={<Board />} />
         <Route path="vendors" element={<Vendors />} />
         <Route path="clients" element={<Clients />} />
@@ -24,7 +27,7 @@ export default function App() {
         <Route path="finance" element={<Finance />} />
         <Route path="calendar" element={<Calendar />} />
       </Route>
-      <Route path="/admin/clients/:id" element={<ClientFile />} />
+      <Route path="/admin/clients/:id" element={<RequireAdmin><ClientFile /></RequireAdmin>} />
       <Route path="/companion" element={<CompanionApp />} />
       <Route path="/client" element={<ClientApp />} />
       <Route path="*" element={<Navigate to="/admin" replace />} />

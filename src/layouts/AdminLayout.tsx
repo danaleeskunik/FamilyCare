@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { Button, Icon } from '../components/ui'
+import { Button, Callout, Icon } from '../components/ui'
 import { useStore } from '../store/AppStore'
+import { useAuth } from '../store/AuthStore'
 
 const TABS = [
   { to: '/admin', label: 'לוח היום', end: true },
@@ -34,16 +35,18 @@ export function Header({ title, sub, actions, tabs, lead }: {
 }
 
 export default function AdminLayout() {
-  const { openForm, clients } = useStore()
+  const { openForm, clients, loading, loadError, reload } = useStore()
+  const { fullName, signOut } = useAuth()
   return (
     <>
       <Header
-        title="שלום אלון — מוקד התפעול"
+        title={`${fullName ? `שלום ${fullName}` : 'שלום'} — מוקד התפעול`}
         sub={`שלישי 15.9 · ${9 + clients.length} לקוחות פעילים · 6 מלווים במשמרת`}
         actions={
           <>
             <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>
             <Button size="sm" icon="plus" onClick={() => openForm('task')}>משימה חדשה</Button>
+            <Button variant="on-navy" size="sm" onClick={signOut}>התנתקות</Button>
           </>
         }
         tabs={
@@ -57,7 +60,15 @@ export default function AdminLayout() {
         }
       />
       <main className="container page-body stack">
-        <Outlet />
+        {loadError ? (
+          <Callout tone="warning" title="לא הצלחנו לטעון את הנתונים">
+            בדקי את החיבור לאינטרנט ונסי שוב. <Button variant="secondary" size="sm" onClick={reload}>ניסיון חוזר</Button>
+          </Callout>
+        ) : loading ? (
+          <p className="muted" role="status">טוענת נתונים…</p>
+        ) : (
+          <Outlet />
+        )}
       </main>
     </>
   )

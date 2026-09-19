@@ -10,16 +10,22 @@ type Errors = Record<string, string>
 const REQUIRED = 'שדה חובה'
 const regionOf = (area: string) => (area.includes('תל אביב') ? 'צפון ת"א' : (regions.find((r) => area.includes(r)) ?? ''))
 
-function FormShell({ title, onSubmit, submitLabel, children }: { title: string; onSubmit: () => void; submitLabel: string; children: React.ReactNode }) {
+function FormShell({ title, onSubmit, submitLabel, children }: { title: string; onSubmit: () => void | Promise<void>; submitLabel: string; children: React.ReactNode }) {
   const { closeForm } = useStore()
-  const submit = (e: FormEvent) => { e.preventDefault(); onSubmit() }
+  const [busy, setBusy] = useState(false)
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy) return
+    setBusy(true)
+    try { await onSubmit() } finally { setBusy(false) }
+  }
   return (
     <Modal
       title={title}
       onClose={closeForm}
       footer={
         <>
-          <Button type="submit" form="entity-form">{submitLabel}</Button>
+          <Button type="submit" form="entity-form" disabled={busy}>{busy ? 'שומרת…' : submitLabel}</Button>
           <Button variant="quiet" onClick={closeForm}>ביטול</Button>
         </>
       }
@@ -42,7 +48,7 @@ function TaskForm({ preset }: { preset: Record<string, string> }) {
   // Frozen vendors (expired licence or insurance) cannot be assigned.
   const assignees = [...staff.map((s) => s.name), ...vendors.filter((x) => !x.licBad).map((x) => x.name)]
 
-  const submit = () => {
+  const submit = async () => {
     const e: Errors = {}
     if (!v.date) e.date = REQUIRED
     if (!v.time) e.time = REQUIRED
@@ -51,10 +57,11 @@ function TaskForm({ preset }: { preset: Record<string, string> }) {
     if (!v.region) e.region = 'בחרי אזור'
     setErr(e)
     if (Object.keys(e).length) return
-    add({ type: 'addTask', task: {
+    const ok = await add({ type: 'addTask', task: {
       id: `t-${Date.now()}`, date: v.date, time: v.time, client: v.client, task: v.task.trim(),
       who: v.who || null, status: v.who ? ['neutral', 'מתוכנן'] : null, region: v.region,
     } })
+    if (!ok) return
     if (v.date === TODAY) setRegionFilter(v.region)
     notify(v.date === TODAY ? 'המשימה נוספה ללוח היום' : `המשימה נוספה ליום ${formatDM(parseISO(v.date))} — אפשר לראות אותה בלוח השנה`)
     closeForm()
@@ -83,7 +90,7 @@ function ClientForm() {
   const [err, setErr] = useState<Errors>({})
   const set = (k: keyof typeof v) => (val: string) => setV((s) => ({ ...s, [k]: val }))
 
-  const submit = () => {
+  const submit = async () => {
     const e: Errors = {}
     const name = v.name.trim()
     const age = Number(v.age)
@@ -96,10 +103,11 @@ function ClientForm() {
     setErr(e)
     if (Object.keys(e).length) return
     const plan = PLANS.find((p) => p.name === v.plan)!
-    add({ type: 'addClient', client: {
+    const ok = await add({ type: 'addClient', client: {
       id: `c-${Date.now()}`, name, age, area: v.area.trim(), plan: [plan.tone, plan.name], used: `0 / ${plan.sessions}`,
       companion: v.companion || null, orderer: v.orderer.trim(), next: '—',
     } })
+    if (!ok) return
     notify(`נוסף/ה לקוח/ה: ${name}`)
     closeForm()
   }
@@ -123,7 +131,7 @@ function VendorForm() {
   const set = (k: keyof typeof v) => (val: string) => setV((s) => ({ ...s, [k]: val }))
   const expired = !!v.expiry && v.expiry < TODAY.slice(0, 7)
 
-  const submit = () => {
+  const submit = async () => {
     const e: Errors = {}
     const name = v.name.trim()
     if (!name) e.name = REQUIRED
@@ -136,10 +144,11 @@ function VendorForm() {
     if (Object.keys(e).length) return
     const [y, m] = v.expiry.split('-')
     const lic = expired ? `פג ${m}.${y.slice(2)}` : `בתוקף עד ${m}.${y.slice(2)}`
-    add({ type: 'addVendor', vendor: {
+    const ok = await add({ type: 'addVendor', vendor: {
       id: `v-${Date.now()}`, name, field: v.field.trim(), area: v.area.trim(), price: v.price.trim(), lic, licBad: expired,
       rating: '—', status: expired ? ['red', 'מוקפא'] : ['green', 'פעיל'],
     } })
+    if (!ok) return
     notify(expired ? `${name} נוסף ומוקפא עד העלאת מסמך מעודכן` : `נוסף ספק: ${name}`)
     closeForm()
   }
@@ -162,7 +171,7 @@ function StaffForm() {
   const [err, setErr] = useState<Errors>({})
   const set = (k: keyof typeof v) => (val: string) => setV((s) => ({ ...s, [k]: val }))
 
-  const submit = () => {
+  const submit = async () => {
     const e: Errors = {}
     const name = v.name.trim()
     if (!name) e.name = REQUIRED
@@ -171,9 +180,10 @@ function StaffForm() {
     if (!v.langs.trim()) e.langs = REQUIRED
     setErr(e)
     if (Object.keys(e).length) return
-    add({ type: 'addStaff', staff: {
+    const ok = await add({ type: 'addStaff', staff: {
       id: `s-${Date.now()}`, name, role: v.role, areas: v.areas.trim(), langs: v.langs.trim(), regulars: '—', hours: '0:00', avail: ['green', 'זמין/ה'],
     } })
+    if (!ok) return
     notify(`נוסף/ה מלווה: ${name}`)
     closeForm()
   }
