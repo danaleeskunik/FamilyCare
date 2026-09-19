@@ -263,7 +263,10 @@ export default function ClientFile() {
   }, [id])
 
   if (failed) {
-    return <main className="container page-body"><Callout tone="warning" title="לא הצלחנו לטעון את התיק">בדקי את החיבור ונסי לרענן את הדף.</Callout></main>
+    return <main className="container page-body stack">
+        <Callout tone="warning" title="לא הצלחנו לטעון את התיק">בדקי את החיבור ונסי לרענן את הדף.</Callout>
+        <div><Link to="/admin/clients">חזרה ללקוחות</Link></div>
+      </main>
   }
   if (d === undefined) return <main className="container page-body"><p className="muted" role="status">טוענת נתונים…</p></main>
   if (d === null) {
@@ -280,7 +283,12 @@ export default function ClientFile() {
   return (
     <>
       <Header
-        lead={<span style={{ width: 1, height: 22, background: 'rgba(255,255,255,.22)' }} />}
+        lead={
+          <>
+            <span style={{ width: 1, height: 22, background: 'rgba(255,255,255,.22)' }} />
+            <Link to="/admin/clients" className="btn on-navy sm"><Icon name="chevron-right" size={16} />ללקוחות</Link>
+          </>
+        }
         title={`תיק לקוח · ${c.full_name}${age(c.birth_date) ? `, ${age(c.birth_date)}` : ''}`}
         sub={[one(c.regions)?.name, c.member_since ? `לקוח/ה מאז ${ymShort(c.member_since)}` : null].filter(Boolean).join(' · ')}
         actions={

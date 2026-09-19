@@ -19,7 +19,7 @@ export function Header({ title, sub, actions, tabs, lead }: {
       <div className="container inner">
         <div className="header-top">
           <div className="row" style={{ gap: 13 }}>
-            <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={46} alt="Family Care — always with you" />
+            <Link to="/admin" aria-label="Family Care — חזרה ללוח הראשי"><img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={46} alt="Family Care — always with you" style={{ display: 'block' }} /></Link>
             {lead}
             <div>
               <div className="header-title">{title}</div>
