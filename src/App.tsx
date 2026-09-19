@@ -9,7 +9,7 @@ import ClientFile from './pages/ClientFile'
 import CompanionApp from './pages/CompanionApp'
 import ClientApp from './pages/ClientApp'
 import Calendar from './pages/admin/Calendar'
-import FormHost, { Toast } from './components/EntityForms'
+import FormHost, { DeleteHost, Toast } from './components/EntityForms'
 import RequireAdmin from './components/RequireAdmin'
 import Login from './pages/Login'
 
@@ -33,6 +33,7 @@ export default function App() {
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
     <FormHost />
+    <DeleteHost />
     <Toast />
     </>
   )

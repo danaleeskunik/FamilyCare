@@ -2,6 +2,8 @@ import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 
 const ICONS: Record<string, string> = {
   plus: 'M12 5v14M5 12h14',
+  edit: 'M4 20l.8-3.6L15.6 5.6a1.5 1.5 0 0 1 2.1 0l.7.7a1.5 1.5 0 0 1 0 2.1L7.6 19.2 4 20z',
+  trash: 'M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7M6 7l1 13h10l1-13',
   export: 'M12 3v12M7.5 10.5L12 15l4.5-4.5M4 19h16',
   message: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
   check: 'M4 12.5l5 5L20 6.5',
@@ -23,7 +25,7 @@ export function Icon({ name, size = 18 }: { name: keyof typeof ICONS; size?: num
 }
 
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'on-navy' | 'quiet'
+  variant?: 'primary' | 'secondary' | 'on-navy' | 'quiet' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   icon?: keyof typeof ICONS
 }
@@ -106,6 +108,16 @@ export function Empty({ text, action }: { text: string; action?: ReactNode }) {
     <div className="dashed" style={{ padding: 18, textAlign: 'center' }}>
       <p style={{ marginBottom: action ? 10 : 0 }}>{text}</p>
       {action}
+    </div>
+  )
+}
+
+/** Edit + delete icon buttons for a table row. `what` names the record for screen readers. */
+export function RowActions({ what, onEdit, onDelete }: { what: string; onEdit: () => void; onDelete: () => void }) {
+  return (
+    <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
+      <button type="button" className="icon-btn" aria-label={`עריכת ${what}`} title="עריכה" onClick={onEdit}><Icon name="edit" size={17} /></button>
+      <button type="button" className="icon-btn danger" aria-label={`מחיקת ${what}`} title="מחיקה" onClick={onDelete}><Icon name="trash" size={17} /></button>
     </div>
   )
 }

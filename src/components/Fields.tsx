@@ -61,3 +61,15 @@ export function CheckGroup({ label, error, options, value, onChange }: {
     </fieldset>
   )
 }
+
+export function TextAreaField({ label, error, hint, value, onChange, rows = 3, placeholder }: {
+  label: string; error?: string; hint?: string; value: string; onChange: (v: string) => void; rows?: number; placeholder?: string
+}) {
+  const id = useId()
+  return (
+    <Wrap id={id} label={label} error={error} hint={hint}>
+      <textarea id={id} className="input" rows={rows} value={value} placeholder={placeholder} aria-invalid={!!error}
+        aria-describedby={error || hint ? `${id}-d` : undefined} onChange={(e) => onChange(e.target.value)} style={{ resize: 'vertical', lineHeight: 1.5 }} />
+    </Wrap>
+  )
+}

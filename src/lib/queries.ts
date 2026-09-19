@@ -81,7 +81,7 @@ export async function loadAll(): Promise<Loaded> {
       client: one<Row>(r.clients)?.full_name ?? '', clientId: r.client_id,
       task: r.title, who, staffId: r.staff_id, vendorId: r.vendor_id,
       // No staff and no vendor = unassigned: the board shows the "שיבוץ" action instead of a status.
-      status: who ? (TASK_STATUS[r.status] ?? null) : null,
+      status: who ? (TASK_STATUS[r.status] ?? null) : null, statusKey: r.status,
       region: one<Row>(r.regions)?.name ?? '', regionId: r.region_id,
     }
   })
@@ -156,7 +156,7 @@ export async function loadAll(): Promise<Loaded> {
 export type ClientDetail = {
   client: Row
   contacts: Row[]; medications: Row[]; allergies: Row[]; preferences: Row[]; documents: Row[]
-  incidents: Row[]; history: Row[]; invoice: Row | null; sessionsUsed: number
+  incidents: Row[]; notes: Row[]; history: Row[]; invoice: Row | null; sessionsUsed: number
 }
 
 export async function loadClientDetail(id: string): Promise<ClientDetail | null> {
@@ -169,14 +169,47 @@ export async function loadClientDetail(id: string): Promise<ClientDetail | null>
     eqc('client_preferences').order('created_at'),
     eqc('client_documents').order('uploaded_at'),
     eqc('incidents').neq('status', 'closed').order('reported_at', { ascending: false }),
+    eqc('client_notes').order('created_at'),
     supabase.from('tasks').select('*, staff_members(full_name), vendors(name), visit_summaries(status), task_feedback(rating), invoice_lines(amount)').eq('client_id', id).eq('status', 'completed').order('scheduled_date', { ascending: false }),
     supabase.from('invoices').select('*, invoice_lines(*)').eq('client_id', id).order('period_month', { ascending: false }).limit(1),
   ])
   const failed = q.find((r) => r.error)
   if (failed) throw failed.error
-  const [c, contacts, meds, allergies, prefs, docs, incidents, history, invoices] = q.map((r) => r.data as any)
+  const [c, contacts, meds, allergies, prefs, docs, incidents, notes, history, invoices] = q.map((r) => r.data as any)
   if (!c) return null
   const month = monthStart(TODAY)
   const sessionsUsed = (history as Row[]).filter((t) => t.staff_id && monthStart(t.scheduled_date) === month).length
-  return { client: c, contacts, medications: meds, allergies, preferences: prefs, documents: docs, incidents, history, invoice: (invoices as Row[])[0] ?? null, sessionsUsed }
+  return { client: c, contacts, medications: meds, allergies, preferences: prefs, documents: docs, incidents, notes, history, invoice: (invoices as Row[])[0] ?? null, sessionsUsed }
+}
+
+// ---- Prefill for edit forms ----
+export async function fetchClientForEdit(id: string) {
+  const [c, o] = await Promise.all([
+    supabase.from('clients').select('*').eq('id', id).maybeSingle(),
+    supabase.from('family_contacts').select('id, full_name').eq('client_id', id).eq('is_orderer', true).maybeSingle(),
+  ])
+  if (c.error) throw c.error
+  if (o.error) throw o.error
+  return c.data ? { client: c.data as Row, orderer: o.data as Row | null } : null
+}
+
+export async function fetchVendorForEdit(id: string) {
+  const [v, r, p] = await Promise.all([
+    supabase.from('vendors').select('*').eq('id', id).maybeSingle(),
+    supabase.from('vendor_regions').select('region_id').eq('vendor_id', id),
+    supabase.from('vendor_price_items').select('*').eq('vendor_id', id).order('sort_order'),
+  ])
+  const err = v.error ?? r.error ?? p.error
+  if (err) throw err
+  return v.data ? { vendor: v.data as Row, regionIds: (r.data ?? []).map((x: Row) => x.region_id as number), prices: (p.data ?? []) as Row[] } : null
+}
+
+export async function fetchStaffForEdit(id: string) {
+  const [s, r] = await Promise.all([
+    supabase.from('staff_members').select('*').eq('id', id).maybeSingle(),
+    supabase.from('staff_regions').select('region_id').eq('staff_id', id),
+  ])
+  const err = s.error ?? r.error
+  if (err) throw err
+  return s.data ? { staff: s.data as Row, regionIds: (r.data ?? []).map((x: Row) => x.region_id as number) } : null
 }

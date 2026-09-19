@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Badge, Button, Callout, Card, CardHead, StatCard, money } from '../../components/ui'
+import { Badge, Button, Callout, Card, CardHead, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
 export default function Vendors() {
-  const { vendors, openForm } = useStore()
+  const { vendors, openForm, askDelete } = useStore()
   const frozen = vendors.filter((v) => v.licBad).length
   const [q, setQ] = useState('')
   const rows = vendors.filter((v) => [v.name, v.field, v.area].some((s) => s.includes(q.trim())))
@@ -29,7 +29,7 @@ export default function Vendors() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>בעל מקצוע</th><th>תחום</th><th>אזור</th><th>מחירון מוסכם</th><th>רישיון / ביטוח</th><th>דירוג</th><th>סטטוס</th></tr>
+              <tr><th>בעל מקצוע</th><th>תחום</th><th>אזור</th><th>מחירון מוסכם</th><th>רישיון / ביטוח</th><th>דירוג</th><th>סטטוס</th><th><span className="sr-only">פעולות</span></th></tr>
             </thead>
             <tbody>
               {rows.map((v) => (
@@ -41,9 +41,10 @@ export default function Vendors() {
                   <td style={v.licBad ? { color: 'var(--danger)', fontWeight: 700 } : undefined}>{v.lic}</td>
                   <td className="num" style={{ fontWeight: 700 }}>{v.rating}</td>
                   <td><Badge tone={v.status[0]}>{v.status[1]}</Badge></td>
+                  <td><RowActions what={`הספק ${v.name}`} onEdit={() => openForm('vendor', { id: v.id })} onDelete={() => askDelete('vendor', v.id)} /></td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={7} className="muted">לא נמצאו בעלי מקצוע. אפשר לנסות תחום אחר או להוסיף ספק חדש.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={8} className="muted">לא נמצאו בעלי מקצוע. אפשר לנסות תחום אחר או להוסיף ספק חדש.</td></tr>}
             </tbody>
           </table>
         </div>

@@ -207,3 +207,15 @@ button.card.stat { display: block; width: 100%; text-align: start; font: inherit
 
 /* Chip wrapping a visually hidden checkbox: show focus on the chip */
 .chip:has(input:focus-visible) { outline: 3px solid var(--brand-bright); outline-offset: 2px; }
+
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger:hover { background: #990000; color: #fff; }
+.icon-btn.danger:hover { background: var(--red-100); color: var(--danger); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+button.evt { display: block; width: 100%; text-align: start; cursor: pointer; font-family: var(--font-ui); color: inherit; }
+button.evt:hover { background: var(--field); }
+button.evt:focus-visible { outline: 3px solid var(--brand-bright); outline-offset: 2px; }
+.note { border: 1px solid var(--border-card); border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+.note.highlight { background: var(--warning-bg); border-color: #F3C9A8; }
+.note .body { flex: 1; font: 600 14.5px/1.55 var(--font-ui); white-space: pre-wrap; }

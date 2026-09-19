@@ -57,11 +57,11 @@ export default function Calendar() {
                   <div className="day-head"><span>{DAY_NAMES[i]}</span><span className="num">{formatDM(d)}</span></div>
                   <div className="day-body">
                     {list.map((t) => (
-                      <div key={t.id} className={`evt ${t.who ? '' : 'open'}`}>
+                      <button key={t.id} type="button" className={`evt ${t.who ? '' : 'open'}`} onClick={() => openForm('task', { id: t.id })} aria-label={`עריכת משימה: ${t.client} — ${t.task}, ${t.time}`}>
                         <div className="t">{t.time}</div>
                         <div>{t.client} — {t.task}</div>
                         <div className="w" style={t.who ? undefined : { color: 'var(--danger)', fontWeight: 700 }}>{t.who ?? 'ללא שיבוץ'}</div>
-                      </div>
+                      </button>
                     ))}
                     {list.length === 0 && <div className="card-meta">אין משימות</div>}
                   </div>

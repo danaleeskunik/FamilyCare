@@ -18,6 +18,7 @@ export type Task = {
   staffId: string | null
   vendorId: string | null
   status: [Tone, string] | null
+  statusKey: string // raw database status: planned | confirmed | in_progress | completed | cancelled
   region: string
   regionId: number | null
 }
@@ -46,4 +47,18 @@ export const JOB_TITLES = [
   { value: 'personal_companion', label: 'מלווה אישית' },
   { value: 'social_worker', label: 'עובדת סוציאלית' },
   { value: 'student', label: 'סטודנט/ית' },
+]
+
+export const TASK_STATUSES = [
+  { value: 'planned', label: 'מתוכנן' },
+  { value: 'confirmed', label: 'אושר ללקוח' },
+  { value: 'in_progress', label: 'בביצוע' },
+  { value: 'completed', label: 'הושלם' },
+  { value: 'cancelled', label: 'בוטל' },
+]
+export const DEPENDENCY_LEVELS = [
+  { value: 'independent', label: 'עצמאי/ת' },
+  { value: 'light', label: 'תלות קלה' },
+  { value: 'moderate', label: 'תלות בינונית' },
+  { value: 'high', label: 'תלות גבוהה' },
 ]

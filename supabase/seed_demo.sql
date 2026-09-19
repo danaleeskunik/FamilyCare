@@ -194,3 +194,10 @@ insert into public.payments (id, invoice_id, amount, status, provider_ref) value
   (md5('pay:hana')::uuid,   md5('inv:hana')::uuid,   11540, 'succeeded', null),
   (md5('pay:miriam')::uuid, md5('inv:miriam')::uuid, 3800, 'failed', null)
 on conflict (id) do nothing;
+
+-- ---- Notes and highlights (needs migration 0008) ----
+insert into public.client_notes (id, client_id, kind, body) values
+  (md5('note:1')::uuid, md5('client:sara')::uuid, 'highlight', 'לא לתאם ביקורים אחרי 19:00. להזכיר תורים יום מראש בשיחה, לא רק בהודעה.'),
+  (md5('note:2')::uuid, md5('client:sara')::uuid, 'highlight', 'אלרגיה לפניצילין. במדרגות ללוות ולתת יד, במיוחד אחרי כאב הברך שדווח ב-15.9.'),
+  (md5('note:3')::uuid, md5('client:sara')::uuid, 'note',      'אוהבת לספר על הנכדים. כדאי להקדיש כמה דקות לשיחה בתחילת הביקור.')
+on conflict (id) do nothing;

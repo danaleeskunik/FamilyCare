@@ -1,9 +1,9 @@
-import { Badge, Button, Callout, Card, CardHead, StatCard, money } from '../../components/ui'
+import { Badge, Button, Callout, Card, CardHead, RowActions, StatCard, money } from '../../components/ui'
 import { TODAY } from '../../data/model'
 import { useStore } from '../../store/AppStore'
 
 export default function Board() {
-  const { tasks, regions, regionFilter: region, setRegionFilter: setRegion } = useStore()
+  const { tasks, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete } = useStore()
   const today = tasks.filter((t) => t.date === TODAY).sort((a, b) => a.time.localeCompare(b.time))
   // Region chips are single-select; toggling the active chip shows all regions.
   const rows = region ? today.filter((t) => t.region === region) : today
@@ -36,7 +36,7 @@ export default function Board() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>שעה</th><th>לקוח/ה</th><th>משימה</th><th>מלווה / ספק</th><th>סטטוס</th></tr>
+              <tr><th>שעה</th><th>לקוח/ה</th><th>משימה</th><th>מלווה / ספק</th><th>סטטוס</th><th><span className="sr-only">פעולות</span></th></tr>
             </thead>
             <tbody>
               {rows.map((t) => (
@@ -45,11 +45,12 @@ export default function Board() {
                   <td style={{ fontWeight: 600 }}>{t.client}</td>
                   <td>{t.task}</td>
                   <td>{t.who ?? <span style={{ color: 'var(--danger)', fontWeight: 700 }}>ללא שיבוץ</span>}</td>
-                  <td>{t.status ? <Badge tone={t.status[0]}>{t.status[1]}</Badge> : <button className="pill-action">שיבוץ</button>}</td>
+                  <td>{t.status ? <Badge tone={t.status[0]}>{t.status[1]}</Badge> : <button className="pill-action" onClick={() => openForm('task', { id: t.id })}>שיבוץ</button>}</td>
+                  <td><RowActions what={`המשימה ${t.task} של ${t.client}`} onEdit={() => openForm('task', { id: t.id })} onDelete={() => askDelete('task', t.id)} /></td>
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={5} style={{ color: 'var(--ink-2)' }}>אין משימות באזור הזה היום. אפשר לבחור אזור אחר או ליצור משימה חדשה.</td></tr>
+                <tr><td colSpan={6} style={{ color: 'var(--ink-2)' }}>אין משימות באזור הזה היום. אפשר לבחור אזור אחר או ליצור משימה חדשה.</td></tr>
               )}
             </tbody>
           </table>

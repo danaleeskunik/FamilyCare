@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Header } from '../layouts/AdminLayout'
-import { Badge, Button, Callout, Card, Empty, Icon, Ltr, Progress, money } from '../components/ui'
+import { Badge, Button, Callout, Card, Empty, Icon, Ltr, Progress, RowActions, money } from '../components/ui'
+import { TextAreaField, SelectField } from '../components/Fields'
+import { supabase } from '../lib/supabase'
 import { useStore } from '../store/AppStore'
 import { loadClientDetail, shortName, type ClientDetail } from '../lib/queries'
 import { formatDM, parseISO } from '../lib/dates'
@@ -246,21 +248,81 @@ function Finance({ d }: { d: ClientDetail }) {
   )
 }
 
+
+function Notes({ d, onChanged }: { d: ClientDetail; onChanged: () => void }) {
+  const { notify } = useStore()
+  const [editing, setEditing] = useState<{ id: string | null; kind: string; body: string } | null>(null)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const sorted = [...(d.notes as any[])].sort((a, b) => (a.kind === b.kind ? a.created_at.localeCompare(b.created_at) : a.kind === 'highlight' ? -1 : 1))
+
+  const save = async () => {
+    if (!editing) return
+    if (!editing.body.trim()) { setErr('כתבי את ההערה או הדגש'); return }
+    setBusy(true)
+    const { data: u } = await supabase.auth.getUser()
+    const { error } = editing.id
+      ? await supabase.from('client_notes').update({ kind: editing.kind, body: editing.body.trim() }).eq('id', editing.id)
+      : await supabase.from('client_notes').insert({ client_id: d.client.id, kind: editing.kind, body: editing.body.trim(), created_by: u.user?.id ?? null })
+    setBusy(false)
+    if (error) { console.error('note save failed', error); notify('לא הצלחנו לשמור את ההערה. נסי שוב.'); return }
+    setEditing(null); setErr('')
+    onChanged()
+  }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('client_notes').delete().eq('id', id)
+    if (error) { console.error('note delete failed', error); notify('לא הצלחנו למחוק את ההערה. נסי שוב.'); return }
+    onChanged()
+  }
+
+  return (
+    <Card>
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+        <div className="card-title">הערות ודגשים לליווי</div>
+        {!editing && <Button variant="secondary" size="sm" icon="plus" onClick={() => setEditing({ id: null, kind: 'highlight', body: '' })}>הוספת הערה</Button>}
+      </div>
+      <p className="card-meta" style={{ marginBottom: 10 }}>מה כל מלווה/ת צריכ/ה לדעת לפני ביקור. דגשים מופיעים ראשונים ומסומנים.</p>
+      <div className="stack" style={{ gap: 8 }}>
+        {sorted.length === 0 && !editing && <Empty text="עוד אין הערות או דגשים ללקוח/ה הזה/זו. אפשר להוסיף את הראשון." />}
+        {sorted.map((n) => (
+          <div key={n.id} className={`note ${n.kind}`}>
+            <Badge tone={n.kind === 'highlight' ? 'orange' : 'neutral'}>{n.kind === 'highlight' ? 'דגש' : 'הערה'}</Badge>
+            <div className="body">{n.body}</div>
+            <RowActions what={n.kind === 'highlight' ? 'הדגש' : 'ההערה'} onEdit={() => { setErr(''); setEditing({ id: n.id, kind: n.kind, body: n.body }) }} onDelete={() => remove(n.id)} />
+          </div>
+        ))}
+        {editing && (
+          <div className="inset stack" style={{ gap: 10 }}>
+            <SelectField label="סוג" value={editing.kind} onChange={(v) => setEditing({ ...editing, kind: v })} options={[{ value: 'highlight', label: 'דגש — חשוב שכל מלווה/ת יראו' }, { value: 'note', label: 'הערה כללית' }]} />
+            <TextAreaField label="הטקסט" value={editing.body} onChange={(v) => setEditing({ ...editing, body: v })} error={err} rows={3} placeholder="למשל: לא לתאם ביקורים אחרי 19:00" />
+            <div className="row" style={{ gap: 8 }}>
+              <Button size="sm" disabled={busy} onClick={save}>{busy ? 'שומרת…' : 'שמירה'}</Button>
+              <Button size="sm" variant="quiet" onClick={() => { setEditing(null); setErr('') }}>ביטול</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
 export default function ClientFile() {
   const { id } = useParams()
-  const { openForm } = useStore()
+  const { openForm, clients } = useStore()
   const [tab, setTab] = useState<TabKey>('med')
   const [d, setD] = useState<ClientDetail | null | undefined>(undefined)
   const [failed, setFailed] = useState(false)
 
+  const [version, setVersion] = useState(0)
+  const refetch = () => setVersion((n) => n + 1)
   useEffect(() => {
     let cancelled = false
-    setD(undefined); setFailed(false)
+    setFailed(false)
     loadClientDetail(id ?? '')
       .then((r) => { if (!cancelled) setD(r) })
       .catch((e) => { console.error('client file load failed', e); if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
-  }, [id])
+  }, [id, version, clients])
 
   if (failed) {
     return <main className="container page-body stack">
@@ -294,6 +356,7 @@ export default function ClientFile() {
         actions={
           <>
             <span className="plan-pill">{trial ? 'תקופת היכרות' : `מסלול ${plan?.name ?? '—'}`}</span>
+            <Button variant="on-navy" size="sm" icon="edit" onClick={() => openForm('client', { id: c.id })}>עריכת פרטים</Button>
             <Button variant="on-navy" size="sm" icon="message">הודעה למשפחה</Button>
             <Button size="sm" icon="plus" onClick={() => openForm('task', { clientId: c.id })}>הזמנת שירות</Button>
           </>
@@ -310,6 +373,7 @@ export default function ClientFile() {
         <div className="file-grid">
           <Sidebar d={d} />
           <div className="stack">
+            <Notes d={d} onChanged={refetch} />
             {tab === 'med' && <Medical d={d} />}
             {tab === 'pref' && <Preferences d={d} />}
             {tab === 'hist' && <History d={d} />}

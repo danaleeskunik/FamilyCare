@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge, Button, Callout, Card, CardHead, Ltr, StatCard } from '../../components/ui'
+import { Badge, Button, Callout, Card, CardHead, Ltr, RowActions, StatCard } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
 export default function Clients() {
-  const { clients, openForm } = useStore()
+  const { clients, openForm, askDelete } = useStore()
   const trial = clients.filter((c) => c.plan[1] === 'תקופת היכרות').length
   const [q, setQ] = useState('')
   const rows = clients.filter((c) => [c.name, c.area, c.plan[1]].some((s) => s.includes(q.trim())))
@@ -26,7 +26,7 @@ export default function Clients() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>לקוח/ה</th><th>גיל</th><th>אזור</th><th>מסלול</th><th>מפגשים</th><th>מלווה קבוע/ה</th><th>מזמין/ת השירות</th><th>הביקור הבא</th><th /></tr>
+              <tr><th>לקוח/ה</th><th>גיל</th><th>אזור</th><th>מסלול</th><th>מפגשים</th><th>מלווה קבוע/ה</th><th>מזמין/ת השירות</th><th>הביקור הבא</th><th /><th><span className="sr-only">פעולות</span></th></tr>
             </thead>
             <tbody>
               {rows.map((c) => (
@@ -40,9 +40,10 @@ export default function Clients() {
                   <td>{c.orderer}</td>
                   <td>{c.next}</td>
                   <td><Link to={`/admin/clients/${c.id}`}>תיק לקוח</Link></td>
+                  <td><RowActions what={`הלקוח/ה ${c.name}`} onEdit={() => openForm('client', { id: c.id })} onDelete={() => askDelete('client', c.id)} /></td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={9} className="muted">לא נמצאו לקוחות. אפשר לנסות שם אחר או להוסיף לקוח/ה חדש/ה.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={10} className="muted">לא נמצאו לקוחות. אפשר לנסות שם אחר או להוסיף לקוח/ה חדש/ה.</td></tr>}
             </tbody>
           </table>
         </div>

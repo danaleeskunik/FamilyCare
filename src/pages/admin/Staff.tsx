@@ -1,8 +1,8 @@
-import { Badge, Button, Card, CardHead, Ltr, StatCard, money } from '../../components/ui'
+import { Badge, Button, Card, CardHead, Ltr, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
 export default function Staff() {
-  const { staff, openForm } = useStore()
+  const { staff, openForm, askDelete } = useStore()
   return (
     <>
       <div className="grid cols-4">
@@ -17,7 +17,7 @@ export default function Staff() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>מלווה</th><th>תפקיד</th><th>אזורים</th><th>שפות</th><th>לקוחות קבועים</th><th>שעות החודש</th><th>זמינות היום</th></tr>
+              <tr><th>מלווה</th><th>תפקיד</th><th>אזורים</th><th>שפות</th><th>לקוחות קבועים</th><th>שעות החודש</th><th>זמינות היום</th><th><span className="sr-only">פעולות</span></th></tr>
             </thead>
             <tbody>
               {staff.map((s) => (
@@ -29,6 +29,7 @@ export default function Staff() {
                   <td>{s.regulars}</td>
                   <td><Ltr>{s.hours}</Ltr></td>
                   <td><Badge tone={s.avail[0]}>{s.avail[1]}</Badge></td>
+                  <td><RowActions what={`המלווה ${s.name}`} onEdit={() => openForm('staff', { id: s.id })} onDelete={() => askDelete('staff', s.id)} /></td>
                 </tr>
               ))}
             </tbody>
