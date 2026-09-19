@@ -16,7 +16,7 @@ export default function CompanionApp() {
             <div style={{ font: '800 17px var(--font-ui)' }}>בוקר טוב, נועה</div>
             <div style={{ font: '500 13px var(--font-ui)', color: 'var(--on-brand-2)' }}>שלישי 15.9 · 3 ביקורים · <Ltr>7:15</Ltr> שעות</div>
           </div>
-          <img src="/brand/logo-white.png" height={34} alt="Family Care — always with you" />
+          <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={34} alt="Family Care — always with you" />
         </div>
         <div className="grid cols-2" style={{ marginTop: 13, gap: 10 }}>
           <div className="inset-dark"><div style={{ font: '500 12.5px var(--font-ui)', color: 'var(--on-brand-2)' }}>שעות החודש</div><Ltr style={{ font: '900 20px var(--font-num)' }}>62:40</Ltr></div>

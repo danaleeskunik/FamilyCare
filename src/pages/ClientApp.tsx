@@ -9,7 +9,7 @@ export default function ClientApp() {
             <div style={{ font: '800 24px var(--font-ui)' }}>שלום שרה</div>
             <div style={{ font: '600 16px var(--font-ui)', color: 'var(--on-brand-2)' }}>יום שלישי, 15 בספטמבר</div>
           </div>
-          <img src="/brand/logo-white.png" height={40} alt="Family Care — always with you" />
+          <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={40} alt="Family Care — always with you" />
         </div>
         <div className="inset-dark" style={{ borderRadius: 14, padding: 15 }}>
           <div style={{ font: '600 15px var(--font-ui)', color: 'var(--on-brand-2)' }}>היום ב-9:30</div>

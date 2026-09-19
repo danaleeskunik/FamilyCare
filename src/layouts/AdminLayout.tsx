@@ -17,7 +17,7 @@ export function Header({ title, sub, actions, tabs, lead }: {
       <div className="container inner">
         <div className="header-top">
           <div className="row" style={{ gap: 13 }}>
-            <img src="/brand/logo-white.png" height={46} alt="Family Care — always with you" />
+            <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={46} alt="Family Care — always with you" />
             {lead}
             <div>
               <div className="header-title">{title}</div>
