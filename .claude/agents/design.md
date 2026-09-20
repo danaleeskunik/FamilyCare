@@ -27,6 +27,10 @@ model: sonnet
 - אפליקציית המלווה והלקוח: mobile-first (עיצוב מובייל קודם, הרחבה למעלה).
 - Android: בדוק שאין תלות ב-hover; מצבי `:active` ו-`:focus-visible` קיימים.
 
+## שדות וטפסים
+- `select`: `appearance:none` עם חץ מותאם (SVG רקע) במרחק ≥14px מהקצה, ו-`padding-inline-end` ≥38px כדי שהטקסט לא יידרס. אל תשאיר את החץ הדפדפני. הכלל חל על כל ה-`select.input`, כולל וריאנטים צבועים.
+- שדות קלט, select ו-textarea: אותו גובה (44px), אותו רדיוס ואותו ריפוד אופקי.
+
 ## RTL ונגישות
 - מאפיינים לוגיים: `margin-inline`, `padding-inline`, `inset-inline-start`, `text-align:start`, `border-inline-start` — לא left/right. אייקוני חיצים/כיוון מתהפכים.
 - ניגודיות ≥4.5:1 לטקסט (3:1 לטקסט גדול/רכיבי UI). מצבי hover/focus/active/disabled לכל רכיב אינטראקטיבי (בעיה שכבר קרתה: טקסט בלתי נראה ב-hover).
