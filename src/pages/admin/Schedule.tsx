@@ -77,7 +77,7 @@ export default function Schedule() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.key}>
-                  <td style={{ fontWeight: 700, verticalAlign: 'top' }}>{r.label}</td>
+                  <td style={{ fontWeight: 500, verticalAlign: 'top' }}>{r.label}</td>
                   {dayIsos.map((iso) => {
                     const list = weekTasks.filter((t) => t.date === iso && (r.staffId ? t.staffId === r.staffId : !t.staffId)).sort((a, b) => a.time.localeCompare(b.time))
                     return (

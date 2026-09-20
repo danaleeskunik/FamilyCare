@@ -41,7 +41,7 @@ export default function Planning() {
       <tr>
         <td className="num nowrap">{DAY_NAMES[parseISO(i.eventDate).getDay()]} {formatDM(parseISO(i.eventDate))}</td>
         <td><Badge>{kindLabel(i.kind)}</Badge></td>
-        <td style={{ fontWeight: 600 }}>{i.client}</td>
+        <td className="name">{i.client}</td>
         <td>{i.title}{i.notes && <div className="card-meta">{i.notes}</div>}</td>
         <td>{i.vendor ?? '—'}</td>
         <td>
@@ -56,7 +56,7 @@ export default function Planning() {
           </select>
           <div style={{ marginTop: 4 }}><Badge tone={st?.tone}>{st?.label}</Badge></div>
         </td>
-        <td className="nowrap" style={overdue(i) ? { color: 'var(--danger)', fontWeight: 700 } : undefined}>
+        <td className="nowrap" style={overdue(i) ? { color: 'var(--danger)', fontWeight: 500 } : undefined}>
           {i.dueDate ? formatDM(parseISO(i.dueDate)) : '—'}{overdue(i) && <div style={{ fontSize: 12 }}>באיחור</div>}
         </td>
         <td><RowActions what={`הפריט ${i.title}`} onEdit={() => openForm('item', { id: i.id })} onDelete={() => askDelete('item', i.id)} /></td>

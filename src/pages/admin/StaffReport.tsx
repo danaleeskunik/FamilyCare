@@ -90,7 +90,7 @@ export default function StaffReport() {
               <table>
                 <thead><tr><th>לקוח/ה</th><th>כתובת</th><th>ביקורים</th><th>שעות</th></tr></thead>
                 <tbody>
-                  {report.perClient.map((c) => <tr key={c.clientId}><td style={{ fontWeight: 600 }}>{c.client}</td><td>{c.place || '—'}</td><td className="num">{c.visits}</td><td><Ltr>{fmtHours(c.minutes)}</Ltr></td></tr>)}
+                  {report.perClient.map((c) => <tr key={c.clientId}><td className="name">{c.client}</td><td>{c.place || '—'}</td><td className="num">{c.visits}</td><td><Ltr>{fmtHours(c.minutes)}</Ltr></td></tr>)}
                   {report.perClient.length === 0 && <tr><td colSpan={4} className="muted">אין ביקורים שהושלמו בחודש הזה.</td></tr>}
                 </tbody>
               </table>
@@ -106,7 +106,7 @@ export default function StaffReport() {
                   {report.visits.map((v) => (
                     <tr key={v.id}>
                       <td className="nowrap">{DAY_NAMES[parseISO(v.date).getDay()]} {formatDM(parseISO(v.date))}</td>
-                      <td style={{ fontWeight: 600 }}>{v.client}</td>
+                      <td className="name">{v.client}</td>
                       <td className="num nowrap"><Ltr>{v.plannedStart}{v.plannedEnd ? `–${v.plannedEnd}` : ''}</Ltr></td>
                       <td className="num nowrap">{v.checkedIn ? <Ltr>{v.checkedIn}–{v.checkedOut || '?'}</Ltr> : <span className="muted">אין דיווח</span>}</td>
                       <td className="num">{v.actualMin === null ? '—' : <Ltr>{fmtHours(v.actualMin)}</Ltr>}</td>

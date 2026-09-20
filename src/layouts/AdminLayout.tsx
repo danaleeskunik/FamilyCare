@@ -2,8 +2,6 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { Button, Callout, Icon } from '../components/ui'
 import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
-import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
-import { TODAY } from '../data/model'
 
 const TABS = [
   { to: '/admin', label: 'לוח היום', end: true },
@@ -22,12 +20,12 @@ export function Header({ title, sub, actions, tabs, lead }: {
     <header className="app-header">
       <div className="container inner">
         <div className="header-top">
-          <div className="row" style={{ gap: 13 }}>
+          <div className="header-brand">
             <Link to="/admin" aria-label="Family Care — חזרה ללוח הראשי"><img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={46} alt="Family Care — always with you" style={{ display: 'block' }} /></Link>
             {lead}
-            <div>
+            <div className="header-text">
               <div className="header-title">{title}</div>
-              <div className="header-sub">{sub}</div>
+              {sub && <div className="header-sub">{sub}</div>}
             </div>
           </div>
           <div className="row" style={{ gap: 9, flexWrap: 'wrap' }}>{actions}</div>
@@ -39,13 +37,13 @@ export function Header({ title, sub, actions, tabs, lead }: {
 }
 
 export default function AdminLayout() {
-  const { openForm, clients, loading, loadError, reload } = useStore()
+  const { openForm, loading, loadError, reload } = useStore()
   const { fullName, signOut } = useAuth()
   return (
     <>
       <Header
-        title={`${fullName ? `שלום ${fullName}` : 'שלום'} — מוקד התפעול`}
-        sub={`${DAY_NAMES[parseISO(TODAY).getDay()]} ${formatDM(parseISO(TODAY))} · ${9 + clients.length} לקוחות פעילים · 6 מלווים במשמרת`}
+        title={fullName ? `שלום ${fullName}` : 'שלום'}
+        sub=""
         actions={
           <>
             <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>

@@ -31,7 +31,7 @@ function DetailBody({ kind, invoices }: { kind: Detail; invoices: InvoiceRow[] }
         <div className="card-label" style={{ margin: '16px 0 4px' }}>לפי מזמין/ת שירות — החשבוניות שבטבלה</div>
         <div className="table-wrap"><table>
           <thead><tr><th>מזמין/ת השירות</th><th>שעות ליווי</th><th>ספקים + ניהול</th></tr></thead>
-          <tbody>{invoices.map((i) => <tr key={i.id}><td style={{ fontWeight: 600 }}>{i.orderer}</td><td className="num nowrap">{money(i.hours)}</td><td className="num nowrap">{money(i.vendors)}</td></tr>)}</tbody>
+          <tbody>{invoices.map((i) => <tr key={i.id}><td className="name">{i.orderer}</td><td className="num nowrap">{money(i.hours)}</td><td className="num nowrap">{money(i.vendors)}</td></tr>)}</tbody>
         </table></div>
         <Note>הפירוט לפי מזמינים מכסה רק את החשבוניות בטבלה. נתוני דמו.</Note>
       </>
@@ -86,7 +86,7 @@ export default function Finance() {
               <tbody>
                 {invoices.map((i) => (
                   <tr key={i.id}>
-                    <td style={{ fontWeight: 600 }}>{i.orderer}</td>
+                    <td className="name">{i.orderer}</td>
                     <td className="num nowrap">{money(i.fee)}</td>
                     <td className="num nowrap">{money(i.hours)}</td>
                     <td className="num nowrap">{money(i.vendors)}</td>

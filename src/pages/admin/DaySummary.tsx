@@ -55,20 +55,21 @@ export default function DaySummary() {
             {pending > 0 && <> · <strong style={{ color: 'var(--warning)' }}>{pending} תוספות זמן ממתינות להחלטה</strong></>}
           </p>
           <div className="table-wrap">
-            <table>
-              <thead><tr><th>לקוח/ה</th><th>מלווה/ת</th><th>מתוכנן</th><th>בפועל</th><th>הפרש</th><th>חיוב ושכר</th></tr></thead>
+            <table className="table-plan">
+              <colgroup><col style={{ width: '15%' }} /><col style={{ width: '11%' }} /><col style={{ width: '20%' }} /><col style={{ width: '20%' }} /><col style={{ width: '12%' }} /><col style={{ width: '22%' }} /></colgroup>
+              <thead><tr><th>לקוח/ה</th><th>מלווה/ת</th><th>מתוכנן<span className="th-sub">שעות · משך</span></th><th>בפועל<span className="th-sub">כניסה–יציאה · משך</span></th><th>הפרש</th><th>חיוב ושכר</th></tr></thead>
               <tbody>
                 {rows.map(({ t, planned, actual, diff, over, member, wage }) => {
                   const d = decisions[t.id]
                   return (
                     <tr key={t.id}>
-                      <td style={{ fontWeight: 600 }}>{t.client}</td>
+                      <td className="name">{t.client}</td>
                       <td>{member ? shortName(member.name) : '—'}</td>
                       <td className="num nowrap"><Ltr>{t.time}{t.end ? `–${t.end}` : ''}</Ltr>{planned !== null && <div className="card-meta"><Ltr>{fmtHours(planned)}</Ltr></div>}</td>
                       <td className="num nowrap">
-                        {t.checkedIn ? <><Ltr>{t.checkedIn}–{t.checkedOut || '…'}</Ltr>{actual !== null && <div className="card-meta"><Ltr>{fmtHours(actual)}</Ltr></div>}</> : <span className="muted">אין דיווח</span>}
+                        {t.checkedIn ? <><Ltr>{t.checkedIn}–{t.checkedOut || '…'}</Ltr>{actual !== null ? <div className="card-meta"><Ltr>{fmtHours(actual)}</Ltr></div> : <div className="card-meta">בביקור עכשיו</div>}</> : <span className="muted">אין דיווח</span>}
                       </td>
-                      <td className="nowrap" style={{ fontWeight: 700, color: diff === null ? undefined : diff >= pricing.graceMinutes ? 'var(--danger)' : 'var(--ink-2)' }}>
+                      <td className="nowrap" style={{ fontWeight: 500, color: diff === null ? undefined : diff >= pricing.graceMinutes ? 'var(--danger)' : 'var(--ink-2)' }}>
                         {diff === null ? (planned === null ? 'אין שעת סיום מתוכננת' : '—') : diff > 0 ? `+${diff} דק׳` : diff < 0 ? `${diff} דק׳` : 'בדיוק'}
                       </td>
                       <td>

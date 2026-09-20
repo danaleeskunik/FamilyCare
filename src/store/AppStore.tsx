@@ -28,8 +28,8 @@ type Store = {
   loading: boolean
   loadError: boolean
   reload: () => void
-  regionFilter: string | null
-  setRegionFilter: (r: string | null) => void
+  regionFilter: string[]
+  setRegionFilter: React.Dispatch<React.SetStateAction<string[]>>
   /** Save = create (id null) or update. Each writes to the database, refreshes lists, and resolves false (with a toast) on failure. */
   saveTask: (id: string | null, t: TaskInput) => Promise<boolean>
   saveClient: (id: string | null, c: ClientInput) => Promise<boolean>
@@ -74,7 +74,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [loadError, setLoadError] = useState(false)
   const [nonce, setNonce] = useState(0)
 
-  const [regionFilter, setRegionFilter] = useState<string | null>('רמת השרון')
+  const [regionFilter, setRegionFilter] = useState<string[]>([])
   const [form, setForm] = useState<FormState>(null)
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null)
   const [toast, setToast] = useState<string | null>(null)

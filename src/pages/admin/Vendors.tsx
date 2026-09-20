@@ -34,12 +34,12 @@ export default function Vendors() {
             <tbody>
               {rows.map((v) => (
                 <tr key={v.id}>
-                  <td style={{ fontWeight: 600 }}>{v.name}</td>
+                  <td className="name">{v.name}</td>
                   <td>{v.field}</td>
                   <td>{v.area}</td>
                   <td>{v.price}</td>
-                  <td style={v.licBad ? { color: 'var(--danger)', fontWeight: 700 } : undefined}>{v.lic}</td>
-                  <td className="num" style={{ fontWeight: 700 }}>{v.rating}</td>
+                  <td style={v.licBad ? { color: 'var(--danger)', fontWeight: 500 } : undefined}>{v.lic}</td>
+                  <td className="num">{v.rating}</td>
                   <td><Badge tone={v.status[0]}>{v.status[1]}</Badge></td>
                   <td><RowActions what={`הספק ${v.name}`} onEdit={() => openForm('vendor', { id: v.id })} onDelete={() => askDelete('vendor', v.id)} /></td>
                 </tr>

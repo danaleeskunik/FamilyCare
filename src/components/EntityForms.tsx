@@ -97,7 +97,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
     const ok = await saveTask(editId, { clientId: v.clientId, date: v.date, time: v.time, title: v.task.trim(), regionId: Number(v.regionId), staffId: v.staffId, vendorId: v.vendorId, status: v.status, checkedIn: v.checkedIn, checkedOut: v.checkedOut })
     if (!ok) return
     const region = regions.find((r) => r.id === Number(v.regionId))
-    if (v.date === TODAY && region) setRegionFilter(region.name)
+    if (v.date === TODAY && region) setRegionFilter((f) => (f.length && !f.includes(region.name) ? [...f, region.name] : f))
     notify(editId ? 'המשימה עודכנה' : v.date === TODAY ? 'המשימה נוספה ללוח היום' : `המשימה נוספה ליום ${formatDM(parseISO(v.date))} — אפשר לראות אותה בלוח השנה`)
     closeForm()
   }

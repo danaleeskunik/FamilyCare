@@ -23,7 +23,7 @@ export default function Staff() {
             <tbody>
               {staff.map((s) => (
                 <tr key={s.id}>
-                  <td style={{ fontWeight: 600 }}><Link to={`/admin/staff/${s.id}`} aria-label={`דוח חודשי של ${s.name}`}>{s.name}</Link>{s.email && <div className="card-meta">מחובר/ת לאפליקציה</div>}</td>
+                  <td className="name"><Link to={`/admin/staff/${s.id}`} aria-label={`דוח חודשי של ${s.name}`}>{s.name}</Link>{s.email && <div className="card-meta">מחובר/ת לאפליקציה</div>}</td>
                   <td>{s.role}</td>
                   <td>{s.areas}</td>
                   <td>{s.langs}</td>

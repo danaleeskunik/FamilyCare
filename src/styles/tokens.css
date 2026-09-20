@@ -35,6 +35,11 @@
   --blue-300: #9CC7F5;
   --blue-500: #006EE5;
   --blue-100: #EAF2FD;
+  --blue-700: #0055B2;
+  --tip-border: #B84E14;
+  --tip-bg: #FFF6E5;
+  --warning-border: #F3C9A8;
+  --danger-hover: #990000;
   --green-100: #EAF7F1;
   --green-700: #00764A;
   --orange-100: #FDEEE6;
@@ -48,6 +53,14 @@
 
   --shadow-card: 0 2px 8px rgba(15, 46, 82, 0.06);
   --shadow-lift: 0 14px 30px rgba(15, 46, 82, 0.14);
+
+  --focus-ring: #0E7C77;
+  --focus-ring-on-dark: #2BC4BC;
+  --brand-action-hover: #128884;
+  --h-pill: 24px;
+  --h-chip: 32px;
+  --h-touch: 44px;
+  --h-tab: 44px;
 
   --gutter: clamp(14px, 4vw, 24px);
 }

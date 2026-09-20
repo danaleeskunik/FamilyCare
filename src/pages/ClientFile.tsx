@@ -168,7 +168,7 @@ function History({ d }: { d: ClientDetail }) {
                 return (
                   <tr key={t.id}>
                     <td className="num">{formatDM(parseISO(t.scheduled_date))}</td>
-                    <td style={{ fontWeight: 600 }}>{[staff && shortName(staff), vendor].filter(Boolean).join(' · ') || '—'}</td>
+                    <td className="name">{[staff && shortName(staff), vendor].filter(Boolean).join(' · ') || '—'}</td>
                     <td>{t.title}</td>
                     <td>{mins === null ? '—' : <Ltr>{hm(mins)}</Ltr>}</td>
                     <td className="num nowrap">{cost ? money(cost) : '—'}</td>

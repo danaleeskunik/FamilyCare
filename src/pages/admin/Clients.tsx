@@ -31,7 +31,7 @@ export default function Clients() {
             <tbody>
               {rows.map((c) => (
                 <tr key={c.id}>
-                  <td style={{ fontWeight: 600 }}>{c.name}</td>
+                  <td className="name">{c.name}</td>
                   <td className="num">{c.age}</td>
                   <td>{c.area}</td>
                   <td><Badge tone={c.plan[0]}>{c.plan[1]}</Badge></td>
