@@ -1,9 +1,8 @@
 /* Family Care tokens. Brand hue is teal (replaces Kunik navy); everything else follows the Kunik system. */
-@font-face { font-family: "Rubik"; src: url("/fonts/Rubik.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "Heebo"; src: url("/fonts/Heebo.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
 
 :root {
-  --font-ui: "Rubik", system-ui, sans-serif;
+  --font-ui: "Rubik Variable", "Rubik", system-ui, sans-serif;
   --font-num: "Heebo", sans-serif;
 
   --brand-deep: #0A3B39;
