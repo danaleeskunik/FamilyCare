@@ -253,3 +253,7 @@ td.name { font-weight: 500; }
 th .th-sub { display: block; margin-top: 2px; font: 400 11.5px var(--font-ui); color: var(--ink-3); }
 .table-plan { table-layout: fixed; min-width: 760px; }
 .table-plan td, .table-plan th { padding-inline: 14px; }
+
+/* Card header controls stay on one row; the whole group drops below the title on narrow screens */
+.card-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+@media (max-width: 560px) { .card-head-actions { flex-wrap: wrap; width: 100%; } .card-head-actions .search { flex: 1; min-width: 0; } }

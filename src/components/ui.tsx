@@ -55,7 +55,7 @@ export function CardHead({ title, children }: { title: string; children?: ReactN
   return (
     <div className="card-head">
       <h2>{title}</h2>
-      {children && <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>{children}</div>}
+      {children && <div className="card-head-actions">{children}</div>}
     </div>
   )
 }
