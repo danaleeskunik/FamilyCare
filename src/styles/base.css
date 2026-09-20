@@ -257,3 +257,10 @@ th .th-sub { display: block; margin-top: 2px; font: 400 11.5px var(--font-ui); c
 /* Card header controls stay on one row; the whole group drops below the title on narrow screens */
 .card-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
 @media (max-width: 560px) { .card-head-actions { flex-wrap: wrap; width: 100%; } .card-head-actions .search { flex: 1; min-width: 0; } }
+
+/* Status picker doubles as the status indicator: tinted by state */
+.status-select { min-width: 130px; font-weight: 500; }
+.status-select.green { background-color: var(--green-100); color: var(--green-700); border-color: transparent; }
+.status-select.blue { background-color: var(--blue-100); color: var(--blue-700); border-color: transparent; }
+.status-select.orange { background-color: var(--orange-100); color: var(--orange-700); border-color: transparent; }
+.status-select.red { background-color: var(--red-100); color: var(--danger); border-color: transparent; }

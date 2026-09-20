@@ -51,10 +51,9 @@ export default function Planning() {
           </select>
         </td>
         <td>
-          <select className="input" style={{ minWidth: 130 }} aria-label={`סטטוס, ${i.title}`} value={i.status} onChange={(e) => setItemStatus(i.id, e.target.value)}>
+          <select className={`input status-select ${st?.tone ?? 'neutral'}`} aria-label={`סטטוס, ${i.title}`} value={i.status} onChange={(e) => setItemStatus(i.id, e.target.value)}>
             {ITEM_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
-          <div style={{ marginTop: 4 }}><Badge tone={st?.tone}>{st?.label}</Badge></div>
         </td>
         <td className="nowrap" style={overdue(i) ? { color: 'var(--danger)', fontWeight: 500 } : undefined}>
           {i.dueDate ? formatDM(parseISO(i.dueDate)) : '—'}{overdue(i) && <div style={{ fontSize: 12 }}>באיחור</div>}
