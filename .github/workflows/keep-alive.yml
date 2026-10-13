@@ -1,0 +1,21 @@
+name: Keep Supabase awake
+
+# Free Supabase projects pause after ~7 days without activity. A daily request reaches Postgres and resets that clock.
+# A 401/403 "permission denied" is the expected answer (anon has no table access); only network errors or 5xx mean trouble.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping database
+        env:
+          URL: https://qipycxgzmmnrafmnjtew.supabase.co
+          KEY: sb_publishable_dCpus-ZgF6297RfQVUJF1g_Ccytb2FL
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL/rest/v1/regions?select=id&limit=1" -H "apikey: $KEY")
+          echo "HTTP $code"
+          if [ "$code" -ge 500 ] || [ "$code" -eq 0 ]; then echo "Supabase unreachable or paused"; exit 1; fi
