@@ -15,12 +15,14 @@ import Schedule from './pages/admin/Schedule'
 import Planning from './pages/admin/Planning'
 import StaffReport from './pages/admin/StaffReport'
 import Login from './pages/Login'
+import Landing from './pages/Landing'
 
 // Role resolution (admin / companion / client) will come from auth; until then each surface has its own route.
 export default function App() {
   return (
     <>
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin" element={<RequireRole role="admin"><AdminLayout /></RequireRole>}>
         <Route index element={<Board />} />
