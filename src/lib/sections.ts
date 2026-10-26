@@ -3,7 +3,7 @@ import type { Role } from '../store/AuthStore'
 /** Admin app sections: tab id → route. */
 export const SECTION_PATHS: Record<string, string> = {
   board: '/admin', vendors: '/admin/vendors', clients: '/admin/clients', staff: '/admin/staff', schedule: '/admin/schedule',
-  planning: '/admin/planning', leads: '/admin/leads', finance: '/admin/finance', team: '/admin/team',
+  planning: '/admin/planning', leads: '/admin/leads', finance: '/admin/finance', materials: '/admin/materials', team: '/admin/team',
 }
 
 /** Sections an admin can give to office staff today (each one needs matching database policies). */

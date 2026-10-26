@@ -12,6 +12,7 @@ const TABS = [
   { id: 'planning', to: '/admin/planning', label: 'לוח ניהול' },
   { id: 'leads', to: '/admin/leads', label: 'לידים' },
   { id: 'finance', to: '/admin/finance', label: 'כספים' },
+  { id: 'materials', to: '/admin/materials', label: 'חומרים' },
   { id: 'team', to: '/admin/team', label: 'הרשאות' },
 ]
 
