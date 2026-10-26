@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../store/AuthStore'
-import { homeFor } from './RequireRole'
+import { homeFor, hasHome } from '../lib/sections'
 import { CONTACT, mailHref, telHref, waHref } from '../lib/contact'
 import '../styles/landing.css'
 
@@ -66,8 +66,8 @@ export function ContactBtn({ href, icon, variant = 'primary', children }: { href
 }
 
 export function LpNav({ onPolicy }: { onPolicy?: boolean }) {
-  const { session, role } = useAuth()
-  const enter = session && (role === 'admin' || role === 'companion') ? { to: homeFor(role), label: 'לאזור האישי' } : { to: '/login', label: 'כניסה' }
+  const { session, role, sections } = useAuth()
+  const enter = session && hasHome(role) ? { to: homeFor(role, sections), label: 'לאזור האישי' } : { to: '/login', label: 'כניסה' }
   return (
     <nav className="lp-nav" aria-label="ניווט ראשי">
       <div className="lp-wrap lp-nav-in">

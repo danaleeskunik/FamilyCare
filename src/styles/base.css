@@ -288,3 +288,8 @@ select.input { appearance: none; -webkit-appearance: none; padding-inline-end: 3
 .lead-notes { resize: vertical; min-height: 64px; }
 .lead-confirm { display: inline-flex; gap: 6px; }
 @media (max-width: 700px) { .lead-add { grid-template-columns: 1fr; } .lead-actions { width: 100%; } .lead-status { flex: 1 1 auto; } }
+
+/* Team permissions */
+.team-add { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 12px; padding: 14px 18px 18px; align-items: end; }
+.team-sections { display: flex; flex-wrap: wrap; gap: 14px; }
+@media (max-width: 700px) { .team-add { grid-template-columns: 1fr; } }

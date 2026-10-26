@@ -4,14 +4,15 @@ import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
 
 const TABS = [
-  { to: '/admin', label: 'לוח היום', end: true },
-  { to: '/admin/vendors', label: 'ספקים ובעלי מקצוע' },
-  { to: '/admin/clients', label: 'לקוחות' },
-  { to: '/admin/staff', label: 'מלווים' },
-  { to: '/admin/schedule', label: 'לו"ז מלווים' },
-  { to: '/admin/planning', label: 'לוח ניהול' },
-  { to: '/admin/leads', label: 'לידים' },
-  { to: '/admin/finance', label: 'כספים' },
+  { id: 'board', to: '/admin', label: 'לוח היום', end: true },
+  { id: 'vendors', to: '/admin/vendors', label: 'ספקים ובעלי מקצוע' },
+  { id: 'clients', to: '/admin/clients', label: 'לקוחות' },
+  { id: 'staff', to: '/admin/staff', label: 'מלווים' },
+  { id: 'schedule', to: '/admin/schedule', label: 'לו"ז מלווים' },
+  { id: 'planning', to: '/admin/planning', label: 'לוח ניהול' },
+  { id: 'leads', to: '/admin/leads', label: 'לידים' },
+  { id: 'finance', to: '/admin/finance', label: 'כספים' },
+  { id: 'team', to: '/admin/team', label: 'הרשאות' },
 ]
 
 export function Header({ title, sub, actions, tabs, lead }: {
@@ -39,7 +40,7 @@ export function Header({ title, sub, actions, tabs, lead }: {
 
 export default function AdminLayout() {
   const { openForm, loading, loadError, reload } = useStore()
-  const { fullName, signOut } = useAuth()
+  const { fullName, signOut, can } = useAuth()
   return (
     <>
       <Header
@@ -47,14 +48,14 @@ export default function AdminLayout() {
         sub=""
         actions={
           <>
-            <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>
-            <Button size="sm" icon="plus" onClick={() => openForm('task')}>משימה חדשה</Button>
+            {can('board') && <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>}
+            {can('board') && <Button size="sm" icon="plus" onClick={() => openForm('task')}>משימה חדשה</Button>}
             <Button variant="on-navy" size="sm" onClick={signOut}>התנתקות</Button>
           </>
         }
         tabs={
           <nav className="tabs" aria-label="ניווט ראשי">
-            {TABS.map((t) => (
+            {TABS.filter((t) => can(t.id)).map((t) => (
               <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
                 {t.label}
               </NavLink>

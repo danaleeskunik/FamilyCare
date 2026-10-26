@@ -4,18 +4,19 @@ import { Button, Card } from '../components/ui'
 import { TextField } from '../components/Fields'
 import { useAuth } from '../store/AuthStore'
 import { homeFor } from '../components/RequireRole'
+import { hasHome } from '../lib/sections'
 
 export default function Login() {
-  const { session, role, signIn } = useAuth()
+  const { session, role, sections, signIn } = useAuth()
   const nav = useNavigate()
   const loc = useLocation()
-  const from = (loc.state as { from?: string } | null)?.from ?? homeFor(role)
+  const from = (loc.state as { from?: string } | null)?.from ?? homeFor(role, sections)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  if (session && (role === 'admin' || role === 'companion')) return <Navigate to={homeFor(role)} replace />
+  if (session && hasHome(role)) return <Navigate to={homeFor(role, sections)} replace />
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
