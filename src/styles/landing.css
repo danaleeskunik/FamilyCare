@@ -135,11 +135,48 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-member a { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
 
 .lp-foot { background: var(--brand-deep); color: var(--on-brand-2); padding-block: 36px; }
+.lp-foot .lp-wrap { display: flex; flex-direction: column; gap: 22px; }
 .lp-foot-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
 .lp-foot nav { display: flex; flex-wrap: wrap; gap: 4px 8px; }
 .lp-foot nav a { display: inline-flex; align-items: center; min-height: var(--h-touch); padding: 0 12px; border-radius: 10px; color: var(--on-brand-3); font-size: 15px; }
 .lp-foot nav a:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.lp-foot-contact { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .12); }
+.lp-foot-contact .lp-btn { min-height: var(--h-touch); padding: 0 18px; font-size: 15px; }
 .lp-foot small { font-size: 14px; }
+
+/* Nav actions, plan buttons, pending contact buttons, floating contact */
+.lp-nav-end { display: flex; align-items: center; gap: 10px; }
+.lp-btn.solid { background: var(--brand-header); color: #fff; }
+.lp-btn.solid:hover { background: var(--brand-deep); color: #fff; }
+.lp-btn.pending { opacity: .7; cursor: default; }
+.lp-btn.pending:hover { transform: none; background: inherit; }
+.lp-btn.ghost.pending:hover { background: rgba(255, 255, 255, .08); }
+.lp-plan-cta { margin-top: auto; align-self: stretch; }
+.lp-plan ul { margin-bottom: 28px; }
+.lp-fine a { color: var(--brand-link); text-decoration: underline; text-underline-offset: 3px; }
+.lp-fab { position: fixed; z-index: 40; inset-inline-end: 16px; inset-block-end: calc(16px + env(safe-area-inset-bottom)); display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 20px; border-radius: 999px; background: var(--brand-bright); color: var(--on-bright); box-shadow: var(--shadow-lift); font: 500 16px/1 var(--font-ui); }
+.lp-fab:hover { background: #4BD3CB; color: var(--on-bright); }
+.lp-fab:focus-visible { outline: 3px solid var(--brand-header); outline-offset: 3px; }
+
+/* Five value cards: three on the first row, two centred below */
+.lp-grid.five { display: flex; flex-wrap: wrap; justify-content: center; }
+.lp-grid.five > * { flex: 0 1 calc((100% - 2 * var(--lp-gap)) / 3); }
+
+/* Policy page */
+.lp-doc { padding-block: clamp(40px, 7vw, 88px); }
+.lp-doc .lp-wrap { max-width: 780px; display: flex; flex-direction: column; gap: 20px; }
+.lp-doc-head h1 { font: 500 clamp(30px, 5vw, 44px)/1.2 var(--font-ui); }
+.lp-doc-head p { margin-top: 12px; color: var(--ink-2); font-size: 18px; }
+.lp-doc-sec { padding: 28px; border-radius: var(--lp-radius); background: var(--card); border: 1px solid var(--border-card); }
+.lp-doc-sec h2 { font: 500 22px/1.3 var(--font-ui); }
+.lp-doc-sec ul { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.lp-doc-sec li { position: relative; padding-inline-start: 22px; color: var(--ink-1); font-size: 16.5px; line-height: 1.7; }
+.lp-doc-sec li::before { content: ""; position: absolute; inset-inline-start: 0; inset-block-start: .8em; width: 8px; height: 8px; border-radius: 50%; background: var(--brand-action); }
+.lp-doc-sec > p { margin-top: 10px; color: var(--ink-2); font-size: 16.5px; }
+.lp-doc-sec .lp-cta { margin-top: 18px; }
+.lp-doc-sec .lp-btn.ghost { background: var(--card); color: var(--brand-header); border-color: var(--border-field); }
+.lp-doc-back { padding-top: 4px; }
+.lp-doc-back a { color: var(--brand-link); }
 
 /* Reveal on scroll (content stays visible without JS or with reduced motion) */
 .lp.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 600ms ease, transform 600ms ease; transition-delay: var(--d, 0ms); }
@@ -158,6 +195,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
   .lp-hero-in { grid-template-columns: 1fr; }
   .lp-hero-art { min-height: 340px; order: 2; }
   .lp-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lp-grid.five > * { flex-basis: calc((100% - var(--lp-gap)) / 2); }
   .lp-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lp-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 36px; }
   .lp-grid.plans { grid-template-columns: 1fr; max-width: 520px; margin-inline: auto; }
@@ -172,6 +210,10 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 }
 @media (max-width: 600px) {
   .lp { --lp-body: 16.5px; }
+  .lp-nav-contact { display: none; }
+  .lp-grid.five > * { flex-basis: 100%; }
+  .lp-doc-sec { padding: 22px; }
+  .lp-foot-contact .lp-btn { flex: 1 1 100%; }
   .lp-grid.three, .lp-grid.four, .lp-steps, .lp-family { grid-template-columns: 1fr; }
   .lp-cta .lp-btn { flex: 1 1 100%; }
   .lp-hero-art { min-height: 300px; }
@@ -181,4 +223,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
   .lp-faq summary { font-size: 17px; padding-inline: 18px; }
   .lp-faq details p { padding-inline: 18px; }
   .lp-foot-in { flex-direction: column; align-items: flex-start; }
+  .lp-fab span { display: none; }
+  .lp-fab { padding: 0; width: 56px; height: 56px; justify-content: center; }
 }
+.lp-member a { display: inline-flex; align-items: center; min-height: var(--h-touch); }
