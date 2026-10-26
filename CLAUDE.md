@@ -1,6 +1,6 @@
 # Family Care — מפת פרויקט
 
-פלטפורמת תפעול RTL בעברית למועדון קונסיירז' ללקוחות 65+. Vite 8 + React 19 + TS + react-router (basename `/FamilyCare/`) + Supabase. פריסה: GitHub Pages (Actions). ה-`.env` ציבורי (מפתח publishable).
+פלטפורמת תפעול RTL בעברית למועדון קונסיירז' ללקוחות 65+. Vite 8 + React 19 + TS + react-router (דומיין myfamilycareclub.com, base `/`) + Supabase. פריסה: GitHub Pages (Actions) על myfamilycareclub.com; DNS ב-Cloudflare; מיילים דרך Cloudflare Email Routing אל Gmail. ה-`.env` ציבורי (מפתח publishable).
 
 ## מבנה
 - `src/data/model.ts` — טיפוסי view-model וקבועים (חוזה בין DB ל-UI)
