@@ -112,9 +112,9 @@ const FAMILY: { icon: IconName; text: string }[] = [
 ]
 
 const PLANS = [
-  { name: 'Business', price: '2,950', meetings: 4, hours: 2, premium: false, featured: false },
-  { name: 'Platinum', price: '8,350', meetings: 8, hours: 3, premium: true, featured: true },
-  { name: 'Top Platinum', price: '15,950', meetings: 12, hours: 4, premium: true, featured: false },
+  { name: 'Business', price: '2,950', meetings: 4, hours: 2, premium: false, featured: false, calendar: '' },
+  { name: 'Platinum', price: '8,350', meetings: 8, hours: 3, premium: true, featured: true, calendar: 'ניהול יומן משפחה חלקי (בפגישות)' },
+  { name: 'Top Platinum', price: '15,950', meetings: 12, hours: 4, premium: true, featured: false, calendar: 'ניהול יומן משפחה ברמה יומית' },
 ]
 const PLAN_SHARED = ['מלווה אישית קבועה', 'תיק אישי עם כל הדגשים והצרכים', 'סיכום כתוב אחרי כל שירות', 'מוקד שירות אחד לכל בקשה']
 
@@ -297,7 +297,7 @@ export default function Landing() {
                 <li><Ico name="check" size={18} /> <strong>{p.meetings} פגישות בחודש</strong></li>
                 <li><Ico name="check" size={18} /> <strong>משך פגישה: {p.hours} שעות</strong></li>
                 <li><Ico name="check" size={18} /> זמינים בחירום 24/7</li>
-                {p.premium && <li><Ico name="check" size={18} /> ניהול יומן משפחה</li>}
+                {p.calendar && <li><Ico name="check" size={18} /> {p.calendar}</li>}
                 {p.premium && <li><Ico name="check" size={18} /> צ'ופרים לסופ"ש: זר פרחים, עיתון או חלה</li>}
                 {PLAN_SHARED.map((f) => (<li key={f}><Ico name="check" size={18} /> {f}</li>))}
               </ul>
