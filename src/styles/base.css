@@ -267,3 +267,24 @@ th .th-sub { display: block; margin-top: 2px; font: 400 11.5px var(--font-ui); c
 
 /* Selects: custom chevron with breathing room from the edge (native arrow hugs the border) */
 select.input { appearance: none; -webkit-appearance: none; padding-inline-end: 38px; background-repeat: no-repeat; background-position: left 14px center; background-size: 12px 8px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%235B6B7C' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E"); }
+
+/* Leads */
+.lead-add { display: grid; grid-template-columns: 1fr 220px auto; gap: 10px; padding: 14px 18px; align-items: center; }
+.lead-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.lead-bar .search { flex: 1 1 280px; min-width: 0; }
+.lead-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lead-list { display: flex; flex-direction: column; gap: 12px; }
+.lead { display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--border-card); border-inline-start: 4px solid var(--border-field); box-shadow: var(--shadow-card); }
+.lead.new { border-inline-start-color: var(--brand-bright); }
+.lead.talked { border-inline-start-color: var(--warning); }
+.lead.meeting { border-inline-start-color: var(--blue-500); }
+.lead.joined { border-inline-start-color: var(--success); }
+.lead.not_relevant { border-inline-start-color: var(--ink-4); opacity: .85; }
+.lead-top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.lead-id { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: 16px; }
+.lead-id strong { font-weight: 500; }
+.lead-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lead-status { width: auto; min-width: 150px; }
+.lead-notes { resize: vertical; min-height: 64px; }
+.lead-confirm { display: inline-flex; gap: 6px; }
+@media (max-width: 700px) { .lead-add { grid-template-columns: 1fr; } .lead-actions { width: 100%; } .lead-status { flex: 1 1 auto; } }

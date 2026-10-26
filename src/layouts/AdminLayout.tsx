@@ -10,6 +10,7 @@ const TABS = [
   { to: '/admin/staff', label: 'מלווים' },
   { to: '/admin/schedule', label: 'לו"ז מלווים' },
   { to: '/admin/planning', label: 'לוח ניהול' },
+  { to: '/admin/leads', label: 'לידים' },
   { to: '/admin/finance', label: 'כספים' },
 ]
 

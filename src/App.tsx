@@ -17,6 +17,7 @@ import StaffReport from './pages/admin/StaffReport'
 import Login from './pages/Login'
 import Landing from './pages/Landing'
 import Policy from './pages/Policy'
+import Leads from './pages/admin/Leads'
 
 // Role resolution (admin / companion / client) will come from auth; until then each surface has its own route.
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="staff/:id" element={<StaffReport />} />
         <Route path="schedule" element={<Schedule />} />
         <Route path="planning" element={<Planning />} />
+        <Route path="leads" element={<Leads />} />
         <Route path="finance" element={<Finance />} />
         <Route path="calendar" element={<Calendar />} />
       </Route>

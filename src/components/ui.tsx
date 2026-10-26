@@ -13,6 +13,7 @@ const ICONS: Record<string, string> = {
   calendar: 'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4',
   'chevron-left': 'M14 6l-6 6 6 6',
   'chevron-right': 'M10 6l6 6-6 6',
+  phone: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z',
   image: 'M3 5h18v14H3zM7 13l3-3 4 4 3-2M8.5 7.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z',
 }
 
