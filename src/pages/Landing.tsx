@@ -105,16 +105,16 @@ const VALUES: { icon: IconName; title: string; text: string }[] = [
 const FAMILY: { icon: IconName; text: string }[] = [
   { icon: 'heart', text: 'תחושת ביטחון שההורים שלכם בידיים טובות, בליווי אנשי צוות אחראים' },
   { icon: 'clock', text: 'זמן פנוי יותר לקריירה ולילדים, בלי להתפשר על הדאגה להורים' },
-  { icon: 'doc', text: 'סיכום כתוב אחרי כל ביקור, בלי לרדוף אחרי עדכונים' },
-  { icon: 'user', text: 'תיק אישי שמרכז דגשים, העדפות, תרופות ואנשי קשר' },
+  { icon: 'users', text: 'המשפחה מלווה על ידי מלווה אישי שמתאים לצרכי המשפחה, ברגישות המתאימה' },
+  { icon: 'doc', text: 'תיק אישי שמרכז דגשים, העדפות, תרופות ואנשי קשר, וסיכום אחרי כל ביקור' },
   { icon: 'shield', text: 'בעלי מקצוע עם רישיון וביטוח בתוקף, ללא ממשק ישיר מול קבלנים' },
   { icon: 'chat', text: 'חשבונית חודשית אחת, במקום תשלום לכל ספק בנפרד' },
 ]
 
 const PLANS = [
-  { name: 'ביזנס', price: '2,950', meetings: 4, hours: 2, premium: false, featured: false },
-  { name: 'פלטינום', price: '8,350', meetings: 8, hours: 3, premium: true, featured: true },
-  { name: 'טופ פלטינום', price: '15,950', meetings: 12, hours: 4, premium: true, featured: false },
+  { name: 'Business', price: '2,950', meetings: 4, hours: 2, premium: false, featured: false },
+  { name: 'Platinum', price: '8,350', meetings: 8, hours: 3, premium: true, featured: true },
+  { name: 'Top Platinum', price: '15,950', meetings: 12, hours: 4, premium: true, featured: false },
 ]
 const PLAN_SHARED = ['מלווה אישית קבועה', 'תיק אישי עם כל הדגשים והצרכים', 'סיכום כתוב אחרי כל שירות', 'מוקד שירות אחד לכל בקשה']
 
@@ -251,7 +251,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <Section id="services" title="הכול תחת קורת גג אחת" lead="שירות קונסיירז' אישי שמוריד מכם את העומס היומיומי ומחזיר לכם זמן, רוגע ואיכות חיים.">
+      <Section id="services" title="הכול תחת קורת גג אחת" lead="שירות קונסיירז' אישי שמוריד מכם את העומס היומיומי ומחזיר לכם חיים.">
         <ServiceGrid />
       </Section>
 

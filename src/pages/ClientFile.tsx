@@ -9,10 +9,12 @@ import { useStore } from '../store/AppStore'
 import { loadClientDetail, shortName, type ClientDetail } from '../lib/queries'
 import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
 import { TODAY } from '../data/model'
+import IntakeTab from './IntakeTab'
 
 const TABS = [
   ['med', 'רפואי ותפקודי'],
   ['pref', 'העדפות אישיות'],
+  ['intake', 'שאלון היכרות'],
   ['hist', 'היסטוריית שירות'],
   ['fin', 'כספים ומנוי'],
 ] as const
@@ -404,6 +406,7 @@ export default function ClientFile() {
             <Notes d={d} onChanged={refetch} />
             {tab === 'med' && <Medical d={d} />}
             {tab === 'pref' && <Preferences d={d} />}
+            {tab === 'intake' && <IntakeTab clientId={c.id} name={c.full_name} />}
             {tab === 'hist' && <History d={d} />}
             {tab === 'fin' && <Finance d={d} />}
           </div>

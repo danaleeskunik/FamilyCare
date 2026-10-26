@@ -308,3 +308,12 @@ select.input { appearance: none; -webkit-appearance: none; padding-inline-end: 3
 .vendor-note p { line-height: 1.65; font-size: 15px; white-space: pre-wrap; }
 .vendor-stars { color: var(--warning); letter-spacing: 2px; }
 @media (max-width: 700px) { .vendor-note-form { grid-template-columns: 1fr; } }
+
+/* Intake questionnaire */
+.intake-q { padding: 10px 0; border-bottom: 1px solid var(--border-hair); }
+.intake-q:last-child { border-bottom: 0; }
+.intake-label { color: var(--ink-2); font-size: 13.5px; line-height: 1.5; margin-bottom: 4px; }
+.intake-a { font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
+.intake-form { display: flex; flex-direction: column; gap: 18px; }
+.intake-sec { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; border: 0; }
+.intake-sec legend { padding: 0 0 8px; color: var(--brand-link); font: 500 16px/1.4 var(--font-ui); }
