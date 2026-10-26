@@ -1,15 +1,90 @@
 import { Link } from 'react-router-dom'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { CONTACT, mailHref, telHref, waHref } from '../lib/contact'
 import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, type IconName, useReveal } from '../components/LandingChrome'
 
-const SERVICES: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'home', title: 'ניהול משק הבית', text: 'תשלומי חשבונות, קביעת תורים, תרופות ומרשמים, קניות וסידורים. כל מה שמבלבל מטופל בשבילכם.' },
-  { icon: 'tools', title: 'תחזוקת הבית', text: 'אינסטלטור, חשמלאי, טכנאי מיזוג, מנעולן ועוד. נציג מטעמנו מתאם, מלווה את העבודה ובודק את התוצאה.' },
-  { icon: 'medical', title: 'ליווי רפואי', text: 'ליווי לרופאים, לבדיקות ולבית המרקחת, והמתנה לצידם. מלווה קבועה שמכירה אותם ואת הצרכים שלהם.' },
-  { icon: 'phone', title: 'טכנולוגיה ודיגיטל', text: 'טלפון, טלוויזיה, אינטרנט ו-WhatsApp. מגיעים הביתה, מסדרים ומסבירים בסבלנות.' },
-  { icon: 'music', title: 'תרבות ופנאי', text: 'בית קפה, קונצרט, הצגה, מוזיאון, טיול או אירוע משפחתי. וגם חופשות: תיאום מקצה לקצה של כרטיסים, הסעות, מלונות וליווי צמוד לנסיעה.' },
-  { icon: 'legal', title: 'ליווי משפטי וביורוקרטי', text: 'הכנת מסמכים, חיבור לעורכי דין ולאנשי מקצוע מתאימים, וליווי לפגישות והליכים.' },
+type Service = { icon: IconName; title: string; text: string; lead: string; groups: { title?: string; items: string[] }[]; note?: string }
+
+const SERVICES: Service[] = [
+  {
+    icon: 'home', title: 'ניהול משק הבית',
+    text: 'תשלומי חשבונות, קביעת תורים, תרופות ומרשמים, קניות וסידורים. כל מה שמבלבל מטופל בשבילכם.',
+    lead: 'המשימות היומיומיות של הבית דורשות זמן וקשב. אנחנו לוקחים עליהן אחריות, לנוחות המשפחה ולשקט הנפשי של יקיריכם.',
+    groups: [{ items: [
+      'רכישת תרופות ומזון ייחודי',
+      'רכב: טיפולים, טסט, שטיפה ותקלות',
+      'כביסה: הזמנת שירותי כביסה הביתה וסידור בארון',
+      'ניהול יומן: תרופות, תורים לרופא, אירועים משפחתיים, תזכורות ואירועי תרבות',
+      'ניהול הוצאות הבית',
+      'קניות ומשלוחים ממעדניות וקצביות איכות לבחירתכם',
+      'תשלומים וטיפול בבירוקרטיה: בנק, דואר, חברת חשמל, מים, ארנונה וקופת חולים, כולל תיאום טפסי 17',
+      'תיאום מול מוסדות: בנק, דואר, קופת חולים, בית חולים, ביטוח לאומי, משרד הפנים ועירייה',
+    ] }],
+  },
+  {
+    icon: 'tools', title: 'תחזוקת הבית',
+    text: 'אינסטלטור, חשמלאי, טכנאי מיזוג, מנעולן ועוד. נציג מטעמנו מתאם, מלווה את העבודה ובודק את התוצאה.',
+    lead: 'אנחנו עובדים עם בעלי מקצוע שעברו את אישורנו. מתאמים את השירות ומלווים אותו, ודואגים למחיר הוגן, לאיכות העבודה ולניקיון, בשקיפות מלאה.',
+    groups: [
+      { title: 'תיקונים והתקנות', items: ['מיזוג אוויר, דודי שמש וחימום מים', 'חשמלאי, אינסטלטור וטכנאי גז', 'אינטרקום וקודנים, מצלמות ואזעקה', 'תיקון תריסים וחלונות, מנעולן, הנדימן', 'גינון, צבע, ריסוס ותיקון נזילות'] },
+      { title: 'רכש', items: ['אביזרי חשמל, רהיטים וכל מה שיידרש בבית'] },
+      { title: 'מערכות וציוד בטיחות', items: ['ציוד גילוי אש ולחצן מצוקה', 'התקנת מעקות וידיות בחדרים הרלוונטיים'] },
+    ],
+    note: 'אנחנו מלווים משלב הבחירה, דרך הרכש ועד ההתקנה, כולל הדרכה.',
+  },
+  {
+    icon: 'medical', title: 'ליווי רפואי',
+    text: 'ליווי לרופאים, לבדיקות ולבית המרקחת, והמתנה לצידם. מלווה קבועה שמכירה אותם ואת הצרכים שלהם.',
+    lead: 'צוות Family Care מלווה בביקור אצל הרופא או המטפל, לתחושת ביטחון וטיפול מיטבי. אפשר לקבל שירות רפואי גם בבית, ממגוון התמחויות, ובשיתוף פעולה עם המדיקל סנטר בהרצליה.',
+    groups: [
+      { title: 'רופאים ומטפלים', items: ['רופא משפחה', 'רופא אף אוזן גרון', 'אורתופד', 'קרדיולוג', 'פסיכולוג', 'פיזיותרפיסט'] },
+      { title: 'שירותים בבית ובדרך', items: ['בדיקות דם, שתן וצואה', 'צילום רנטגן ביתי', 'רפואת עיניים ביתית', 'מרשמים ותרופות מיידיים', 'שיחות עם רופא בטלפון', 'אחות מלווה צמודה בשהייה בבית חולים'] },
+    ],
+  },
+  {
+    icon: 'phone', title: 'טכנולוגיה ודיגיטל',
+    text: 'טלפון, טלוויזיה, אינטרנט ו-WhatsApp. מגיעים הביתה, מסדרים ומסבירים בסבלנות.',
+    lead: 'כשהטלוויזיה לא עובדת, אין אינטרנט בבית או שהטלפון תקוע, אנחנו מגיעים מיד, מתקנים ומדריכים באדיבות לתפעול נכון.',
+    groups: [{ items: [
+      'טלפונים ניידים וטאבלטים: תיקוני שבר, עדכוני תוכנה, התקנת אפליקציות, הגדרות והדרכה',
+      'אינטרנט ו-WiFi בבית: התקנה והדרכה',
+      'טלוויזיה חכמה וכבלים: תקלות, הגדרות, טיפול מול חברת הכבלים (YES, HOT, Partner) ותפעול השלט',
+      'מחשב ביתי ומדפסת: לימוד והדרכה, ובדיקה שהכול עובד כנדרש',
+      'הדרכה למשפחה ולבני הגיל השלישי בתפעול אפליקציות ובינה מלאכותית',
+    ] }],
+  },
+  {
+    icon: 'music', title: 'תרבות ופנאי',
+    text: 'בית קפה, קונצרט, הצגה, מוזיאון, טיול או אירוע משפחתי. וגם חופשות: תיאום מקצה לקצה של כרטיסים, הסעות, מלונות וליווי צמוד לנסיעה.',
+    lead: 'זמן איכות וחברה שומרים על שמחת החיים ועל העצמאות. אנחנו אחראים על התיאום המלא: הזמנות, נסיעה ביחד ברכב החברה, וליווי הבילוי מתחילתו ועד סופו.',
+    groups: [{ items: [
+      'לשבת ביחד, לקרוא עיתון או סתם לדבר',
+      'בית קפה ומסעדה',
+      'קונצרט, מוזיאונים וקולנוע',
+      'טיול בטבע או בקניון',
+      'ליווי והסעה לאירועים משפחתיים, כמו ימי הולדת',
+      'חיבור למרכזי קהילה, למשחקים ולהכרות עם חברים חדשים',
+      'פעילות גופנית',
+      'עבודת שורשים על המשפחה',
+      'חופשות: כרטיסים, הסעות, מלונות וליווי צמוד לנסיעה',
+    ] }],
+  },
+  {
+    icon: 'legal', title: 'ליווי משפטי וביורוקרטי',
+    text: 'ייפוי כוח, צוואות, אפוטרופסות, גישור משפחתי ועוד, בליווי אנשי מקצוע מתאימים.',
+    lead: 'ליווי משפטי לגיל השלישי שומר על הצרכים, האינטרסים והנכסים שלכם, ומאפשר לקבל החלטות בהסכמה רחבה במשפחה, לפני רגעי משבר.',
+    groups: [{ items: [
+      'מינוי אפוטרופוס',
+      'ייפוי כוח להנחיות וטיפול רפואי',
+      'ייפוי כוח נוטריוני וייפוי כוח מתמשך',
+      'צוואות ודיני ירושה',
+      'גישור במשפחה',
+      'טיפול במקרקעין וברכוש שצברתם, כולל העברתו לדורות הבאים',
+      'תביעות למימוש זכויות לפי דין או חוזה ביטוח',
+      'הסכמי התקשרות במעבר לדיור מוגן או למוסד אחר',
+    ] }],
+    note: 'כולל התייעצות עם עורך דין לענייני משפחה.',
+  },
 ]
 
 const STEPS = [
@@ -53,6 +128,72 @@ const FAQ = [
   { q: 'באילו אזורים אתם פועלים?', a: `כרגע ב${REGIONS.slice(0, -1).join(', ')} ו${REGIONS[REGIONS.length - 1]}.` },
   { q: 'איך משלמים?', a: 'מנוי חודשי לפי המסלול, וחשבונית חודשית אחת למזמין/ת השירות. עלות בעלי מקצוע ורכישות נוספת בהתאם להזמנה.' },
 ]
+
+function ServiceGrid() {
+  const [open, setOpen] = useState<number | null>(null)
+  const popRef = useRef<HTMLDivElement>(null)
+  const triggers = useRef<(HTMLButtonElement | null)[]>([])
+
+  const close = (restoreFocus = true) => {
+    setOpen((cur) => {
+      if (cur !== null && restoreFocus) triggers.current[cur]?.focus()
+      return null
+    })
+  }
+
+  useEffect(() => {
+    if (open === null) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    document.addEventListener('keydown', onKey)
+    const el = popRef.current
+    el?.querySelector<HTMLButtonElement>('.lp-pop-x')?.focus({ preventScroll: true })
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  return (
+    <>
+    {open !== null && <div className="lp-pop-bd" onClick={() => close(false)} aria-hidden="true" />}
+    <div className="lp-grid three">
+      {SERVICES.map((s, i) => (
+        <div key={s.title} className="lp-svc reveal" data-open={open === i} style={delay(i * 60)}>
+          <button
+            type="button"
+            ref={(el) => { triggers.current[i] = el }}
+            className="lp-card"
+            aria-haspopup="dialog"
+            aria-expanded={open === i}
+            aria-controls={`svc-pop-${i}`}
+            onClick={() => setOpen(open === i ? null : i)}
+          >
+            <span className="lp-ico"><Ico name={s.icon} /></span>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+            <span className="lp-more">למידע נוסף <Ico name="plus" size={16} /></span>
+          </button>
+          {open === i && (
+            <div className="lp-pop" id={`svc-pop-${i}`} role="dialog" aria-labelledby={`svc-pop-t-${i}`} ref={popRef}>
+              <div className="lp-pop-head">
+                <span className="lp-ico sm"><Ico name={s.icon} size={20} /></span>
+                <h3 id={`svc-pop-t-${i}`}>{s.title}</h3>
+                <button type="button" className="lp-pop-x" aria-label="סגירה" onClick={() => close()}><Ico name="x" size={20} /></button>
+              </div>
+              <p className="lp-pop-lead">{s.lead}</p>
+              {s.groups.map((g) => (
+                <div key={g.title ?? 'main'} className="lp-pop-group">
+                  {g.title && <h4>{g.title}</h4>}
+                  <ul>{g.items.map((it) => (<li key={it}>{it}</li>))}</ul>
+                </div>
+              ))}
+              {s.note && <p className="lp-pop-note">{s.note}</p>}
+              <a className="lp-btn sm solid lp-pop-cta" href="#contact" onClick={() => close(false)}>רוצים לשמוע עוד? צרו קשר</a>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+    </>
+  )
+}
 
 function Section({ id, tone, title, lead, children }: { id: string; tone?: 'white' | 'dark'; title: string; lead?: string; children: ReactNode }) {
   return (
@@ -111,15 +252,7 @@ export default function Landing() {
       </header>
 
       <Section id="services" title="הכול תחת קורת גג אחת" lead="שירות קונסיירז' אישי שמוריד מכם את העומס היומיומי ומחזיר לכם זמן, רוגע ואיכות חיים.">
-        <div className="lp-grid three">
-          {SERVICES.map((s, i) => (
-            <article key={s.title} className="lp-card reveal" style={delay(i * 60)}>
-              <span className="lp-ico"><Ico name={s.icon} /></span>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </article>
-          ))}
-        </div>
+        <ServiceGrid />
       </Section>
 
       <Section id="how" tone="white" title="איך זה עובד" lead="פשוט, אישי, ובקצב שלכם.">
@@ -163,7 +296,7 @@ export default function Landing() {
               <ul>
                 <li><Ico name="check" size={18} /> <strong>{p.meetings} פגישות בחודש</strong></li>
                 <li><Ico name="check" size={18} /> <strong>משך פגישה: {p.hours} שעות</strong></li>
-                {p.premium && <li><Ico name="check" size={18} /> זמינות בחירום</li>}
+                <li><Ico name="check" size={18} /> זמינים בחירום 24/7</li>
                 {p.premium && <li><Ico name="check" size={18} /> ניהול יומן משפחה</li>}
                 {p.premium && <li><Ico name="check" size={18} /> צ'ופרים לסופ"ש: זר פרחים, עיתון או חלה</li>}
                 {PLAN_SHARED.map((f) => (<li key={f}><Ico name="check" size={18} /> {f}</li>))}

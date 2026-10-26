@@ -24,6 +24,8 @@ const PATHS = {
   mail: 'M3 6h18v12H3zM3 7l9 6 9-6',
   down: 'M6 9l6 6 6-6',
   arrow: 'M19 12H5M11 6l-6 6 6 6',
+  plus: 'M12 5v14M5 12h14',
+  x: 'M6 6l12 12M18 6L6 18',
   pin: 'M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
 } as const
 export type IconName = keyof typeof PATHS
