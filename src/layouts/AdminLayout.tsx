@@ -48,6 +48,7 @@ export default function AdminLayout() {
         sub=""
         actions={
           <>
+            <Link to="/" className="btn on-navy sm"><Icon name="home" size={16} />לאתר החברה</Link>
             {can('board') && <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>}
             {can('board') && <Button size="sm" icon="plus" onClick={() => openForm('task')}>משימה חדשה</Button>}
             <Button variant="on-navy" size="sm" onClick={signOut}>התנתקות</Button>

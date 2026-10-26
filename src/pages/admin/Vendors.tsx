@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { Badge, Button, Callout, Card, CardHead, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
@@ -34,7 +35,7 @@ export default function Vendors() {
             <tbody>
               {rows.map((v) => (
                 <tr key={v.id}>
-                  <td className="name">{v.name}</td>
+                  <td className="name"><Link to={`/admin/vendors/${v.id}`} aria-label={`תיק הספק ${v.name}`}>{v.name}</Link></td>
                   <td>{v.field}</td>
                   <td>{v.area}</td>
                   <td>{v.price}</td>

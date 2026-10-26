@@ -3,6 +3,8 @@ import Modal from './Modal'
 import { Button } from './ui'
 import { CheckGroup, SelectField, TextAreaField, TextField } from './Fields'
 import { useStore } from '../store/AppStore'
+import { useAuth } from '../store/AuthStore'
+import { supabase } from '../lib/supabase'
 import { DEPENDENCY_LEVELS, ITEM_KINDS, ITEM_STATUSES, JOB_TITLES, TASK_STATUSES, TODAY } from '../data/model'
 import { DAY_NAMES, addDays, formatDM, parseISO, toISO } from '../lib/dates'
 import { fetchClientForEdit, fetchStaffForEdit, fetchVendorForEdit, shortName } from '../lib/queries'
@@ -433,21 +435,54 @@ const KIND_LABEL = { task: 'המשימה', client: 'הלקוח/ה', vendor: 'ה�
 
 export function DeleteHost() {
   const { pendingDelete, cancelDelete, confirmDelete } = useStore()
+  const { isOwner, session } = useAuth()
   const [busy, setBusy] = useState(false)
+  const [pw, setPw] = useState('')
+  const [pwError, setPwError] = useState('')
+  const pendingId = pendingDelete?.id
+  useEffect(() => { setPw(''); setPwError('') }, [pendingId])
   if (!pendingDelete) return null
+
+  // Deleting a client needs the owner's approval: only the owner can do it, and only after re-entering the password.
+  const needsOwner = pendingDelete.kind === 'client'
+  const run = async () => {
+    setBusy(true)
+    setPwError('')
+    if (needsOwner) {
+      const { error } = await supabase.auth.signInWithPassword({ email: session?.user.email ?? '', password: pw })
+      if (error) { setPwError('הסיסמה שגויה'); setBusy(false); return }
+    }
+    await confirmDelete()
+    setBusy(false)
+  }
+
+  if (needsOwner && !isOwner) {
+    return (
+      <Modal title="מחיקת הלקוח/ה" onClose={cancelDelete} footer={<Button variant="secondary" onClick={cancelDelete}>הבנתי</Button>}>
+        <p style={{ font: '500 15px/1.5 var(--font-ui)', marginBottom: 8 }}>מחיקת לקוח/ה דורשת אישור של אלון קוניק.</p>
+        <p className="muted" style={{ lineHeight: 1.55 }}>רק אלון, אחרי הזדהות והקלדת הסיסמה שלו, יכול למחוק לקוח/ה. אפשר לבקש ממנו למחוק את {pendingDelete.name}.</p>
+      </Modal>
+    )
+  }
+
   return (
     <Modal
       title={`מחיקת ${KIND_LABEL[pendingDelete.kind]}`}
       onClose={cancelDelete}
       footer={
         <>
-          <Button variant="danger" disabled={busy} onClick={async () => { setBusy(true); await confirmDelete(); setBusy(false) }}>{busy ? 'מוחקת…' : 'כן, למחוק'}</Button>
+          <Button variant="danger" disabled={busy || (needsOwner && !pw)} onClick={run}>{busy ? 'מוחקת…' : 'כן, למחוק'}</Button>
           <Button variant="quiet" onClick={cancelDelete}>ביטול</Button>
         </>
       }
     >
-      <p style={{ font: '700 15px/1.5 var(--font-ui)', marginBottom: 8 }}>למחוק את {pendingDelete.name}?</p>
+      <p style={{ font: '500 15px/1.5 var(--font-ui)', marginBottom: 8 }}>למחוק את {pendingDelete.name}?</p>
       <p className="muted" style={{ lineHeight: 1.55 }}>{pendingDelete.warning}</p>
+      {needsOwner && (
+        <div style={{ marginTop: 14 }}>
+          <TextField label="לאישור, הקלידי את הסיסמה שלך" type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} error={pwError} />
+        </div>
+      )}
     </Modal>
   )
 }

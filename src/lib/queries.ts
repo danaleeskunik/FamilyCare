@@ -195,6 +195,7 @@ export async function loadAll(): Promise<Loaded> {
     vendorId: r.vendor_id, vendor: one<Row>(r.vendors)?.name ?? null, status: r.status, notes: r.notes ?? '',
   }))
   const admins: AdminUser[] = adminsR.map((r) => ({ id: r.id, name: r.full_name || 'ללא שם' }))
+  clients.sort((a, b) => a.name.localeCompare(b.name, 'he'))
   return { regions, plans, tasks, clients, vendors, staff, invoices, slots, decisions, pricing, items, admins }
 }
 

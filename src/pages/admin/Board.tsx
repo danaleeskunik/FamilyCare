@@ -1,5 +1,8 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Badge, Button, Callout, Card, CardHead, RowActions, StatCard, money } from '../../components/ui'
 import { TODAY } from '../../data/model'
+import { formatDM, parseISO } from '../../lib/dates'
 import { useStore } from '../../store/AppStore'
 import RegionFilter from '../../components/RegionFilter'
 import DaySummary from './DaySummary'
@@ -10,12 +13,26 @@ function countBy(list: { region: string }[]) {
   return m
 }
 
+const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+
 export default function Board() {
-  const { tasks, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete } = useStore()
+  const { tasks, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete, decisions, pricing } = useStore()
+  const nav = useNavigate()
+  const [view, setView] = useState<'today' | 'unassigned'>('today')
   const today = tasks.filter((t) => t.date === TODAY).sort((a, b) => a.time.localeCompare(b.time))
+  // Upcoming visits nobody has been assigned to.
+  const unassigned = tasks.filter((t) => !t.who && t.statusKey !== 'cancelled' && t.date >= TODAY).sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+  const base = view === 'today' ? today : unassigned
   // Empty selection = all regions.
-  const rows = region.length ? today.filter((t) => region.includes(t.region)) : today
-  const unassigned = tasks.filter((t) => !t.who)
+  const rows = region.length ? base.filter((t) => region.includes(t.region)) : base
+  const completedToday = today.filter((t) => t.statusKey === 'completed').length
+  // Visits that ran past the plan by the grace period and still wait for a billing decision.
+  const openOvertime = tasks.filter((t) => t.staffId && t.end && t.checkedIn && t.checkedOut
+    && toMin(t.checkedOut) - toMin(t.checkedIn) - (toMin(t.end) - toMin(t.time)) >= pricing.graceMinutes && !decisions[t.id]).length
+  const goTo = (id: string, next?: 'today' | 'unassigned') => {
+    if (next) setView(next)
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+  }
   const unassignedToday = today.filter((t) => !t.who)
   const unassignedNote = unassignedToday.length === 0 ? 'אף אחת מהן לא להיום'
     : unassignedToday.length === 1 ? `אחת מהן להיום ${unassignedToday[0].time}` : `${unassignedToday.length} מהן להיום`
@@ -23,19 +40,21 @@ export default function Board() {
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="משימות היום" figure={4 + today.length} note={`4 הושלמו · ${today.length} בהמשך היום`} />
-        <StatCard label="ממתין לשיבוץ" figure={2 + unassigned.length} note={unassignedNote} color="var(--danger)" />
-        <StatCard label="חריגות פתוחות" figure="2" note="דורשות תחקיר ומענה למשפחה" color="var(--warning)" />
-        <StatCard label="הכנסות ספטמבר" figure={money(112400)} note="דמי חברות + העמסות" />
+        <StatCard label="משימות היום" figure={today.length} note={`${completedToday} הושלמו · ${today.length - completedToday} בהמשך היום`} onClick={() => goTo('board-tasks', 'today')} />
+        <StatCard label="ממתין לשיבוץ" figure={unassigned.length} note={unassignedNote} color="var(--danger)" onClick={() => goTo('board-tasks', 'unassigned')} />
+        <StatCard label="חריגות פתוחות" figure={openOvertime} note="ממתינות להחלטת חיוב ושכר" color="var(--warning)" onClick={() => goTo('day-summary')} />
+        <StatCard label="הכנסות ספטמבר" figure={money(112400)} note="דמי חברות + העמסות" onClick={() => nav('/admin/finance')} />
       </div>
 
       <Callout tone="warning" title="דורש החלטה עכשיו">
         מרים אדלר — הדרכת WhatsApp ב-16:00 עדיין ללא מלווה. שני מלווים זמינים באזור הרצליה. דניאל כ. דיווח על ירידה בתיאבון אצל יעקב ברנע — ממתין לפתיחת תחקיר.
       </Callout>
 
+      <div id="board-tasks" className="anchor">
       <Card flush>
-        <CardHead title="משימות היום">
-          <RegionFilter regions={regions.map((r) => r.name)} counts={countBy(today)} selected={region} onChange={setRegion} />
+        <CardHead title={view === 'today' ? 'משימות היום' : 'ממתינות לשיבוץ'}>
+          {view === 'unassigned' && <Button size="sm" variant="secondary" onClick={() => setView('today')}>חזרה למשימות היום</Button>}
+          <RegionFilter regions={regions.map((r) => r.name)} counts={countBy(base)} selected={region} onChange={setRegion} />
         </CardHead>
         <div className="table-wrap">
           <table>
@@ -45,7 +64,7 @@ export default function Board() {
             <tbody>
               {rows.map((t) => (
                 <tr key={t.id}>
-                  <td className="num">{t.time}</td>
+                  <td className="num nowrap">{view === 'unassigned' ? `${formatDM(parseISO(t.date))} · ${t.time}` : t.time}</td>
                   <td>{t.region}</td>
                   <td className="name">{t.client}</td>
                   <td>{t.task}</td>
@@ -55,14 +74,15 @@ export default function Board() {
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={7} style={{ color: 'var(--ink-2)' }}>אין משימות בערים שנבחרו היום. אפשר לבחור עיר אחרת או ליצור משימה חדשה.</td></tr>
+                <tr><td colSpan={7} style={{ color: 'var(--ink-2)' }}>{view === 'today' ? 'אין משימות בערים שנבחרו היום. אפשר לבחור עיר אחרת או ליצור משימה חדשה.' : 'אין ביקורים שממתינים לשיבוץ בערים שנבחרו.'}</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </Card>
+      </div>
 
-      <DaySummary />
+      <div id="day-summary" className="anchor"><DaySummary /></div>
 
       <div className="grid cols-3" style={{ alignItems: 'start' }}>
         <Card>

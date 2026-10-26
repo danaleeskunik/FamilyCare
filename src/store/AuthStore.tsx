@@ -8,6 +8,8 @@ type Auth = {
   role: Role | null
   /** Sections an office user may open (admins can open everything). */
   sections: string[]
+  /** Only the owner may delete clients (re-checked in the database). */
+  isOwner: boolean
   can: (section: string) => boolean
   fullName: string
   loading: boolean
@@ -20,7 +22,7 @@ const Ctx = createContext<Auth | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [profile, setProfile] = useState<{ role: Role; fullName: string; sections: string[] } | null>(null)
+  const [profile, setProfile] = useState<{ role: Role; fullName: string; sections: string[]; isOwner: boolean } | null>(null)
   const [ready, setReady] = useState(false) // initial getSession finished
   const [profileLoading, setProfileLoading] = useState(false)
   const [loadedUid, setLoadedUid] = useState<string | null>(null) // user whose profile has finished loading
@@ -40,14 +42,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     setProfileLoading(true)
-    // "sections" arrives with migration 0014: fall back to the old shape so nobody is locked out before it runs.
+    // Newer columns arrive with later migrations: fall back to the older shape so nobody is locked out before they run.
     void (async () => {
-      let res = await supabase.from('profiles').select('role, full_name, sections').eq('id', uid).maybeSingle()
-      if (res.error) res = (await supabase.from('profiles').select('role, full_name').eq('id', uid).maybeSingle()) as typeof res
+      type P = { role: string; full_name: string; sections?: string[] | null; is_owner?: boolean | null }
+      let d: P | null = null
+      let failure: unknown = null
+      for (const cols of ['role, full_name, sections, is_owner', 'role, full_name, sections', 'role, full_name']) {
+        const r = await supabase.from('profiles').select(cols).eq('id', uid).maybeSingle()
+        if (!r.error) { d = r.data as unknown as P | null; failure = null; break }
+        failure = r.error
+      }
       if (cancelled) return
-      if (res.error) console.error('profile load failed', res.error)
-      const d = res.data as { role: string; full_name: string; sections?: string[] | null } | null
-      setProfile(d ? { role: d.role as Role, fullName: d.full_name, sections: d.sections ?? [] } : null)
+      if (failure) console.error('profile load failed', failure)
+      setProfile(d ? { role: d.role as Role, fullName: d.full_name, sections: d.sections ?? [], isOwner: !!d.is_owner } : null)
       setLoadedUid(uid)
       setProfileLoading(false)
     })()
@@ -63,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => { await supabase.auth.signOut() }, [])
 
   const value = useMemo<Auth>(() => ({
-    session, role: profile?.role ?? null, sections: profile?.sections ?? [],
+    session, role: profile?.role ?? null, sections: profile?.sections ?? [], isOwner: !!profile?.isOwner,
     can: (section: string) => profile?.role === 'admin' || (profile?.role === 'office' && profile.sections.includes(section)),
     fullName: profile?.fullName ?? '', loading: !ready || profileLoading || (!!session && loadedUid !== session.user.id), signIn, signOut,
   }), [session, profile, ready, profileLoading, loadedUid, signIn, signOut])

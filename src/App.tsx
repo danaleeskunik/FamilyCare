@@ -21,6 +21,7 @@ import Landing from './pages/Landing'
 import Policy from './pages/Policy'
 import Leads from './pages/admin/Leads'
 import Team from './pages/admin/Team'
+import VendorFile from './pages/admin/VendorFile'
 
 /** The admin shell is for admins and office staff; each page then checks its own section. */
 function RequireAnyStaff({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/admin" element={<RequireAnyStaff><AdminLayout /></RequireAnyStaff>}>
         <Route index element={<RequireSection section="board"><Board /></RequireSection>} />
         <Route path="vendors" element={<RequireSection section="vendors"><Vendors /></RequireSection>} />
+        <Route path="vendors/:id" element={<RequireSection section="vendors"><VendorFile /></RequireSection>} />
         <Route path="clients" element={<RequireSection section="clients"><Clients /></RequireSection>} />
         <Route path="staff" element={<RequireSection section="staff"><Staff /></RequireSection>} />
         <Route path="staff/:id" element={<RequireSection section="staff"><StaffReport /></RequireSection>} />
