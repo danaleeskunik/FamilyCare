@@ -1115,7 +1115,7 @@ alter table public.profiles add constraint profiles_role_check check (role in ('
 alter table public.profiles add column if not exists sections text[] not null default '{}';
 
 -- True when the signed-in user is office staff who was given this section.
-create function public.has_section(p_section text) returns boolean
+create or replace function public.has_section(p_section text) returns boolean
 language sql stable security definer set search_path = ''
 as $$
   select coalesce(
@@ -1127,12 +1127,13 @@ grant execute on function public.has_section(text) to authenticated;
 
 -- Leads: admins and office staff with the "leads" section.
 drop policy if exists "admin all" on public.leads;
+drop policy if exists "leads access" on public.leads;
 create policy "leads access" on public.leads for all to authenticated
   using (public.is_admin() or public.has_section('leads'))
   with check (public.is_admin() or public.has_section('leads'));
 
 -- Admin tool: give an existing login (created in Supabase Authentication) office access to some sections.
-create function public.set_office_access(p_email text, p_name text, p_sections text[]) returns void
+create or replace function public.set_office_access(p_email text, p_name text, p_sections text[]) returns void
 language plpgsql security definer set search_path = ''
 as $$
 declare u uuid; existing text;
@@ -1159,7 +1160,7 @@ begin
 end;
 $$;
 
-create function public.remove_office_access(p_id uuid) returns void
+create or replace function public.remove_office_access(p_id uuid) returns void
 language plpgsql security definer set search_path = ''
 as $$
 begin
