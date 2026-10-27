@@ -59,9 +59,12 @@ export function useReveal() {
   }, [])
 }
 
+/** Web links (WhatsApp) open in a new tab so the visitor keeps the site open. */
+const extLink = (href: string) => (/^https?:/.test(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})
+
 /** One contact button. Without a configured value it renders as a visible-but-inactive "coming soon" button. */
 export function ContactBtn({ href, icon, variant = 'primary', children }: { href: string | null; icon: IconName; variant?: 'primary' | 'ghost'; children: ReactNode }) {
-  if (href) return <a className={`lp-btn ${variant}`} href={href}><Ico name={icon} size={20} /> {children}</a>
+  if (href) return <a className={`lp-btn ${variant}`} href={href} {...extLink(href)}><Ico name={icon} size={20} /> {children}</a>
   return <span className={`lp-btn ${variant} pending`} role="link" aria-disabled="true" title="פרטי הקשר יתווספו בקרוב"><Ico name={icon} size={20} /> {children}</span>
 }
 
@@ -74,6 +77,7 @@ export function LpNav({ onPolicy }: { onPolicy?: boolean }) {
         <Link className="lp-logo" to="/" aria-label="Family Care — לדף הבית"><img src={logo('logo-white.png')} alt="Family Care — always with you" /></Link>
         {!onPolicy && (
           <div className="lp-links">
+            <a href="#about">אודות</a>
             <a href="#services">שירותים</a>
             <a href="#how">איך זה עובד</a>
             <a href="#plans">מסלולים</a>
@@ -96,7 +100,7 @@ export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
         <div className="lp-foot-in">
           <img src={logo('logo-white.png')} alt="Family Care" height={40} />
           <nav aria-label="קישורים בתחתית העמוד">
-            {onPolicy ? <Link to="/">דף הבית</Link> : (<><a href="#services">שירותים</a><a href="#plans">מסלולים</a><a href="#faq">שאלות נפוצות</a></>)}
+            {onPolicy ? <Link to="/">דף הבית</Link> : (<><a href="#about">אודות</a><a href="#services">שירותים</a><a href="#plans">מסלולים</a><a href="#faq">שאלות נפוצות</a></>)}
             <Link to="/policy">מדיניות החברה</Link>
             <Link to="/login">כניסה</Link>
           </nav>
@@ -116,5 +120,5 @@ export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
 export function FloatingContact({ toSection }: { toSection?: boolean }) {
   const href = waHref ?? (toSection ? '#contact' : mailHref)
   if (!href) return null
-  return <a className="lp-fab" href={href} aria-label="יצירת קשר"><Ico name="chat" size={22} /> <span>צרו קשר</span></a>
+  return <a className="lp-fab" href={href} {...extLink(href)} aria-label="יצירת קשר"><Ico name="chat" size={22} /> <span>צרו קשר</span></a>
 }

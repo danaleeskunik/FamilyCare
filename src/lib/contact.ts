@@ -7,3 +7,6 @@ const subject = encodeURIComponent('התעניינות במועדון Family Car
 export const waHref = CONTACT.whatsapp ? `https://wa.me/${CONTACT.whatsapp}?text=${hello}` : null
 export const mailHref = CONTACT.email ? `mailto:${CONTACT.email}?subject=${subject}` : null
 export const telHref = CONTACT.phone ? `tel:${CONTACT.phone}` : null
+
+/** Direct mobile line shown under the contact buttons. */
+export const ROY = { name: 'רועי', display: '054-7479545', tel: 'tel:+972547479545' }

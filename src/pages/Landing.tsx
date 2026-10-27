@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CONTACT, mailHref, telHref, waHref } from '../lib/contact'
+import { CONTACT, ROY, mailHref, telHref, waHref } from '../lib/contact'
 import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, type IconName, useReveal } from '../components/LandingChrome'
 
 type Service = { icon: IconName; title: string; text: string; lead: string; groups: { title?: string; items: string[] }[]; note?: string }
+
+const ABOUT: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'shield', title: 'איכות חיים וביטחון אישי', text: 'לשקט הנפשי של המשפחה, עבור יקירינו.' },
+  { icon: 'heart', title: 'חברת בוטיק מוכוונת שירות', text: 'אדיבים, מסורים ומקצועיים ביותר.' },
+  { icon: 'users', title: 'מתאימים את עצמנו אליכם', text: 'כדי שהמשפחה תיהנה מאיכות חיים ובטחון אישי.' },
+  { icon: 'check', title: 'מבצעים ברקע את התהליכים', text: 'מההזמנה ועד סיום הביצוע.' },
+]
 
 const SERVICES: Service[] = [
   {
@@ -251,6 +258,21 @@ export default function Landing() {
         </div>
       </header>
 
+      <Section id="about" tone="white" title="אודות Family Care" lead="מועדון לקוחות יוקרה לאיכות חיים, המציע שירותי Concierge אישיים למשפחה, במודל One Stop Shop.">
+        <div className="lp-grid four">
+          {ABOUT.map((a, i) => (
+            <article key={a.title} className="lp-fact reveal" style={delay(i * 70)}>
+              <span className="lp-ico"><Ico name={a.icon} /></span>
+              <h3>{a.title}</h3>
+              <p>{a.text}</p>
+            </article>
+          ))}
+        </div>
+        <p className="lp-about-note reveal">
+          מאחורינו חמש שנות ניסיון אישי בחיי היום-יום של משפחה מודרנית ובמגוון רחב של צרכים: ניהול הבית ואחזקתו, טיפול רפואי, תרבות ופנאי, תהליכים משפטיים ועוד. עמלנו לדייק את הצרכים של המשפחה ושל הגיל השלישי, כדי להעניק שירות באיכות של מועדון יוקרה.
+        </p>
+      </Section>
+
       <Section id="services" title="הכול תחת קורת גג אחת" lead="שירות קונסיירז' אישי שמוריד מכם את העומס היומיומי ומחזיר לכם חיים.">
         <ServiceGrid />
       </Section>
@@ -329,6 +351,7 @@ export default function Landing() {
             <ContactBtn href={mailHref} icon="mail" variant="ghost">{CONTACT.email || 'שלחו לנו מייל'}</ContactBtn>
             {telHref && <ContactBtn href={telHref} icon="call" variant="ghost"><span dir="ltr">{CONTACT.phone}</span></ContactBtn>}
           </div>
+          <p className="lp-direct">או התקשרו ישירות ל{ROY.name}: <a href={ROY.tel} dir="ltr">{ROY.display}</a></p>
           <p className="lp-member">כבר חברים במועדון? <Link to="/login">כניסה לאזור האישי</Link></p>
         </div>
       </section>
