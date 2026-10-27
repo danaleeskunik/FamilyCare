@@ -27,8 +27,16 @@ export default function Board() {
   const rows = region.length ? base.filter((t) => region.includes(t.region)) : base
   const completedToday = today.filter((t) => t.statusKey === 'completed').length
   // Visits that ran past the plan by the grace period and still wait for a billing decision.
-  const openOvertime = tasks.filter((t) => t.staffId && t.end && t.checkedIn && t.checkedOut
-    && toMin(t.checkedOut) - toMin(t.checkedIn) - (toMin(t.end) - toMin(t.time)) >= pricing.graceMinutes && !decisions[t.id]).length
+  const openOvertimeTasks = tasks.filter((t) => t.staffId && t.end && t.checkedIn && t.checkedOut
+    && toMin(t.checkedOut) - toMin(t.checkedIn) - (toMin(t.end) - toMin(t.time)) >= pricing.graceMinutes && !decisions[t.id])
+  const openOvertime = openOvertimeTasks.length
+  const [summaryDay, setSummaryDay] = useState(TODAY)
+  // The overrun list shows one day at a time: open the earliest day that still waits for a decision.
+  const showOvertime = () => {
+    const dates = openOvertimeTasks.map((t) => t.date).sort()
+    if (dates.length && !dates.includes(summaryDay)) setSummaryDay(dates[0])
+    goTo('day-summary')
+  }
   const goTo = (id: string, next?: 'today' | 'unassigned') => {
     if (next) setView(next)
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
@@ -42,7 +50,7 @@ export default function Board() {
       <div className="grid cols-4">
         <StatCard label="משימות היום" figure={today.length} note={`${completedToday} הושלמו · ${today.length - completedToday} בהמשך היום`} onClick={() => goTo('board-tasks', 'today')} />
         <StatCard label="ממתין לשיבוץ" figure={unassigned.length} note={unassignedNote} color="var(--danger)" onClick={() => goTo('board-tasks', 'unassigned')} />
-        <StatCard label="חריגות פתוחות" figure={openOvertime} note="ממתינות להחלטת חיוב ושכר" color="var(--warning)" onClick={() => goTo('day-summary')} />
+        <StatCard label="חריגות פתוחות" figure={openOvertime} note="ממתינות להחלטת חיוב ושכר" color="var(--warning)" onClick={showOvertime} />
         <StatCard label="הכנסות ספטמבר" figure={money(112400)} note="דמי חברות + העמסות" onClick={() => nav('/admin/finance')} />
       </div>
 
@@ -82,7 +90,7 @@ export default function Board() {
       </Card>
       </div>
 
-      <div id="day-summary" className="anchor"><DaySummary /></div>
+      <div id="day-summary" className="anchor"><DaySummary day={summaryDay} onDayChange={setSummaryDay} /></div>
 
       <div className="grid cols-3" style={{ alignItems: 'start' }}>
         <Card>

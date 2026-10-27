@@ -9,9 +9,8 @@ import { shortName } from '../../lib/queries'
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 
 /** End-of-day view: planned time vs time actually spent at the client, with the billing / pay effect of any overrun. */
-export default function DaySummary() {
+export default function DaySummary({ day, onDayChange }: { day: string; onDayChange: (d: string) => void }) {
   const { tasks, staff, decisions, pricing, decideOvertime, revertOvertime, notify } = useStore()
-  const [day, setDay] = useState(TODAY)
   const [busy, setBusy] = useState<string | null>(null)
 
   const rows = tasks
@@ -41,9 +40,9 @@ export default function DaySummary() {
       <div className="card-head">
         <h2>תכנון מול ביצוע</h2>
         <div className="row" style={{ gap: 6 }}>
-          <button className="icon-btn" aria-label="היום הקודם" onClick={() => setDay(toISO(addDays(parseISO(day), -1)))}><Icon name="chevron-right" /></button>
+          <button className="icon-btn" aria-label="היום הקודם" onClick={() => onDayChange(toISO(addDays(parseISO(day), -1)))}><Icon name="chevron-right" /></button>
           <strong style={{ minWidth: 90, textAlign: 'center' }} aria-live="polite">{day === TODAY ? 'היום' : formatDM(parseISO(day))}</strong>
-          <button className="icon-btn" aria-label="היום הבא" onClick={() => setDay(toISO(addDays(parseISO(day), 1)))}><Icon name="chevron-left" /></button>
+          <button className="icon-btn" aria-label="היום הבא" onClick={() => onDayChange(toISO(addDays(parseISO(day), 1)))}><Icon name="chevron-left" /></button>
         </div>
       </div>
       {rows.length === 0 ? (
