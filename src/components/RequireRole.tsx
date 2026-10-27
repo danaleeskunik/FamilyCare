@@ -12,13 +12,13 @@ export default function RequireRole({ role: required, children }: { role: Role; 
 
   if (loading) return <main className="container page-body"><p className="muted" role="status">טוענת…</p></main>
   if (!session) return <Navigate to="/login" replace state={{ from: loc.pathname }} />
-  if (role === 'admin' || role === 'companion' || role === 'office') {
+  if (role === 'admin' || role === 'companion' || role === 'office' || role === 'family') {
     return role === required ? <>{children}</> : <Navigate to={homeFor(role)} replace />
   }
   return (
     <main className="container page-body">
       <Empty
-        text={role === 'family' ? 'האזור למשפחות עוד לא זמין באפליקציה. נעדכן כשיהיה מוכן.' : 'החשבון הזה עדיין לא מוגדר. אפשר לפנות למי שמנהל/ת את המערכת, או להתחבר עם חשבון אחר.'}
+        text="החשבון הזה עדיין לא מוגדר. אפשר לפנות למי שמנהל/ת את המערכת, או להתחבר עם חשבון אחר."
         action={<Button size="sm" variant="secondary" onClick={signOut}>התנתקות</Button>}
       />
     </main>

@@ -58,7 +58,7 @@ export default function App() {
       </Route>
       <Route path="/admin/clients/:id" element={<RequireSection section="clients"><ClientFile /></RequireSection>} />
       <Route path="/companion" element={<RequireRole role="companion"><CompanionApp /></RequireRole>} />
-      <Route path="/client" element={<ClientApp />} />
+      <Route path="/client" element={<RequireRole role="family"><ClientApp /></RequireRole>} />
       <Route path="*" element={<HomeRedirect />} />
     </Routes>
     <FormHost />

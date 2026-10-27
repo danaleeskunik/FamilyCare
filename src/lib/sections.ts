@@ -12,8 +12,9 @@ export const OFFICE_SECTIONS: { id: string; label: string }[] = [{ id: 'leads', 
 export const homeFor = (role: Role | null, sections: string[] = []) =>
   role === 'admin' ? '/admin'
     : role === 'companion' ? '/companion'
+      : role === 'family' ? '/client'
       : role === 'office' ? (sections.map((s) => SECTION_PATHS[s]).find(Boolean) ?? '/login')
         : '/login'
 
 /** Roles that have an app to land in after signing in. */
-export const hasHome = (role: Role | null) => role === 'admin' || role === 'companion' || role === 'office'
+export const hasHome = (role: Role | null) => role === 'admin' || role === 'companion' || role === 'office' || role === 'family'
