@@ -1,5 +1,5 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../store/AuthStore'
 import { homeFor, hasHome } from '../lib/sections'
 import { CONTACT, mailHref, telHref, waHref } from '../lib/contact'
@@ -68,13 +68,25 @@ export function ContactBtn({ href, icon, variant = 'primary', children }: { href
   return <span className={`lp-btn ${variant} pending`} role="link" aria-disabled="true" title="פרטי הקשר יתווספו בקרוב"><Ico name={icon} size={20} /> {children}</span>
 }
 
+/** Logo click: on the home page scroll back to the top (a Link to the current route does nothing); elsewhere navigate home. */
+function useLogoTop() {
+  const { pathname } = useLocation()
+  return (e: MouseEvent<HTMLAnchorElement>) => {
+    if (pathname !== '/') return
+    e.preventDefault()
+    history.replaceState(null, '', '/')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
 export function LpNav({ onPolicy }: { onPolicy?: boolean }) {
   const { session, role, sections } = useAuth()
+  const toTop = useLogoTop()
   const enter = session && hasHome(role) ? { to: homeFor(role, sections), label: 'לאזור האישי' } : { to: '/login', label: 'כניסה' }
   return (
     <nav className="lp-nav" aria-label="ניווט ראשי">
       <div className="lp-wrap lp-nav-in">
-        <Link className="lp-logo" to="/" aria-label="Family Care — לדף הבית"><img src={logo('logo-white.png')} alt="Family Care — always with you" /></Link>
+        <Link className="lp-logo" to="/" onClick={toTop} aria-label="Family Care — לדף הבית"><img src={logo('logo-white.png')} alt="Family Care — always with you" /></Link>
         {!onPolicy && (
           <div className="lp-links">
             <a href="#about">אודות</a>
@@ -94,11 +106,12 @@ export function LpNav({ onPolicy }: { onPolicy?: boolean }) {
 }
 
 export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
+  const toTop = useLogoTop()
   return (
     <footer className="lp-foot">
       <div className="lp-wrap">
         <div className="lp-foot-in">
-          <img src={logo('logo-white.png')} alt="Family Care" height={40} />
+          <Link to="/" onClick={toTop} aria-label="Family Care — לתחילת הדף"><img src={logo('logo-white.png')} alt="Family Care" height={40} /></Link>
           <nav aria-label="קישורים בתחתית העמוד">
             {onPolicy ? <Link to="/">דף הבית</Link> : (<><a href="#about">אודות</a><a href="#services">שירותים</a><a href="#plans">מסלולים</a><a href="#faq">שאלות נפוצות</a></>)}
             <Link to="/policy">מדיניות החברה</Link>
