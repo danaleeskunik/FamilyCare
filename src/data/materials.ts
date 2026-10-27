@@ -4,7 +4,7 @@ export type Material = {
   group: string
   title: string
   text: string
-  kind: 'PDF' | 'PNG'
+  kind: 'PDF' | 'PNG' | 'DOCX'
   file: string // path under /materials
   thumb: string // path under /materials/thumbs
 }
@@ -34,5 +34,20 @@ export const MATERIALS: Material[] = [
     id: 'abroad-brochure', group: 'למשפחות הלקוחות', kind: 'PDF', file: 'abroad-brochure.pdf', thumb: 'abroad-brochure.jpg',
     title: 'ברושור לילדים שגרים בחו"ל (2 עמודים)',
     text: 'למי שההורים בארץ והם מחוץ לה: מענה בכל שעה, עדכון שקוף, טיפול מקצה לקצה והמסלולים. הלוגו, הטלפון והוואטסאפ לחיצים.',
+  },
+  {
+    id: 'seniors-brochure', group: 'ללקוחות עצמם', kind: 'PDF', file: 'seniors-brochure.pdf', thumb: 'seniors-brochure.jpg',
+    title: 'ברושור לבני הגיל השלישי (2 עמודים)',
+    text: 'פונה ישירות אל ההורים: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
+  },
+  {
+    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', thumb: 'new-client-questionnaire.jpg',
+    title: 'שאלון קליטה והיכרות ללקוח חדש (להדפסה)',
+    text: 'טופס ריק, 3 עמודים, למילוי בפגישת ההיכרות. אותם שדות שבלשונית "שאלון היכרות" בתיק הלקוח.',
+  },
+  {
+    id: 'client-interview-guide', group: 'שאלונים', kind: 'DOCX', file: 'client-interview-guide.docx', thumb: 'client-interview-guide.jpg',
+    title: 'מדריך לשיחת היכרות עם לקוח (Word)',
+    text: 'שאלון הנציג: שיחה עם הבן או הבת, שיחה עם ההורה בבית, סיכום לנציג ומתי עוצרים ומדברים עם אלון.',
   },
 ]

@@ -21,6 +21,7 @@ export default function Clients() {
       <Card flush>
         <CardHead title="כל הלקוחות">
           <input className="search" placeholder="חיפוש לפי שם, אזור או מסלול" aria-label="חיפוש לקוחות" value={q} onChange={(e) => setQ(e.target.value)} />
+          <a className="btn secondary sm" href={`${import.meta.env.BASE_URL}materials/new-client-questionnaire.pdf`} target="_blank" rel="noreferrer">שאלון לקוח חדש</a>
           <Button size="sm" icon="plus" onClick={() => openForm('client')}>לקוח/ה חדש/ה</Button>
         </CardHead>
         <div className="table-wrap">
