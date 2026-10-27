@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import Modal from './Modal'
-import { Button } from './ui'
+import { Button, Callout } from './ui'
 import { CheckGroup, SelectField, TextAreaField, TextField } from './Fields'
 import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
@@ -159,8 +159,11 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
     if (v.cardLast4 && !/^\d{4}$/.test(v.cardLast4)) e.cardLast4 = 'ארבע ספרות אחרונות בלבד'
     if (v.cap && !(Number(v.cap) >= 0)) e.cap = 'הזיני סכום תקין'
     setErr(e)
+    if (Object.keys(e).length) document.querySelector('dialog.modal[open] .modal-body')?.scrollTo({ top: 0, behavior: 'smooth' })
     return Object.keys(e).length === 0
   }
+  const FIELD_LABELS: Record<string, string> = { name: 'שם מלא', birthDate: 'תאריך לידה', regionId: 'אזור', orderer: 'מזמין/ת השירות', cap: 'תקרה חודשית', cardLast4: 'ספרות הכרטיס' }
+  const missing = Object.keys(err).map((k) => FIELD_LABELS[k]).filter(Boolean)
 
   const toQuestionnaire = () => { if (validate()) setStep(2) }
 
@@ -213,6 +216,7 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
 
   return (
     <FormShell title={editId ? 'עריכת פרטי לקוח/ה' : 'לקוח/ה חדש/ה · פרטים'} onSubmit={editId ? () => submit() : toQuestionnaire} submitLabel={editId ? 'שמירה' : 'המשך לשאלון היכרות'}>
+      {missing.length > 0 && <div className="full"><Callout tone="warning" title="צריך להשלים כמה פרטים לפני שממשיכים">{missing.join(' · ')}</Callout></div>}
       <div className="full"><TextField label="שם מלא" value={v.name} onChange={(e) => set('name')(e.target.value)} error={err.name} /></div>
       <TextField label="תאריך לידה" type="date" value={v.birthDate} onChange={(e) => set('birthDate')(e.target.value)} error={err.birthDate} />
       <SelectField label="אזור" value={v.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} placeholder="בחרי אזור" error={err.regionId} />

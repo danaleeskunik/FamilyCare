@@ -43,7 +43,7 @@ export const MATERIALS: Material[] = [
     text: 'פונה ישירות אל ההורים: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
   },
   {
-    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', web: '/admin/questionnaire', thumb: 'new-client-questionnaire.jpg',
+    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', web: '/admin/questionnaire?new=1', thumb: 'new-client-questionnaire.jpg',
     title: 'שאלון היכרות עם לקוח חדש',
     text: 'אפשר למלא ברשת, או להדפיס. שאלון אחד, 9 עמודים: הנחיות לנציג, שיחה עם הבן או הבת, שיחה עם ההורה בבית, מיפוי מפורט וסיכום. אותם שדות שנפתחים ב"לקוח/ה חדש/ה" ובלשונית "שאלון היכרות".',
   },

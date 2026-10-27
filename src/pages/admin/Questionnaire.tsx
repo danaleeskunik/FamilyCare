@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Callout, Card } from '../../components/ui'
 import { SelectField } from '../../components/Fields'
 import IntakeFields from '../../components/IntakeFields'
@@ -23,6 +23,14 @@ export default function Questionnaire() {
   const [busy, setBusy] = useState(false)
   const [draftFound, setDraftFound] = useState<Answers | null>(null)
   const [dirty, setDirty] = useState(false)
+
+  // Arriving from "מילוי ברשת" in Materials (?new=1): open the new-client form straight away.
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (params.get('new') !== '1') return
+    openForm('client')
+    setParams({}, { replace: true })
+  }, [params, setParams, openForm])
 
   useEffect(() => {
     if (!clientId) { setValues({}); setDraftFound(null); setDirty(false); return }
