@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Badge, Button, Callout, Card, Ltr } from '../components/ui'
 import Modal from '../components/Modal'
-import { SelectField, TextAreaField, TextField } from '../components/Fields'
+import IntakeFields from '../components/IntakeFields'
 import { supabase } from '../lib/supabase'
 import { INTAKE, PAYMENT_METHODS, type IntakeField } from '../data/intake'
-
-type Answers = Record<string, string>
-const missingTable = (e: { code?: string; message?: string } | null) => !!e && (['42P01', 'PGRST205'].includes(e.code ?? '') || /schema cache|does not exist/i.test(e.message ?? ''))
-const clean = (a: unknown): Answers => Object.fromEntries(Object.entries((a ?? {}) as Record<string, unknown>).filter(([, v]) => typeof v === 'string' && v.trim()).map(([k, v]) => [k, v as string]))
+import { cleanAnswers as clean, missingTable, saveIntake, type Answers } from '../lib/intake'
 
 function show(f: IntakeField, v: string | undefined) {
   if (!v) return '—'
@@ -65,15 +62,18 @@ export default function IntakeTab({ clientId, name }: { clientId: string; name: 
       </Card>
       {error && <Callout tone="warning" title="משהו לא הצליח">{error}</Callout>}
       {!loading && INTAKE.map((s) => (
-        <Card key={s.id}>
-          <div className="card-title" style={{ marginBottom: 6 }}>{s.title}</div>
-          {s.fields.map((f) => (
-            <div key={f.key} className="intake-q">
-              <div className="intake-label">{f.label}{f.private && <> <Badge tone="orange">מנהלים בלבד</Badge></>}</div>
-              <div className="intake-a">{show(f, all[f.key])}</div>
-            </div>
-          ))}
-        </Card>
+        <Fragment key={s.id}>
+          {s.part && <h3 className="intake-part">{s.part}</h3>}
+          <Card>
+            <div className="card-title" style={{ marginBottom: 6 }}>{s.title}{s.private && <> <Badge tone="orange">מנהלים בלבד</Badge></>}</div>
+            {s.fields.map((f) => (
+              <div key={f.key} className="intake-q">
+                <div className="intake-label">{f.label}{f.private && !s.private && <> <Badge tone="orange">מנהלים בלבד</Badge></>}</div>
+                <div className="intake-a">{show(f, all[f.key])}</div>
+              </div>
+            ))}
+          </Card>
+        </Fragment>
       ))}
       {editing && (
         <IntakeForm
@@ -92,23 +92,13 @@ function IntakeForm({ clientId, name, initial, onClose, onSaved }: {
   const [v, setV] = useState<Answers>(initial)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const set = (k: string) => (val: string) => setV((cur) => ({ ...cur, [k]: val }))
 
   const save = async () => {
     setBusy(true); setError(null)
-    const pub: Answers = {}
-    const priv: Answers = {}
-    for (const s of INTAKE) for (const f of s.fields) {
-      const val = (v[f.key] ?? '').trim()
-      if (val) (f.private ? priv : pub)[f.key] = val
-    }
-    const [a, b] = await Promise.all([
-      supabase.from('client_intake').upsert({ client_id: clientId, answers: pub }, { onConflict: 'client_id' }),
-      supabase.from('client_intake_private').upsert({ client_id: clientId, answers: priv }, { onConflict: 'client_id' }),
-    ])
+    const r = await saveIntake(clientId, v)
     setBusy(false)
-    if (a.error || b.error) { console.error('intake save failed', a.error ?? b.error); setError('לא הצלחנו לשמור. בדקי את החיבור ונסי שוב.'); return }
-    onSaved(pub, priv)
+    if (!r.ok) { setError('לא הצלחנו לשמור. בדקי את החיבור ונסי שוב.'); return }
+    onSaved(r.pub, r.priv)
   }
 
   return (
@@ -118,20 +108,8 @@ function IntakeForm({ clientId, name, initial, onClose, onSaved }: {
       onClose={onClose}
       footer={<><Button disabled={busy} onClick={save}>{busy ? 'שומרת…' : 'שמירה'}</Button><Button variant="quiet" onClick={onClose}>ביטול</Button></>}
     >
-      <div className="intake-form">
-        {INTAKE.map((s) => (
-          <fieldset key={s.id} className="intake-sec">
-            <legend>{s.title}</legend>
-            {s.fields.map((f) => {
-              const label = f.private ? `${f.label} (מנהלים בלבד)` : f.label
-              if (f.kind === 'long') return <TextAreaField key={f.key} label={label} value={v[f.key] ?? ''} onChange={set(f.key)} rows={2} />
-              if (f.kind === 'payment') return <SelectField key={f.key} label={label} value={v[f.key] ?? ''} onChange={set(f.key)} options={PAYMENT_METHODS} placeholder="לא נבחר" />
-              return <TextField key={f.key} label={label} dir={f.ltr ? 'ltr' : undefined} value={v[f.key] ?? ''} onChange={(e) => set(f.key)(e.target.value)} />
-            })}
-          </fieldset>
-        ))}
-        {error && <Callout tone="warning" title="משהו לא הצליח">{error}</Callout>}
-      </div>
+      <IntakeFields values={v} onChange={(k, val) => setV((cur) => ({ ...cur, [k]: val }))} />
+      {error && <Callout tone="warning" title="משהו לא הצליח">{error}</Callout>}
     </Modal>
   )
 }

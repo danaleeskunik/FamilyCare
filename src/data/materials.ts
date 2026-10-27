@@ -4,7 +4,7 @@ export type Material = {
   group: string
   title: string
   text: string
-  kind: 'PDF' | 'PNG' | 'DOCX'
+  kind: 'PDF' | 'PNG'
   file: string // path under /materials
   thumb: string // path under /materials/thumbs
 }
@@ -42,12 +42,7 @@ export const MATERIALS: Material[] = [
   },
   {
     id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', thumb: 'new-client-questionnaire.jpg',
-    title: 'שאלון קליטה והיכרות ללקוח חדש (להדפסה)',
-    text: 'טופס ריק, 3 עמודים, למילוי בפגישת ההיכרות. אותם שדות שבלשונית "שאלון היכרות" בתיק הלקוח.',
-  },
-  {
-    id: 'client-interview-guide', group: 'שאלונים', kind: 'DOCX', file: 'client-interview-guide.docx', thumb: 'client-interview-guide.jpg',
-    title: 'מדריך לשיחת היכרות עם לקוח (Word)',
-    text: 'שאלון הנציג: שיחה עם הבן או הבת, שיחה עם ההורה בבית, סיכום לנציג ומתי עוצרים ומדברים עם אלון.',
+    title: 'שאלון היכרות עם לקוח חדש (להדפסה)',
+    text: 'שאלון אחד, 9 עמודים: הנחיות לנציג, שיחה עם הבן או הבת, שיחה עם ההורה בבית, מיפוי מפורט וסיכום. אותם שדות שנפתחים ב"לקוח/ה חדש/ה" ובלשונית "שאלון היכרות".',
   },
 ]

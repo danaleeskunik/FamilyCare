@@ -7,6 +7,8 @@ import { useAuth } from '../store/AuthStore'
 import { supabase } from '../lib/supabase'
 import { DEPENDENCY_LEVELS, ITEM_KINDS, ITEM_STATUSES, JOB_TITLES, TASK_STATUSES, TODAY } from '../data/model'
 import { DAY_NAMES, addDays, formatDM, parseISO, toISO } from '../lib/dates'
+import IntakeFields from './IntakeFields'
+import { saveIntake, type Answers } from '../lib/intake'
 import { fetchClientForEdit, fetchStaffForEdit, fetchVendorForEdit, shortName } from '../lib/queries'
 
 type Errors = Record<string, string>
@@ -135,9 +137,13 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
     mobilityNotes: str('mobility_notes'), cognitiveNotes: str('cognitive_notes'), cap: str('monthly_budget_cap'), cardLast4: str('card_last4'),
   })
   const [err, setErr] = useState<Errors>({})
+  // A new client continues to the intake questionnaire; answers are saved together with the client.
+  const [step, setStep] = useState<1 | 2>(1)
+  const [intake, setIntake] = useState<Answers>({})
+  const [busy, setBusy] = useState(false)
   const set = <K extends keyof typeof v>(k: K) => (val: (typeof v)[K]) => setV((s) => ({ ...s, [k]: val }))
 
-  const submit = async () => {
+  const validate = () => {
     const e: Errors = {}
     const name = v.name.trim()
     if (!name) e.name = REQUIRED
@@ -152,20 +158,60 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
     if (v.cardLast4 && !/^\d{4}$/.test(v.cardLast4)) e.cardLast4 = 'ארבע ספרות אחרונות בלבד'
     if (v.cap && !(Number(v.cap) >= 0)) e.cap = 'הזיני סכום תקין'
     setErr(e)
-    if (Object.keys(e).length) return
+    return Object.keys(e).length === 0
+  }
+
+  const toQuestionnaire = () => { if (validate()) setStep(2) }
+
+  const submit = async (withIntake = false) => {
+    if (!validate()) { setStep(1); return }
+    const name = v.name.trim()
     const monthAhead = new Date(); monthAhead.setMonth(monthAhead.getMonth() + 1)
     const trialEndsOn = !v.trial ? null : existingTrial && existingTrial >= TODAY ? existingTrial : monthAhead.toISOString().slice(0, 10)
-    const ok = await saveClient(editId, {
+    const savedId = await saveClient(editId, {
       name, birthDate: v.birthDate, regionId: Number(v.regionId), planId: v.planId, trialEndsOn, companionId: v.companionId, orderer: v.orderer.trim(),
       phone: v.phone, address: v.address, buildingCode: v.buildingCode, dependency: v.dependency, mobilityNotes: v.mobilityNotes, cognitiveNotes: v.cognitiveNotes, cap: v.cap, cardLast4: v.cardLast4,
     })
-    if (!ok) return
+    if (!savedId) return
+    if (!editId && withIntake && Object.values(intake).some((x) => x.trim())) {
+      const r = await saveIntake(savedId, intake)
+      if (!r.ok) {
+        notify(r.setup ? `נוסף/ה לקוח/ה: ${name}. השאלון לא נשמר: צריך להריץ את upgrade_0016 ב-Supabase` : `נוסף/ה לקוח/ה: ${name}. השאלון לא נשמר, אפשר למלא אותו מתיק הלקוח`)
+        closeForm()
+        return
+      }
+    }
     notify(editId ? 'פרטי הלקוח/ה עודכנו' : `נוסף/ה לקוח/ה: ${name}`)
     closeForm()
   }
 
+  const finish = async (withIntake: boolean) => {
+    if (busy) return
+    setBusy(true)
+    try { await submit(withIntake) } finally { setBusy(false) }
+  }
+
+  if (!editId && step === 2) {
+    return (
+      <Modal
+        wide
+        title={`שאלון היכרות · ${v.name.trim() || 'לקוח/ה חדש/ה'}`}
+        onClose={closeForm}
+        footer={
+          <>
+            <Button disabled={busy} onClick={() => void finish(true)}>{busy ? 'שומרת…' : 'הוספת לקוח/ה'}</Button>
+            <Button variant="secondary" disabled={busy} onClick={() => setStep(1)}>חזרה לפרטים</Button>
+            <Button variant="quiet" disabled={busy} onClick={() => void finish(false)}>הוספה בלי שאלון</Button>
+          </>
+        }
+      >
+        <IntakeFields values={intake} onChange={(k, val) => setIntake((cur) => ({ ...cur, [k]: val }))} />
+      </Modal>
+    )
+  }
+
   return (
-    <FormShell title={editId ? 'עריכת פרטי לקוח/ה' : 'לקוח/ה חדש/ה'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספת לקוח/ה'}>
+    <FormShell title={editId ? 'עריכת פרטי לקוח/ה' : 'לקוח/ה חדש/ה · פרטים'} onSubmit={editId ? () => submit() : toQuestionnaire} submitLabel={editId ? 'שמירה' : 'המשך לשאלון היכרות'}>
       <div className="full"><TextField label="שם מלא" value={v.name} onChange={(e) => set('name')(e.target.value)} error={err.name} /></div>
       <TextField label="תאריך לידה" type="date" value={v.birthDate} onChange={(e) => set('birthDate')(e.target.value)} error={err.birthDate} />
       <SelectField label="אזור" value={v.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} placeholder="בחרי אזור" error={err.regionId} />

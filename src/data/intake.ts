@@ -1,7 +1,10 @@
-/** The intake questionnaire ("שאלון קליטה, היכרות ומיפוי צרכים"). Answers live in client_intake; sensitive ones in client_intake_private. */
-export type IntakeKind = 'text' | 'long' | 'payment'
-export type IntakeField = { key: string; label: string; kind: IntakeKind; private?: boolean; ltr?: boolean }
-export type IntakeSection = { id: string; title: string; fields: IntakeField[] }
+/** The intake questionnaire: one form that merges the rep's interview guide (parts A and B), the detailed mapping form (part C) and the rep's summary.
+ *  Answers live in client_intake; fields marked private (or in a private section) go to client_intake_private, which only admins can read. */
+export type IntakeKind = 'text' | 'long' | 'payment' | 'checks'
+export type IntakeField = { key: string; label: string; kind: IntakeKind; private?: boolean; ltr?: boolean; options?: string[] }
+export type IntakeSection = { id: string; title: string; part?: string; private?: boolean; fields: IntakeField[] }
+
+export const fieldIsPrivate = (s: IntakeSection, f: IntakeField) => !!(s.private || f.private)
 
 export const PAYMENT_METHODS = [
   { value: 'bank', label: 'הוראה בנקאית / העברה' },
@@ -9,9 +12,167 @@ export const PAYMENT_METHODS = [
   { value: 'bit', label: 'Bit / PayBox' },
 ]
 
+/** Guidance for whoever runs the interview. */
+export const INTAKE_GUIDE = [
+  'שתי שיחות נפרדות, בסדר קבוע: קודם הבן או הבת (טלפון או זום, כ-30 דקות), ואחר כך ההורה, בבית שלו (כשעה ורבע, עם קפה). השיחה עם הבן או הבת נותנת את התמונה המעשית. השיחה עם ההורה קובעת אם זה יעבוד.',
+  'שיחה, לא טופס. השאלות הן מפה לנציג. לא קוראים אותן ברצף, ולא חייבים לעבור על כולן בפגישה אחת.',
+  'את ההורה שואלים מה הוא רוצה, לא מה הוא לא מסוגל לעשות. הוא המארח, והוא מחליט מה נכנס לבית שלו.',
+  'מה שהבן או הבת סיפרו נשאר אצלנו. לא מצטטים אותם מול ההורה.',
+  'רפואה רק במידה שצריך לתיאום: מי הרופאים ומתי התורים, לא מה האבחנות.',
+  'לא מבטיחים בשיחה. רושמים, וחוזרים עם הצעה של מסלול תוך יומיים.',
+]
+
+/** Said to the parent at the start of part B. */
+export const INTAKE_OPENING = 'נעים מאוד, אני [שם] מ-Family Care. אנחנו לא באים לטפל בך, את/ה מסתדר/ת מצוין. אנחנו כאן כדי לקחת ממך ומהילדים את כל מה שמעייף: הטלפונים, הטכנאים, הטפסים. ולפעמים גם לצאת יחד לקפה או להצגה. את/ה מחליט/ה מה מתאים לך.'
+
+const t = (key: string, label: string, extra: Partial<IntakeField> = {}): IntakeField => ({ key, label, kind: 'text', ...extra })
+const l = (key: string, label: string): IntakeField => ({ key, label, kind: 'long' })
+const c = (key: string, label: string, options: string[]): IntakeField => ({ key, label, kind: 'checks', options })
+
 export const INTAKE: IntakeSection[] = [
   {
-    id: 'life', title: '1. העולם הרך: זהות, סיפור חיים וקשר חברתי',
+    id: 'a_basic', part: 'חלק א: שיחה עם הבן או הבת', private: true, title: 'א1. פרטים בסיסיים',
+    fields: [
+      t('orderer_phone', 'טלפון הפונה', { ltr: true }),
+      t('orderer_email', 'מייל הפונה', { ltr: true }),
+      t('orderer_relation', 'קרבה (בן / בת / אחר)'),
+      t('lives_with', 'עם מי ההורה גר (לבד / בן זוג / מטפלת)'),
+      l('other_family', 'אחים ובני משפחה מעורבים, ואיפה הם גרים'),
+      t('decision_maker', 'מי מקבל את ההחלטות במשפחה בנושאים של ההורה'),
+      t('how_found', 'איך הגעתם אלינו'),
+    ],
+  },
+  {
+    id: 'a_today', private: true, title: 'א2. התמונה היום',
+    fields: [
+      l('typical_week', 'ספרו לי על ההורה. איך נראה אצלו שבוע רגיל?'),
+      l('why_now', 'מה גרם לכם לפנות דווקא עכשיו? היה משהו ספציפי?'),
+      l('time_spent', 'כמה זמן בשבוע הולך לכם על העניינים שלו? מה הכי שוחק?'),
+      l('who_helps', 'מי עוד במשפחה עוזר, ואיך מתחלקים ביניכם?'),
+      l('parent_loves', 'מה ההורה הכי אוהב לעשות? ממה הוא נהנה?'),
+      l('knows_about_us', 'ההורה יודע שפניתם אלינו? איך לדעתכם הוא יקבל את זה?'),
+    ],
+  },
+  {
+    id: 'a_relief', private: true, title: 'א3. מה הייתם רוצים להוריד מעצמכם (לפי ששת התחומים)',
+    fields: [
+      c('relief_home', 'ניהול משק הבית', ['קניות וסידורים', 'תשלומים וחשבונות', 'תיאום עם עוזרת בית או מטפלת']),
+      c('relief_maint', 'אחזקת הבית', ['תיקונים ובעלי מקצוע', 'מזגן, דוד, מכשירי חשמל', 'התאמות בבית (מעקות, תאורה, ריצוף)']),
+      c('relief_medical', 'ליווי רפואי', ['קביעת תורים ומעקב', 'ליווי לרופא ולבדיקות', 'מרשמים ותרופות מבית המרקחת']),
+      c('relief_legal', 'בירוקרטיה ומשפטים', ['ביטוח לאומי וקצבאות', 'ביטוחים, בנק, רשויות', 'ייפוי כוח מתמשך וצוואה (תיאום מול עורך דין)']),
+      c('relief_digital', 'דיגיטל', ['טלפון, טלוויזיה ואינטרנט', 'אפליקציות (בנק, קופת חולים, וואטסאפ, זום)']),
+      c('relief_culture', 'תרבות ופנאי', ['יציאות לבית קפה, הצגה, מוזיאון', 'חוגים ומפגשים חברתיים', 'ליווי לאירועים משפחתיים']),
+    ],
+  },
+  {
+    id: 'a_coord', private: true, title: 'א4. מה צריך לדעת כדי לתאם (בלי אבחנות)',
+    fields: [
+      t('private_insurance', 'ביטוח משלים, ביטוח בריאות פרטי או סיעודי'),
+      l('doctors', 'רופא משפחה ורופאים קבועים'),
+      l('appointments', 'תורים קבועים או קרובים'),
+      t('meds_manager', 'מי מסדר את התרופות היום'),
+      t('poa', 'יש ייפוי כוח מתמשך? למי?'),
+      t('nii_benefits', 'קצבאות מביטוח לאומי'),
+      t('helper_days', 'יש מטפלת או עוזרת בית? באילו ימים?'),
+    ],
+  },
+  {
+    id: 'a_comms', private: true, title: 'א5. עדכונים ותקשורת',
+    fields: [
+      t('upd_who', 'מי מקבל עדכונים? רק אתם, או גם האחים?'),
+      t('upd_channel', 'באיזה ערוץ: וואטסאפ אישי, קבוצה משפחתית, שיחה?'),
+      t('upd_freq', 'באיזו תדירות: אחרי כל ביקור, סיכום שבועי?'),
+      t('upd_urgent', 'על מה לעדכן מיד, באמצע היום?'),
+      l('upd_not_shared', 'יש משהו שלא משתפים עם ההורה, או עם בני משפחה אחרים?'),
+      l('upd_speak_for', 'מול מי מותר לנו לדבר בשם ההורה (רופאים, בנק, ביטוח לאומי)? מה צריך בשביל זה?'),
+    ],
+  },
+  {
+    id: 'a_safety', private: true, title: 'א6. בטיחות וחירום',
+    fields: [
+      t('emergency_1_2', 'איש קשר לחירום ראשון ושני'),
+      t('key_holder', 'מפתח לבית: למי יש, והאם נקבל'),
+      t('home_floor', 'הבית: קומה, מעלית, מדרגות'),
+      t('neighbors', 'שכנים או חברים קרובים שכדאי להכיר'),
+      t('pets', 'בעלי חיים בבית'),
+    ],
+  },
+  {
+    id: 'a_expect', private: true, title: 'א7. ציפיות',
+    fields: [
+      l('success_3m', 'מה ייחשב הצלחה בעוד שלושה חודשים?'),
+      t('visits_week', 'כמה ביקורים בשבוע נראה לכם נכון בהתחלה?'),
+      l('dont_do', 'יש דברים שחשוב לכם שלא נעשה, או שתמיד תאשרו קודם?'),
+      t('meet_parent', 'מתי נוח לכם שנקבע את הפגישה עם ההורה? תרצו להיות שם?'),
+    ],
+  },
+  {
+    id: 'b_day', part: 'חלק ב: שיחה עם ההורה, בבית שלו (בגובה העיניים, לא ראיון)', title: 'ב1. היום שלו/ה',
+    fields: [
+      l('b_typical_day', 'איך נראה אצלך יום רגיל? מתי את/ה קם/ה, מה את/ה אוהב/ת לעשות בבוקר?'),
+      l('b_joy', 'מה הכי משמח אותך בשבוע?'),
+      l('b_return', 'יש דברים שפעם עשית והיית רוצה לחזור אליהם?'),
+    ],
+  },
+  {
+    id: 'b_home', title: 'ב2. הבית',
+    fields: [
+      l('b_pending_repair', 'יש משהו בבית שמחכה לתיקון כבר זמן מה?'),
+      l('b_repair_who', 'מי בא לתקן בדרך כלל? יש בעל מקצוע שאת/ה סומך/ת עליו?'),
+      l('b_annoying', 'מה הכי מעצבן אותך בבית כרגע?'),
+      l('b_shopping', 'איך מסתדרים עם הקניות והסידורים?'),
+    ],
+  },
+  {
+    id: 'b_doctors', title: 'ב3. רופאים ותורים',
+    fields: [
+      l('b_appointments', 'איך את/ה מסתדר/ת עם קביעת תורים ועם קופת החולים?'),
+      l('b_fav_doctor', 'יש רופא שאת/ה אוהב/ת במיוחד? מישהו שקשה להשיג?'),
+      l('b_accompany', 'היית רוצה שמישהו יבוא איתך לתורים, או שאת/ה מעדיף/ה לבד ושרק נסדר את ההגעה?'),
+    ],
+  },
+  {
+    id: 'b_paper', title: 'ב4. ניירת ובירוקרטיה',
+    fields: [
+      l('b_letters', 'יש מכתבים או טפסים שמחכים לטיפול?'),
+      l('b_who_bank', 'מי מטפל אצלך בבנק, בביטוח לאומי ובביטוחים?'),
+      l('b_close_issue', 'יש עניין שהיית רוצה שמישהו פשוט ירים ויסגור?'),
+    ],
+  },
+  {
+    id: 'b_tech', title: 'ב5. טלפון, טלוויזיה ומחשב',
+    fields: [
+      l('b_phone_use', 'מה את/ה עושה בטלפון? וואטסאפ, תמונות של הנכדים, שיחות וידאו?'),
+      l('b_learn', 'משהו שהיית רוצה ללמוד לעשות לבד?'),
+      l('b_frustrating', 'יש מכשיר שמתסכל אותך?'),
+    ],
+  },
+  {
+    id: 'b_social', title: 'ב6. חברים ויציאות',
+    fields: [
+      l('b_meets', 'עם מי את/ה נפגש/ת בדרך כלל? איפה?'),
+      l('b_likes', 'מה את/ה אוהב/ת: תיאטרון, מוזיקה, הרצאות, טבע, בתי קפה?'),
+      l('b_wish', 'מה היית רוצה לעשות אם היה לך מישהו שמסדר הכול ובא איתך?'),
+    ],
+  },
+  {
+    id: 'b_together', title: 'ב7. איך נעבוד יחד',
+    fields: [
+      t('b_days_hours', 'באילו ימים ושעות נוח לך שנגיע?'),
+      t('b_contact_pref', 'איך את/ה מעדיף/ה שנתקשר אליך: טלפון, וואטסאפ?'),
+      l('b_tell_kids', 'מה חשוב לך שהילדים יידעו, ומה תעדיפי לספר להם בעצמך?'),
+      l('b_ask_first', 'יש משהו שלא היית רוצה שנעשה בלי לשאול אותך קודם?'),
+    ],
+  },
+  {
+    id: 'b_notice', private: true, title: 'ב8. מה הנציג שם לב אליו (לא שואלים, רק רושמים)',
+    fields: [
+      c('b_noticed', 'סמנו מה שנראה', ['נגישות: מדרגות, מעלית, תאורה במסדרון', 'דברים בבית שמחכים לתיקון', 'מכשירים שלא עובדים או לא בשימוש', 'מה מעניין אותו/ה: ספרים, תמונות, תחביבים שרואים בבית', 'איך הגיב/ה לרעיון: פתוח/ה, מסויג/ת, צריך/ה זמן']),
+      l('b_closing', 'סיכום בקול: שניים או שלושה דברים שאמר/ה שחשובים לו/ה, ומתי חוזרים אליו/ה (לא יוצאים בלי תאריך לשיחה הבאה)'),
+    ],
+  },
+  {
+    id: 'life', part: 'חלק ג: מיפוי מפורט של הלקוח/ה', title: 'ג1. העולם הרך: זהות, סיפור חיים וקשר חברתי',
     fields: [
       { key: 'nickname', label: 'שם חיבה מועדף (איך כולם קוראים לו/לה?)', kind: 'text' },
       { key: 'past_occupation', label: 'במה עסק/ה בעבר? מה היה מרכז העשייה והעניין שלו/שלה?', kind: 'long' },
@@ -24,7 +185,7 @@ export const INTAKE: IntakeSection[] = [
     ],
   },
   {
-    id: 'daily', title: '2. מיפוי אתגרים, קשיים וצרכים ביום-יום',
+    id: 'daily', title: 'ג2. מיפוי אתגרים, קשיים וצרכים ביום-יום',
     fields: [
       { key: 'home_difficulties', label: 'במה ההורה הכי מתקשה בבית כיום? (להתכופף, לפתוח קופסאות, להחליף מנורות או מצעים, להרים דברים)', kind: 'long' },
       { key: 'food', label: 'איך מנוהל המקרר והמזון? (מי עושה קניות? יש אוכל טרי? העדפה למעדניות כמו דליקטסן או קצביות אהרוני?)', kind: 'long' },
@@ -35,7 +196,7 @@ export const INTAKE: IntakeSection[] = [
     ],
   },
   {
-    id: 'contacts', title: '3. פרטים טכניים, אנשי קשר וניהול סיכונים',
+    id: 'contacts', title: 'ג3. פרטים טכניים, אנשי קשר וניהול סיכונים',
     fields: [
       { key: 'national_id', label: 'תעודת זהות של ההורה', kind: 'text', private: true, ltr: true },
       { key: 'home_phone', label: 'טלפון בבית', kind: 'text', ltr: true },
@@ -45,7 +206,7 @@ export const INTAKE: IntakeSection[] = [
     ],
   },
   {
-    id: 'access', title: '4. נגישות, אבטחה ופרטי כניסה לנכס',
+    id: 'access', title: 'ג4. נגישות, אבטחה ופרטי כניסה לנכס',
     fields: [
       { key: 'address_details', label: 'כתובת מלאה (רחוב, מספר, דירה, קומה, יש מעלית?)', kind: 'text' },
       { key: 'door_code', label: 'קוד כניסה לבית (אם יש קודן)', kind: 'text', private: true, ltr: true },
@@ -56,7 +217,7 @@ export const INTAKE: IntakeSection[] = [
     ],
   },
   {
-    id: 'systems', title: '5. מערכות קריטיות בבית ומעטפת רפואית',
+    id: 'systems', title: 'ג5. מערכות קריטיות בבית ומעטפת רפואית',
     fields: [
       { key: 'electric_panel', label: 'ארון חשמל ומפסק ראשי (מיקום)', kind: 'text' },
       { key: 'water_shutoff', label: 'שיבר מים ראשי של הדירה (מיקום)', kind: 'text' },
@@ -66,11 +227,39 @@ export const INTAKE: IntakeSection[] = [
     ],
   },
   {
-    id: 'match', title: '6. התאמת מסלול, ציפיות ודרכי תשלום',
+    id: 'match', title: 'ג6. התאמת מסלול, ציפיות ודרכי תשלום',
     fields: [
       { key: 'companion_profile', label: 'פרופיל המלווה המועדף ותכונות אופי נדרשות (גבר או אישה, אנרגטי ויוזם, שקט וקשוב)', kind: 'long' },
       { key: 'payment_method', label: 'דרך תשלום מועדפת על הלקוח', kind: 'payment', private: true },
       { key: 'sensitive_topics', label: 'הערות מיוחדות, קווים אדומים או נושאים רגישים שאין להעלות מול ההורה', kind: 'long' },
+    ],
+  },
+
+  {
+    id: 'sum', part: 'סיכום לנציג (ממלאים אחרי שתי השיחות)', private: true, title: 'ד. סיכום והתאמת מסלול',
+    fields: [
+      l('sum_home', 'ניהול משק הבית: רלוונטי? עדיפות (1-3)? מה בדיוק'),
+      l('sum_maint', 'אחזקת הבית: רלוונטי? עדיפות (1-3)? מה בדיוק'),
+      l('sum_medical', 'ליווי רפואי: רלוונטי? עדיפות (1-3)? מה בדיוק'),
+      l('sum_legal', 'בירוקרטיה ומשפטים: רלוונטי? עדיפות (1-3)? מה בדיוק'),
+      l('sum_digital', 'דיגיטל: רלוונטי? עדיפות (1-3)? מה בדיוק'),
+      l('sum_culture', 'תרבות ופנאי: רלוונטי? עדיפות (1-3)? מה בדיוק'),
+      l('sum_plan', 'מסלול מוצע: Business / Platinum / Top Platinum, ומשפט אחד למה'),
+      l('sum_parent_asked', 'נקודות שההורה ביקש במפורש (נכנסות להצעה כמו שהן, במילים שלו/ה)'),
+      c('sum_stop', 'מתי עוצרים ומדברים עם אלון לפני שממשיכים', [
+        'הצורך העיקרי הוא טיפול אישי או השגחה צמודה (זו לא עבודת סיעוד, מפנים בנימוס)',
+        'ההורה לא מעוניין, והילדים מבקשים להתחיל בכל זאת (לא מתחילים בלי הסכמה שלו/ה)',
+        'פער בין מה שהילדים תיארו למה שראינו בבית',
+        'נראה סיכון בטיחותי בבית, או מצב שמחייב עדכון מיידי של המשפחה',
+        'בקשה לפעול מול בנק, רופא או ביטוח לאומי בלי ייפוי כוח או הסכמה בכתב',
+      ]),
+      c('sum_next', 'צעדים הבאים', [
+        'הצעת מסלול לבן או לבת תוך יומיים',
+        'הסכמה בכתב לשיתוף מידע ולפעולה בשם ההורה, במידת הצורך',
+        'פתיחת קבוצת וואטסאפ לעדכונים לפי מה שסוכם',
+        'קביעת הביקור הראשון ביומן המשותף',
+        'משימה ראשונה קטנה ומוצלחת, מהרשימה שההורה בחר',
+      ]),
     ],
   },
 ]

@@ -32,7 +32,8 @@ type Store = {
   setRegionFilter: React.Dispatch<React.SetStateAction<string[]>>
   /** Save = create (id null) or update. Each writes to the database, refreshes lists, and resolves false (with a toast) on failure. */
   saveTask: (id: string | null, t: TaskInput) => Promise<boolean>
-  saveClient: (id: string | null, c: ClientInput) => Promise<boolean>
+  /** Resolves the client's id, or null on failure. */
+  saveClient: (id: string | null, c: ClientInput) => Promise<string | null>
   saveVendor: (id: string | null, v: VendorInput) => Promise<boolean>
   saveStaff: (id: string | null, s: StaffInput) => Promise<boolean>
   saveSlot: (id: string | null, s: SlotInput) => Promise<boolean>
@@ -150,38 +151,42 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       dependency_level: c.dependency || null, mobility_notes: nul(c.mobilityNotes), cognitive_notes: nul(c.cognitiveNotes),
     }
     const billing = { card_last4: nul(c.cardLast4), monthly_budget_cap: c.cap.trim() ? Number(c.cap) : null }
+    let newId: string | null = null
     if (id) {
       const { error } = await supabase.from('clients').update(row).eq('id', id)
-      if (error) return fail('update client', error)
+      if (error) { fail('update client', error); return null }
       const cur = await supabase.from('family_contacts').select('id').eq('client_id', id).eq('is_orderer', true).maybeSingle()
       const r = cur.data
         ? await supabase.from('family_contacts').update({ full_name: c.orderer }).eq('id', cur.data.id)
         : await supabase.from('family_contacts').insert({ client_id: id, full_name: c.orderer, permission: 'full', is_orderer: true })
-      if (r.error) return fail('save orderer', r.error)
+      if (r.error) { fail('save orderer', r.error); return null }
       if (billing.card_last4 || billing.monthly_budget_cap !== null) {
         const b = await supabase.from('client_billing').upsert({ client_id: id, ...billing })
-        if (b.error) return fail('save billing', b.error)
+        if (b.error) { fail('save billing', b.error); return null }
       } else {
         await supabase.from('client_billing').delete().eq('client_id', id) // cleared in the form; ignore if the table does not exist yet
       }
     } else {
       const { data: created, error } = await supabase.from('clients').insert({ ...row, member_since: new Date().toISOString().slice(0, 10) }).select('id').single()
-      if (error) return fail('create client', error)
+      if (error) { fail('create client', error); return null }
+      newId = created.id
       const { error: e2 } = await supabase.from('family_contacts').insert({ client_id: created.id, full_name: c.orderer, permission: 'full', is_orderer: true })
       if (e2) {
         await supabase.from('clients').delete().eq('id', created.id) // no half-created client without an orderer
-        return fail('create orderer', e2)
+        fail('create orderer', e2)
+        return null
       }
       if (billing.card_last4 || billing.monthly_budget_cap !== null) {
         const b = await supabase.from('client_billing').insert({ client_id: created.id, ...billing })
         if (b.error) {
           await supabase.from('clients').delete().eq('id', created.id)
-          return fail('create billing', b.error)
+          fail('create billing', b.error)
+          return null
         }
       }
     }
     await refresh()
-    return true
+    return id ?? newId
   }, [fail, refresh])
 
   const saveVendor = useCallback(async (id: string | null, v: VendorInput) => {
