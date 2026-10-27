@@ -7,7 +7,7 @@ export const SECTION_PATHS: Record<string, string> = {
 }
 
 /** Sections an admin can give to office staff today (each one needs matching database policies). */
-export const OFFICE_SECTIONS: { id: string; label: string }[] = [{ id: 'leads', label: 'לידים' }]
+export const OFFICE_SECTIONS: { id: string; label: string }[] = [{ id: 'leads', label: 'לידים' }, { id: 'materials', label: 'חומרים' }]
 
 export const homeFor = (role: Role | null, sections: string[] = []) =>
   role === 'admin' ? '/admin'
