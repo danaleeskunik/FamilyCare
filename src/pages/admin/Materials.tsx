@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Card } from '../../components/ui'
 import { MATERIALS } from '../../data/materials'
 import { useStore } from '../../store/AppStore'
@@ -52,7 +53,8 @@ export default function Materials() {
                     <h3>{m.title}</h3>
                     <p>{m.text}</p>
                     <div className="mat-actions">
-                      <a className="btn sm" href={url(m.file)} target="_blank" rel="noreferrer">פתיחה</a>
+                      {m.web && <Link className="btn sm" to={m.web}>מילוי ברשת</Link>}
+                      <a className={`btn sm ${m.web ? 'secondary' : ''}`} href={url(m.file)} target="_blank" rel="noreferrer">{m.web ? 'להדפסה' : 'פתיחה'}</a>
                       <a className="btn secondary sm" href={url(m.file)} download>הורדה</a>
                       <button type="button" className="btn secondary sm" onClick={() => void copy(m.file)}>העתקת קישור</button>
                     </div>

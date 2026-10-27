@@ -22,6 +22,7 @@ import Policy from './pages/Policy'
 import Leads from './pages/admin/Leads'
 import Team from './pages/admin/Team'
 import Materials from './pages/admin/Materials'
+import Questionnaire from './pages/admin/Questionnaire'
 import VendorFile from './pages/admin/VendorFile'
 
 /** The admin shell is for admins and office staff; each page then checks its own section. */
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="vendors" element={<RequireSection section="vendors"><Vendors /></RequireSection>} />
         <Route path="vendors/:id" element={<RequireSection section="vendors"><VendorFile /></RequireSection>} />
         <Route path="clients" element={<RequireSection section="clients"><Clients /></RequireSection>} />
+        <Route path="questionnaire" element={<RequireSection section="clients"><Questionnaire /></RequireSection>} />
         <Route path="staff" element={<RequireSection section="staff"><Staff /></RequireSection>} />
         <Route path="staff/:id" element={<RequireSection section="staff"><StaffReport /></RequireSection>} />
         <Route path="schedule" element={<RequireSection section="schedule"><Schedule /></RequireSection>} />

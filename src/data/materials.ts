@@ -1,5 +1,6 @@
 /** Ready-made files available from the personal area. Files live in public/materials; add a row here to publish another one. */
 export type Material = {
+  web?: string // in-app page where the same document can be filled in online
   area?: 'social' // omitted = brochures and documents
   id: string
   group: string
@@ -42,9 +43,9 @@ export const MATERIALS: Material[] = [
     text: 'פונה ישירות אל ההורים: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
   },
   {
-    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', thumb: 'new-client-questionnaire.jpg',
-    title: 'שאלון היכרות עם לקוח חדש (להדפסה)',
-    text: 'שאלון אחד, 9 עמודים: הנחיות לנציג, שיחה עם הבן או הבת, שיחה עם ההורה בבית, מיפוי מפורט וסיכום. אותם שדות שנפתחים ב"לקוח/ה חדש/ה" ובלשונית "שאלון היכרות".',
+    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', web: '/admin/questionnaire', thumb: 'new-client-questionnaire.jpg',
+    title: 'שאלון היכרות עם לקוח חדש',
+    text: 'אפשר למלא ברשת, או להדפיס. שאלון אחד, 9 עמודים: הנחיות לנציג, שיחה עם הבן או הבת, שיחה עם ההורה בבית, מיפוי מפורט וסיכום. אותם שדות שנפתחים ב"לקוח/ה חדש/ה" ובלשונית "שאלון היכרות".',
   },
   { id: 'social-story-teaser-1', area: 'social', group: 'סטוריז', kind: 'JPG', file: 'social/story-teaser-1.jpg', thumb: 'social/story-teaser-1.jpg', title: 'סטורי: "טלפון אחד, והכול מסודר"', text: 'פתיחת קמפיין, 1080×1920 · עם הטלפון של רועי וכתובת האתר.' },
   { id: 'social-story-teaser-2', area: 'social', group: 'סטוריז', kind: 'JPG', file: 'social/story-teaser-2.jpg', thumb: 'social/story-teaser-2.jpg', title: 'סטורי: "הילד הנוסף שאין לך זמן להיות"', text: 'פתיחת קמפיין, רקע ירוק · עם הטלפון של רועי וכתובת האתר.' },
