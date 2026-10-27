@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 import { DEPENDENCY_LEVELS, ITEM_KINDS, ITEM_STATUSES, JOB_TITLES, TASK_STATUSES, TODAY } from '../data/model'
 import { DAY_NAMES, addDays, formatDM, parseISO, toISO } from '../lib/dates'
 import IntakeFields from './IntakeFields'
+import { photoUrl } from '../lib/portal'
 import { saveIntake, type Answers } from '../lib/intake'
 import { fetchClientForEdit, fetchStaffForEdit, fetchVendorForEdit, shortName } from '../lib/queries'
 
@@ -297,6 +298,36 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
 }
 
 // ---------------------------------------------------------------- Staff
+/** The companion's photo, shown to the family in the client portal. Uploads right away (existing companions only). */
+function StaffPhoto({ staffId, current, name }: { staffId: string; current: string | null; name: string }) {
+  const { notify } = useStore()
+  const [path, setPath] = useState(current)
+  const [busy, setBusy] = useState(false)
+  const pick = async (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith('image/') || file.size > 4_000_000) { notify('בחרי תמונה (JPG או PNG) עד 4MB'); return }
+    setBusy(true)
+    const ext = file.type === 'image/png' ? 'png' : 'jpg'
+    const key = `${staffId}/${Date.now()}.${ext}`
+    const up = await supabase.storage.from('staff-photos').upload(key, file, { contentType: file.type, upsert: true })
+    if (up.error) { console.error('photo upload failed', up.error); setBusy(false); notify('לא הצלחנו להעלות. צריך להריץ את upgrade_0018 ב-Supabase'); return }
+    const { error } = await supabase.from('staff_members').update({ photo_path: key }).eq('id', staffId)
+    setBusy(false)
+    if (error) { console.error('photo save failed', error); notify('התמונה הועלתה אבל לא נשמרה'); return }
+    setPath(key); notify('התמונה עודכנה')
+  }
+  const src = photoUrl(path)
+  return (
+    <div className="full row" style={{ gap: 14 }}>
+      {src ? <img src={src} alt={name} width={64} height={64} style={{ borderRadius: '50%', objectFit: 'cover' }} /> : <span className="avatar" style={{ width: 64, height: 64, background: '#E3EAF2' }}>{name[0]}</span>}
+      <label className="btn secondary sm" style={{ cursor: 'pointer' }}>{busy ? 'מעלה…' : path ? 'החלפת תמונה' : 'העלאת תמונה'}
+        <input type="file" accept="image/png,image/jpeg" hidden disabled={busy} onChange={(e) => void pick(e.target.files?.[0])} />
+      </label>
+      <span className="card-meta">התמונה מוצגת ללקוחות באזור האישי</span>
+    </div>
+  )
+}
+
 function StaffForm({ editId, initial }: { editId: string | null; initial?: { staff: Record<string, unknown>; regionIds: number[] } }) {
   const { staff, regions, saveStaff, closeForm, notify } = useStore()
   const s0 = initial?.staff ?? {}
@@ -334,6 +365,7 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
       <TextField label="טלפון" type="tel" dir="ltr" value={v.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="052-000-0000" />
       <TextField label="שפות" value={v.languages} onChange={(e) => set('languages')(e.target.value)} error={err.languages} placeholder="עברית, אנגלית" hint="מופרדות בפסיק" />
       <div className="full"><CheckGroup label="אזורי פעילות" options={regions.map((r) => ({ value: r.id, label: r.name }))} value={v.regionIds} onChange={set('regionIds')} error={err.regionIds} /></div>
+      {editId && <StaffPhoto staffId={editId} current={(s0.photo_path as string) ?? null} name={v.name || 'מלווה'} />}
       <div className="full"><TextField label="אימייל להתחברות לאפליקציה" type="email" dir="ltr" value={v.email} onChange={(e) => set('email')(e.target.value)} error={err.email}
         hint={currentEmail ? 'החשבון מחובר. מחיקת האימייל תנתק את הגישה.' : 'קודם יוצרים משתמש ב-Supabase ← Authentication ← Add user, ואז מזינים כאן את אותו אימייל.'} /></div>
     </FormShell>

@@ -6,6 +6,7 @@ import { formatDM, parseISO } from '../../lib/dates'
 import { useStore } from '../../store/AppStore'
 import RegionFilter from '../../components/RegionFilter'
 import DaySummary from './DaySummary'
+import PortalInbox from './PortalInbox'
 
 function countBy(list: { region: string }[]) {
   const m: Record<string, number> = {}
@@ -54,6 +55,8 @@ export default function Board() {
         <StatCard label="הכנסות ספטמבר" figure={money(112400)} note="דמי חברות + העמסות" onClick={() => nav('/admin/finance')} />
       </div>
 
+      <PortalInbox />
+
       <Callout tone="warning" title="דורש החלטה עכשיו">
         מרים אדלר — הדרכת WhatsApp ב-16:00 עדיין ללא מלווה. שני מלווים זמינים באזור הרצליה. דניאל כ. דיווח על ירידה בתיאבון אצל יעקב ברנע — ממתין לפתיחת תחקיר.
       </Callout>
@@ -92,13 +95,7 @@ export default function Board() {
 
       <div id="day-summary" className="anchor"><DaySummary day={summaryDay} onDayChange={setSummaryDay} /></div>
 
-      <div className="grid cols-3" style={{ alignItems: 'start' }}>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 8 }}>בקשות חדשות מהמשפחות</div>
-          {[['רונית לוי — רופא/ה עד הבית', 'לפני 20 דק׳'], ['משפחת אדלר — כרטיסים לקונצרט', 'אתמול'], ['חנה פלד — הנדימן למעקה', 'אתמול']].map(([a, b]) => (
-            <div key={a} className="kv"><span style={{ fontWeight: 600 }}>{a}</span><span className="card-meta">{b}</span></div>
-          ))}
-        </Card>
+      <div className="grid cols-2" style={{ alignItems: 'start' }}>
         <Card>
           <div className="card-title" style={{ marginBottom: 8 }}>סיכומי ביקור לאישור</div>
           <p className="muted" style={{ lineHeight: 1.55, marginBottom: 12 }}>

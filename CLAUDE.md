@@ -5,7 +5,8 @@
 ## מבנה
 - `src/data/model.ts` — טיפוסי view-model וקבועים (חוזה בין DB ל-UI)
 - `src/lib/` — `queries.ts` (טעינה, `optional()` סובל טבלאות חסרות), `report.ts` (שכר, שעות, חריגות), `dates.ts`
-- `src/store/` — `AuthStore` (תפקידים admin|companion|family), `AppStore` (כל ה-CRUD)
+- `src/store/` — `AuthStore` (תפקידים admin|companion|family|office), `AppStore` (כל ה-CRUD)
+- פורטל לקוח (`/client`, תפקיד family): `pages/ClientApp.tsx` + `lib/portal.ts`; הנתונים רק דרך RPC `portal_data()` (0018), הודעות ב-`client_messages`; אדמין מחבר איש קשר דרך `PortalAccess`
 - `src/components/` — `ui.tsx`, `Fields.tsx`, `Modal.tsx`, `EntityForms.tsx`
 - `src/pages/admin|…`, `src/layouts/AdminLayout.tsx`, `src/styles/{tokens,base}.css`
 - `supabase/migrations/0001…` + `full_setup.sql`, `upgrade_*.sql`, `seed_*.sql`, `reset_and_seed.sql`, `README.md`

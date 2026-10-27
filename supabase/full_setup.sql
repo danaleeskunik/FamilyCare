@@ -1309,6 +1309,9 @@ create policy "staff photos admin write" on storage.objects for all to authentic
   using (bucket_id = 'staff-photos' and public.is_admin())
   with check (bucket_id = 'staff-photos' and public.is_admin());
 
+-- Families read their visits only through portal_data(), which leaves out internal notes. Drop the broad direct policy from 0007.
+drop policy if exists "family tasks" on public.tasks;
+
 -- A request can carry a category and a preferred date.
 alter table public.service_requests add column if not exists category text;
 alter table public.service_requests add column if not exists preferred_date date;

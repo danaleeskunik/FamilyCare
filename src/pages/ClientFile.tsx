@@ -10,11 +10,14 @@ import { loadClientDetail, shortName, type ClientDetail } from '../lib/queries'
 import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
 import { TODAY } from '../data/model'
 import IntakeTab from './IntakeTab'
+import ClientMessages from './ClientMessages'
+import PortalAccess from '../components/PortalAccess'
 
 const TABS = [
   ['med', 'רפואי ותפקודי'],
   ['pref', 'העדפות אישיות'],
   ['intake', 'שאלון היכרות'],
+  ['msgs', 'הודעות'],
   ['hist', 'היסטוריית שירות'],
   ['fin', 'כספים ומנוי'],
 ] as const
@@ -28,7 +31,7 @@ const initials = (name: string) => name.split(' ').map((w) => w[0]).join('"')
 const ymShort = (iso: string) => `${iso.slice(5, 7)}.${iso.slice(2, 4)}`
 const hm = (mins: number) => `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`
 
-function Sidebar({ d }: { d: ClientDetail }) {
+function Sidebar({ d, refetch }: { d: ClientDetail; refetch: () => void }) {
   const c = d.client
   const a = age(c.birth_date)
   return (
@@ -66,6 +69,7 @@ function Sidebar({ d }: { d: ClientDetail }) {
                       : [p.relation, p.is_orderer ? 'מזמין/ת השירות' : null, p.permission === 'full' ? 'הרשאה מלאה' : 'צפייה בלבד'].filter(Boolean).join(' · ')}
                   </div>
                 </div>
+                {p.contact_type !== 'physician' && <span style={{ marginInlineStart: 'auto' }}><PortalAccess contact={p} onChanged={refetch} /></span>}
               </div>
             ))}
           </div>
@@ -386,7 +390,7 @@ export default function ClientFile() {
           <>
             <span className="plan-pill">{trial ? 'תקופת היכרות' : `מסלול ${plan?.name ?? '—'}`}</span>
             <Button variant="on-navy" size="sm" icon="edit" onClick={() => openForm('client', { id: c.id })}>עריכת פרטים</Button>
-            <Button variant="on-navy" size="sm" icon="message">הודעה למשפחה</Button>
+            <Button variant="on-navy" size="sm" icon="message" onClick={() => setTab('msgs')}>הודעה למשפחה</Button>
             <Button size="sm" icon="plus" onClick={() => openForm('task', { clientId: c.id })}>הזמנת שירות</Button>
           </>
         }
@@ -400,13 +404,14 @@ export default function ClientFile() {
       />
       <main className="container page-body">
         <div className="file-grid">
-          <Sidebar d={d} />
+          <Sidebar d={d} refetch={refetch} />
           <div className="stack">
             <Slots clientId={c.id} />
             <Notes d={d} onChanged={refetch} />
             {tab === 'med' && <Medical d={d} />}
             {tab === 'pref' && <Preferences d={d} />}
             {tab === 'intake' && <IntakeTab clientId={c.id} name={c.full_name} />}
+            {tab === 'msgs' && <ClientMessages clientId={c.id} name={c.full_name} />}
             {tab === 'hist' && <History d={d} />}
             {tab === 'fin' && <Finance d={d} />}
           </div>
