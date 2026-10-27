@@ -32,7 +32,7 @@ export default function Materials() {
                 <div>
                   <div className="card-title">{area.title}</div>
                   <p className="muted" style={{ marginTop: 4, lineHeight: 1.6 }}>
-                    תמונות מוכנות לפרסום בלינקדאין, פייסבוק, אינסטגרם ובוואטסאפ: סטוריז, פוסטים, טיפים שבועיים וכל תחומי השירות. בכל תמונה הטלפונים של אלון ורועי וכתובת האתר.
+                    תמונות מוכנות לפרסום בלינקדאין, פייסבוק, אינסטגרם ובוואטסאפ: סטוריז, פוסטים, טיפים שבועיים וכל תחומי השירות. בכל תמונה הטלפון של רועי וכתובת האתר.
                   </p>
                 </div>
                 <a className="btn sm" href={url('social-images.zip')} download>הורדת כל התמונות (ZIP)</a>
