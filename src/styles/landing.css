@@ -40,7 +40,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 
 /* Hero */
 .lp-hero { position: relative; overflow: hidden; color: #fff; background: radial-gradient(900px 480px at 85% -10%, rgba(43, 196, 188, .28), transparent 60%), linear-gradient(165deg, var(--brand-deep) 0%, var(--brand-header) 58%, #14625E 100%); }
-.lp-hero-in { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: clamp(28px, 5vw, 72px); padding-block: clamp(48px, 8vw, 104px) clamp(56px, 9vw, 112px); }
+.lp-hero-in { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: clamp(28px, 5vw, 72px); padding-block: clamp(48px, 8vw, 104px) clamp(56px, 9vw, 112px); }
 .lp-eyebrow { display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; background: rgba(43, 196, 188, .16); border: 1px solid rgba(43, 196, 188, .4); color: var(--on-brand-3); font: 500 14.5px/1 var(--font-ui); }
 .lp-hero h1 { margin-top: 20px; font: 500 clamp(34px, 5.6vw, 58px)/1.15 var(--font-ui); letter-spacing: -.01em; }
 .lp-sub { margin-top: 20px; max-width: 34em; color: var(--on-brand-3); font-size: clamp(17px, 2vw, 19.5px); line-height: 1.75; }
@@ -50,10 +50,6 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-trust li { display: inline-flex; align-items: center; gap: 8px; }
 .lp-trust svg { color: var(--brand-bright); flex: none; }
 
-.lp-hero-art { position: relative; min-height: 380px; display: flex; align-items: center; justify-content: center; }
-.lp-orb { position: absolute; border-radius: 50%; filter: blur(2px); }
-.lp-orb.a { width: 300px; height: 300px; inset-inline-end: -40px; inset-block-start: -10px; background: radial-gradient(circle at 30% 30%, rgba(43, 196, 188, .55), rgba(43, 196, 188, 0) 70%); }
-.lp-orb.b { width: 220px; height: 220px; inset-inline-start: -30px; inset-block-end: 0; background: radial-gradient(circle at 60% 40%, rgba(159, 214, 210, .35), rgba(159, 214, 210, 0) 70%); }
 .lp-note { position: relative; width: min(100%, 380px); padding: 22px; border-radius: 22px; background: #fff; color: var(--ink-1); box-shadow: 0 30px 60px rgba(3, 25, 24, .45); transform: rotate(-2deg); }
 .lp-note-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .lp-note-title { display: inline-flex; align-items: center; gap: 8px; color: var(--brand-link); font: 500 15px/1 var(--font-ui); }
@@ -65,8 +61,6 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-note p { margin-top: 14px; color: var(--ink-1); font-size: 15.5px; line-height: 1.65; }
 .lp-note-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: var(--ink-2); font-size: 13.5px; }
 .lp-ok { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--green-100); color: var(--green-700); font-weight: 500; }
-.lp-float { position: absolute; inset-inline-start: 0; inset-block-end: 18px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 14px; background: rgba(255, 255, 255, .96); color: var(--brand-header); box-shadow: var(--shadow-lift); font: 500 14.5px/1 var(--font-ui); transform: rotate(1.5deg); }
-.lp-float svg { color: var(--brand-link); }
 
 /* Sections */
 .lp-section { padding-block: var(--lp-section-y); }
@@ -181,8 +175,6 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 /* Reveal on scroll (content stays visible without JS or with reduced motion) */
 .lp.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 600ms ease, transform 600ms ease; transition-delay: var(--d, 0ms); }
 .lp.js .reveal.in { opacity: 1; transform: none; }
-.lp.js .lp-note.reveal, .lp.js .lp-hero-art.reveal { transform: translateY(18px); }
-.lp.js .lp-hero-art.reveal.in { transform: none; }
 .lp.js .lp-plan.featured.reveal.in { transform: translateY(-8px); }
 @media (prefers-reduced-motion: reduce) {
   .lp, html:has(.lp) { scroll-behavior: auto; }
@@ -192,8 +184,6 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 
 /* Tablet */
 @media (max-width: 960px) {
-  .lp-hero-in { grid-template-columns: 1fr; }
-  .lp-hero-art { min-height: 340px; order: 2; }
   .lp-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lp-grid.five > * { flex-basis: calc((100% - var(--lp-gap)) / 2); }
   .lp-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -216,9 +206,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
   .lp-foot-contact .lp-btn { flex: 1 1 100%; }
   .lp-grid.three, .lp-grid.four, .lp-steps, .lp-family { grid-template-columns: 1fr; }
   .lp-cta .lp-btn { flex: 1 1 100%; }
-  .lp-hero-art { min-height: 300px; }
   .lp-note { transform: none; }
-  .lp-float { inset-inline-start: 4px; inset-block-end: 4px; }
   .lp-card, .lp-value { padding: 24px; }
   .lp-faq summary { font-size: 17px; padding-inline: 18px; }
   .lp-faq details p { padding-inline: 18px; }
@@ -273,3 +261,13 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-direct { margin-top: 22px !important; font-size: 17px !important; }
 .lp-direct a { display: inline-flex; align-items: center; min-height: var(--h-touch); color: #fff; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 1000px) { .lp-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Example visit summary + proof badge, shown before "how it works" */
+.lp-example { display: grid; justify-items: center; gap: 36px; }
+.lp-example .lp-note { transform: none; }
+.lp-proof { display: grid; justify-items: center; gap: 10px; max-width: 520px; text-align: center; }
+.lp-proof strong { display: inline-flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 28px; border-radius: 999px; background: #fff; color: var(--brand-header); box-shadow: var(--shadow-lift); font: 600 clamp(20px, 3.4vw, 26px)/1.2 var(--font-ui); }
+.lp-proof strong svg { color: var(--brand-link); flex: none; }
+.lp-proof span { color: var(--on-brand-3); font-size: 16px; line-height: 1.6; }
+.lp-hero .lp-cta, .lp-hero .lp-trust { justify-content: center; }
+.lp-hero .lp-sub { margin-inline: auto; }

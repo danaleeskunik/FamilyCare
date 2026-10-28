@@ -154,25 +154,12 @@ export default function Landing() {
               <a className="lp-btn ghost" href="#services">מה כלול במועדון</a>
             </div>
             <ul className="lp-trust reveal" style={delay(320)}>
-              <li><Ico name="check" size={18} /> מלווה אישית קבועה</li>
-              <li><Ico name="check" size={18} /> סיכום כתוב אחרי כל שירות</li>
-              <li><Ico name="check" size={18} /> הכול באישור הלקוח</li>
+              <li><Ico name="check" size={18} /> מלווה אישית קבועה למשפחה</li>
+              <li><Ico name="check" size={18} /> איכות חיים ובטחון אישי להורים</li>
+              <li><Ico name="check" size={18} /> אחריות מלאה ושקיפות עבורכם</li>
             </ul>
           </div>
 
-          <div className="lp-hero-art reveal" style={delay(200)} aria-hidden="true">
-            <div className="lp-orb a" /><div className="lp-orb b" />
-            <article className="lp-note">
-              <div className="lp-note-top">
-                <span className="lp-note-title"><Ico name="doc" size={18} /> סיכום ביקור</span>
-                <span className="lp-tag">דוגמה</span>
-              </div>
-              <div className="lp-note-row"><span className="lp-dot"><Ico name="medical" size={18} /></span><div><strong>ליווי לבדיקת עיניים</strong><small><span className="ltr">09:30–12:00</span> · המלווה הקבועה</small></div></div>
-              <p>הכול עבר בשלום. התור הבא נקבע לעוד שלושה חודשים, והתרופות נמסרו הביתה.</p>
-              <div className="lp-note-foot"><span className="lp-ok"><Ico name="check" size={16} /> הושלם</span><span>נשלח למשפחה</span></div>
-            </article>
-            <div className="lp-float"><Ico name="shield" size={18} /> בעלי מקצוע מאושרים</div>
-          </div>
         </div>
       </header>
 
@@ -193,6 +180,24 @@ export default function Landing() {
 
       <Section id="services" title="הכול תחת קורת גג אחת" lead="שירות קונסיירז' אישי שמוריד מכם את העומס היומיומי ומחזיר לכם חיים.">
         <ServiceGrid />
+      </Section>
+
+      <Section id="example" tone="dark" title="ככה נראה שירות אצלנו" lead="אחרי כל שירות המשפחה מקבלת סיכום כתוב, גם כשלא נמצאים בבית.">
+        <div className="lp-example">
+          <article className="lp-note reveal">
+            <div className="lp-note-top">
+              <span className="lp-note-title"><Ico name="doc" size={18} /> סיכום ביקור</span>
+              <span className="lp-tag">דוגמה</span>
+            </div>
+            <div className="lp-note-row"><span className="lp-dot"><Ico name="medical" size={18} /></span><div><strong>ליווי לבדיקת עיניים</strong><small><span className="ltr">09:30–12:00</span> · המלווה הקבועה</small></div></div>
+            <p>הכול עבר בשלום. התור הבא נקבע לעוד שלושה חודשים, והתרופות נמסרו הביתה.</p>
+            <div className="lp-note-foot"><span className="lp-ok"><Ico name="check" size={16} /> הושלם</span><span>נשלח למשפחה</span></div>
+          </article>
+          <div className="lp-proof reveal" style={delay(120)}>
+            <strong><Ico name="shield" size={28} /> בעלי מקצוע מאושרים</strong>
+            <span>רישיון וביטוח של כל בעל מקצוע נבדקים, ומי שפג תוקפו מוקפא ולא משובץ.</span>
+          </div>
+        </div>
       </Section>
 
       <Section id="how" tone="white" title="איך זה עובד" lead="פשוט, אישי, ובקצב שלכם.">

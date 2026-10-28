@@ -114,7 +114,7 @@ export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
           <Link to="/" onClick={toTop} aria-label="Family Care — לתחילת הדף"><img src={logo('logo-white.png')} alt="Family Care" height={40} /></Link>
           <nav aria-label="קישורים בתחתית העמוד">
             {onPolicy ? <Link to="/">דף הבית</Link> : (<><a href="#about">אודות</a><a href="#services">שירותים</a><a href="#plans">מסלולים</a><a href="#faq">שאלות נפוצות</a></>)}
-            <Link to="/policy">מדיניות החברה</Link>
+            <Link to="/policy">מדיניות ותנאי שירות</Link>
             <Link to="/login">כניסה</Link>
           </nav>
         </div>
