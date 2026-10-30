@@ -271,3 +271,17 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-proof span { color: var(--on-brand-3); font-size: 16px; line-height: 1.6; }
 .lp-hero .lp-cta, .lp-hero .lp-trust { justify-content: center; }
 .lp-hero .lp-sub { margin-inline: auto; }
+
+/* Policy document: numbered clauses and table of contents */
+.lp-doc-toc { display: flex; flex-wrap: wrap; gap: 8px; }
+.lp-doc-toc a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--tint); color: var(--brand-header); font-size: 14.5px; text-decoration: none; }
+.lp-doc-toc a span { font-weight: 600; color: var(--brand-link); }
+.lp-doc-sec { scroll-margin-top: 88px; }
+.lp-doc-sec h2 span { color: var(--brand-link); }
+.lp-doc-sec .lp-doc-intro { margin-top: 10px; color: var(--ink-1); font-size: 16.5px; line-height: 1.7; }
+.lp-doc-sec ol.lp-doc-items { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; padding: 0; list-style: none; }
+.lp-doc-sec ol.lp-doc-items > li { display: flex; gap: 12px; padding-inline-start: 0; font-size: 16.5px; line-height: 1.7; }
+.lp-doc-sec ol.lp-doc-items > li::before { content: none; }
+.lp-doc-n { flex: none; min-width: 34px; color: var(--brand-link); font-weight: 600; font-size: 15px; line-height: 1.9; }
+.lp-doc-sec ol.lp-doc-items p { margin: 0; color: var(--ink-1); }
+.lp-doc-sec ul.lp-doc-sub { margin-top: 8px; }
