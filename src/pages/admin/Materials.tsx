@@ -24,7 +24,7 @@ export default function Materials() {
       <Card>
         <div className="card-title">חומרים</div>
         <p className="muted" style={{ marginTop: 4, lineHeight: 1.6 }}>
-          קבצים מוכנים לשליחה ולפרסום. "העתקת קישור" מעתיקה כתובת שאפשר להדביק בוואטסאפ או במייל, והקובץ נפתח ממנה גם למי שאין לו חשבון. בברושורים, "שליחה בוואטסאפ" שולחת גלויה יפה עם תמונה וכותרת, ולחיצה עליה פותחת את הברושור.
+          קבצים מוכנים לשליחה ולפרסום. "העתקת קישור" מעתיקה כתובת שאפשר להדביק בוואטסאפ או במייל, והקובץ נפתח ממנה גם למי שאין לו חשבון. "שליחה בוואטסאפ" שולחת גלויה יפה עם תמונה וכותרת, ולחיצה עליה פותחת את הקובץ.
         </p>
       </Card>
       {areas.map((area) => (
@@ -58,11 +58,11 @@ export default function Materials() {
                       {m.web && <Link className="btn sm" to={m.web}>מילוי ברשת</Link>}
                       <a className={`btn sm ${m.web ? 'secondary' : ''}`} href={url(m.file)} target="_blank" rel="noreferrer">{m.web ? 'להדפסה' : 'פתיחה'}</a>
                       <a className="btn secondary sm" href={url(m.file)} download>הורדה</a>
-                      {m.share ? (
+                      {!m.noShare ? (
                         <>
-                          <a className="btn sm" href={`https://wa.me/?text=${encodeURIComponent(`${m.title}\n${shareHref(m.share)}`)}`} target="_blank" rel="noreferrer">שליחה בוואטסאפ</a>
-                          <button type="button" className="btn secondary sm" onClick={() => void copyHref(shareHref(m.share!))}>העתקת קישור לוואטסאפ</button>
-                          <a className="btn secondary sm" href={`${import.meta.env.BASE_URL}s/${m.share}/card.jpg`} download={`family-care-${m.share}.jpg`}>הורדת הגלויה</a>
+                          <a className="btn sm" href={`https://wa.me/?text=${encodeURIComponent(shareHref(m.share ?? m.id))}`} target="_blank" rel="noreferrer">שליחה בוואטסאפ</a>
+                          <button type="button" className="btn secondary sm" onClick={() => void copyHref(shareHref(m.share ?? m.id))}>העתקת קישור לוואטסאפ</button>
+                          <a className="btn secondary sm" href={`${import.meta.env.BASE_URL}s/${m.share ?? m.id}/card.jpg`} download={`family-care-${m.share ?? m.id}.jpg`}>הורדת הגלויה</a>
                         </>
                       ) : (
                         <button type="button" className="btn secondary sm" onClick={() => void copy(m.file)}>העתקת קישור</button>

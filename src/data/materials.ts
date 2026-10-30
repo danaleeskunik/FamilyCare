@@ -1,7 +1,8 @@
 /** Ready-made files available from the personal area. Files live in public/materials; add a row here to publish another one. */
 export type Material = {
   web?: string // in-app page where the same document can be filled in online
-  share?: string // slug of the WhatsApp postcard page under /s/ (link preview + opens the PDF)
+  share?: string // slug of the WhatsApp postcard page under /s/ (defaults to the id; link preview + opens the file)
+  noShare?: boolean // internal documents have no postcard
   area?: 'social' // omitted = brochures and documents
   id: string
   group: string
@@ -44,7 +45,7 @@ export const MATERIALS: Material[] = [
     text: 'פונה ישירות אל ההורים: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
   },
   {
-    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', web: '/admin/questionnaire?new=1', thumb: 'new-client-questionnaire.jpg',
+    id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', web: '/admin/questionnaire?new=1', noShare: true, thumb: 'new-client-questionnaire.jpg',
     title: 'שאלון היכרות עם לקוח חדש',
     text: 'אפשר למלא ברשת, או להדפיס. שאלון אחד, 9 עמודים: הנחיות לנציג, שיחה עם הבן או הבת, שיחה עם ההורה בבית, מיפוי מפורט וסיכום. אותם שדות שנפתחים ב"לקוח/ה חדש/ה" ובלשונית "שאלון היכרות".',
   },
