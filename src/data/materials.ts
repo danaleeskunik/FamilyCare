@@ -45,6 +45,16 @@ export const MATERIALS: Material[] = [
     text: 'פונה ישירות אל ההורים: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
   },
   {
+    id: 'families-brochure-en', group: 'באנגלית', kind: 'PDF', file: 'families-brochure-en.pdf', share: 'families-en', thumb: 'families-brochure-en.jpg',
+    title: 'Brochure for clients\' families (English, 2 pages)',
+    text: 'הגרסה האנגלית של הברושור לילדי הלקוחות: מי אנחנו, מה אנחנו עושים בשביל ההורים, איך מתחילים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
+  },
+  {
+    id: 'seniors-brochure-en', group: 'באנגלית', kind: 'PDF', file: 'seniors-brochure-en.pdf', share: 'seniors-en', thumb: 'seniors-brochure-en.jpg',
+    title: 'Brochure for older adults (English, 2 pages)',
+    text: 'הגרסה האנגלית של הברושור להורים עצמם: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
+  },
+  {
     id: 'new-client-questionnaire', group: 'שאלונים', kind: 'PDF', file: 'new-client-questionnaire.pdf', web: '/admin/questionnaire?new=1', noShare: true, thumb: 'new-client-questionnaire.jpg',
     title: 'שאלון היכרות עם לקוח חדש',
     text: 'אפשר למלא ברשת, או להדפיס. שאלון אחד, 9 עמודים: הנחיות לנציג, שיחה עם הבן או הבת, שיחה עם ההורה בבית, מיפוי מפורט וסיכום. אותם שדות שנפתחים ב"לקוח/ה חדש/ה" ובלשונית "שאלון היכרות".',
