@@ -1,6 +1,7 @@
 /** Ready-made files available from the personal area. Files live in public/materials; add a row here to publish another one. */
 export type Material = {
   web?: string // in-app page where the same document can be filled in online
+  share?: string // slug of the WhatsApp postcard page under /s/ (link preview + opens the PDF)
   area?: 'social' // omitted = brochures and documents
   id: string
   group: string
@@ -13,7 +14,7 @@ export type Material = {
 
 export const MATERIALS: Material[] = [
   {
-    id: 'companions-brochure', group: 'גיוס מלווים', kind: 'PDF', file: 'companions-brochure.pdf', thumb: 'companions-brochure.jpg',
+    id: 'companions-brochure', group: 'גיוס מלווים', kind: 'PDF', file: 'companions-brochure.pdf', share: 'companions', thumb: 'companions-brochure.jpg',
     title: 'ברושור גיוס מלווים (A4)',
     text: 'עמוד אחד להדפסה או לשליחה. הלוגו, הטלפון, המייל ולוגו הוואטסאפ לחיצים.',
   },
@@ -28,17 +29,17 @@ export const MATERIALS: Material[] = [
     text: 'אותה מודעה כתמונה 1080×1350, לאינסטגרם, פייסבוק וקבוצות. קישורים מוסיפים בכיתוב.',
   },
   {
-    id: 'families-brochure', group: 'למשפחות הלקוחות', kind: 'PDF', file: 'families-brochure.pdf', thumb: 'families-brochure.jpg',
+    id: 'families-brochure', group: 'למשפחות הלקוחות', kind: 'PDF', file: 'families-brochure.pdf', share: 'families', thumb: 'families-brochure.jpg',
     title: 'ברושור לילדי הלקוחות (2 עמודים)',
     text: 'מי אנחנו, מה אנחנו עושים בשביל ההורים, איך מתחילים, המסלולים ויצירת קשר. הלוגו, הטלפון והוואטסאפ לחיצים.',
   },
   {
-    id: 'abroad-brochure', group: 'למשפחות הלקוחות', kind: 'PDF', file: 'abroad-brochure.pdf', thumb: 'abroad-brochure.jpg',
+    id: 'abroad-brochure', group: 'למשפחות הלקוחות', kind: 'PDF', file: 'abroad-brochure.pdf', share: 'abroad', thumb: 'abroad-brochure.jpg',
     title: 'ברושור לילדים שגרים בחו"ל (2 עמודים)',
     text: 'למי שההורים בארץ והם מחוץ לה: מענה בכל שעה, עדכון שקוף, טיפול מקצה לקצה והמסלולים. הלוגו, הטלפון והוואטסאפ לחיצים.',
   },
   {
-    id: 'seniors-brochure', group: 'ללקוחות עצמם', kind: 'PDF', file: 'seniors-brochure.pdf', thumb: 'seniors-brochure.jpg',
+    id: 'seniors-brochure', group: 'ללקוחות עצמם', kind: 'PDF', file: 'seniors-brochure.pdf', share: 'seniors', thumb: 'seniors-brochure.jpg',
     title: 'ברושור לבני הגיל השלישי (2 עמודים)',
     text: 'פונה ישירות אל ההורים: אתם מחליטים, מלווה קבועה, טלפון אחד לכל דבר, השירותים והמסלולים. הלוגו, הטלפונים והוואטסאפ לחיצים.',
   },
