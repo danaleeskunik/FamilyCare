@@ -10,3 +10,6 @@ export const telHref = CONTACT.phone ? `tel:${CONTACT.phone}` : null
 
 /** Direct mobile line shown under the contact buttons. */
 export const ROY = { name: 'רועי', display: '054-7479545', tel: 'tel:+972547479545' }
+
+/** Accessibility coordinator shown in the accessibility statement. Change here if someone else takes the role. */
+export const ACCESS = { name: 'אלון', role: 'מנהל החברה', phone: '054-9995858', tel: 'tel:+972549995858', email: 'office@myfamilycareclub.com' }

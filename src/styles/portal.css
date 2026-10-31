@@ -39,8 +39,8 @@
 .pt-chip { padding: 6px 16px; border-radius: 999px; background: var(--tint); color: var(--brand-header); font-weight: 500; border: 1px solid var(--border-card); }
 .pt-link { background: none; border: 0; padding: 0; color: var(--brand-link); text-decoration: underline; cursor: pointer; font-weight: 500; min-height: 44px; }
 
-.pt-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 14px; border: 1.5px solid var(--brand-action); background: var(--brand-action); color: #fff; font-weight: 600; text-decoration: none; cursor: pointer; }
-.pt-btn:hover { background: var(--brand-action-hover); }
+.pt-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 14px; border: 1.5px solid var(--brand-action-strong); background: var(--brand-action-strong); color: #fff; font-weight: 600; text-decoration: none; cursor: pointer; }
+.pt-btn:hover { background: var(--brand-action-strong-hover); }
 .pt-btn.ghost { background: transparent; color: var(--brand-link); border-color: var(--border-field); }
 .pt-btn:disabled { opacity: .55; cursor: default; }
 .portal[data-hc="1"] .pt-btn { background: #064744; border-color: #064744; }
@@ -55,7 +55,7 @@
 .pt-action { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; justify-content: center; min-height: 112px; padding: 16px 18px; border-radius: 20px; border: 1.5px solid var(--border-card); background: var(--card); color: var(--ink-1); text-align: start; text-decoration: none; cursor: pointer; }
 .pt-action b { font: 600 calc(19px * var(--ts)) / 1.25 var(--font-ui); }
 .pt-action span { color: var(--ink-2); font-size: .88em; line-height: 1.4; }
-.pt-action.main { background: var(--brand-action); border-color: var(--brand-action); color: #fff; }
+.pt-action.main { background: var(--brand-action-strong); border-color: var(--brand-action-strong); color: #fff; }
 .pt-action.main span { color: #fff; }
 .portal[data-hc="1"] .pt-action.main { background: #064744; border-color: #064744; }
 

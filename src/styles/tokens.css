@@ -9,7 +9,7 @@
   --brand-header: #0E4F4C;
   --brand-action: #16A5A0;
   --brand-bright: #2BC4BC;
-  --brand-link: #0E7C77;
+  --brand-link: #0C766F;
   --brand-link-hover: #0A5F5B;
   --on-brand-2: #9FD6D2;
   --on-brand-3: #CFECEA;
@@ -56,6 +56,8 @@
   --focus-ring: #0E7C77;
   --focus-ring-on-dark: #2BC4BC;
   --brand-action-hover: #128884;
+  --brand-action-strong: #0C766F; /* white text on this passes 4.5:1; use it for filled buttons */
+  --brand-action-strong-hover: #0A5F5B;
   --h-pill: 24px;
   --h-chip: 32px;
   --h-touch: 44px;

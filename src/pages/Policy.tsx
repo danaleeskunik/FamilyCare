@@ -26,7 +26,7 @@ export default function Policy() {
   return (
     <div className="lp">
       <LpNav onPolicy />
-      <main className="lp-doc">
+      <main id="main" tabIndex={-1} className="lp-doc">
         <div className="lp-wrap">
           <header className="lp-doc-head reveal">
             <h1>תקנון ומדיניות החברה</h1>
@@ -52,9 +52,9 @@ export default function Policy() {
           </section>
           <p className="lp-doc-back"><Link to="/">חזרה לדף הבית</Link></p>
         </div>
+        <FloatingContact />
       </main>
       <LpFooter onPolicy />
-      <FloatingContact />
     </div>
   )
 }

@@ -68,7 +68,17 @@ function ServiceGrid() {
 
   useEffect(() => {
     if (open === null) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { close(); return }
+      if (e.key !== 'Tab') return
+      // Keep Tab inside the open dialog.
+      const items = [...(popRef.current?.querySelectorAll<HTMLElement>('button, a[href]') ?? [])]
+      if (!items.length) return
+      const first = items[0], last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      else if (!popRef.current?.contains(document.activeElement)) { e.preventDefault(); first.focus() }
+    }
     document.addEventListener('keydown', onKey)
     const el = popRef.current
     el?.querySelector<HTMLButtonElement>('.lp-pop-x')?.focus({ preventScroll: true })
@@ -96,7 +106,7 @@ function ServiceGrid() {
             <span className="lp-more">למידע נוסף <Ico name="plus" size={16} /></span>
           </button>
           {open === i && (
-            <div className="lp-pop" id={`svc-pop-${i}`} role="dialog" aria-labelledby={`svc-pop-t-${i}`} ref={popRef}>
+            <div className="lp-pop" id={`svc-pop-${i}`} role="dialog" aria-modal="true" aria-labelledby={`svc-pop-t-${i}`} ref={popRef}>
               <div className="lp-pop-head">
                 <span className="lp-ico sm"><Ico name={s.icon} size={20} /></span>
                 <h3 id={`svc-pop-t-${i}`}>{s.title}</h3>
@@ -142,6 +152,7 @@ export default function Landing() {
     <div className="lp">
       <LpNav />
 
+      <main id="main" tabIndex={-1}>
       <header id="top" className="lp-hero">
         <div className="lp-wrap lp-hero-in">
           <div className="lp-hero-text">
@@ -286,8 +297,10 @@ export default function Landing() {
         </div>
       </section>
 
-      <LpFooter />
       <FloatingContact toSection />
+      </main>
+
+      <LpFooter />
     </div>
   )
 }

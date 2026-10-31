@@ -84,6 +84,8 @@ export function LpNav({ onPolicy }: { onPolicy?: boolean }) {
   const toTop = useLogoTop()
   const enter = session && hasHome(role) ? { to: homeFor(role, sections), label: 'לאזור האישי' } : { to: '/login', label: 'כניסה' }
   return (
+    <>
+    <a className="lp-skip" href="#main">דלגו לתוכן הראשי</a>
     <nav className="lp-nav" aria-label="ניווט ראשי">
       <div className="lp-wrap lp-nav-in">
         <Link className="lp-logo" to="/" onClick={toTop} aria-label="Family Care — לדף הבית"><img src={logo('logo-white.png')} alt="Family Care — always with you" /></Link>
@@ -102,6 +104,7 @@ export function LpNav({ onPolicy }: { onPolicy?: boolean }) {
         </div>
       </div>
     </nav>
+    </>
   )
 }
 
@@ -115,6 +118,7 @@ export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
           <nav aria-label="קישורים בתחתית העמוד">
             {onPolicy ? <Link to="/">דף הבית</Link> : (<><a href="#about">אודות</a><a href="#services">שירותים</a><a href="#plans">מסלולים</a><a href="#faq">שאלות נפוצות</a></>)}
             <Link to="/policy">מדיניות ותנאי שירות</Link>
+            <Link to="/accessibility">הצהרת נגישות</Link>
             <Link to="/login">כניסה</Link>
           </nav>
         </div>

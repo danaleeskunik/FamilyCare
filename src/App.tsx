@@ -20,6 +20,7 @@ import StaffReport from './pages/admin/StaffReport'
 import Login from './pages/Login'
 import Landing from './pages/Landing'
 import Policy from './pages/Policy'
+import Accessibility from './pages/Accessibility'
 import Leads from './pages/admin/Leads'
 import Team from './pages/admin/Team'
 import Materials from './pages/admin/Materials'
@@ -50,6 +51,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/policy" element={<Policy />} />
+      <Route path="/accessibility" element={<Accessibility />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin" element={<RequireAnyStaff><AdminLayout /></RequireAnyStaff>}>
         <Route index element={<RequireSection section="board"><Board /></RequireSection>} />

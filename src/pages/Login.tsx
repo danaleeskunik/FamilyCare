@@ -29,7 +29,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 16, background: 'var(--brand-header)' }}>
+    <main id="main" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 16, background: 'var(--brand-header)' }}>
       <Card size="lg" style={{ width: 'min(400px, 100%)' }}>
         <div className="row" style={{ justifyContent: 'center', marginBottom: 16, background: 'var(--brand-header)', borderRadius: 12, padding: 12 }}>
           <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={44} alt="Family Care — always with you" />
@@ -42,6 +42,6 @@ export default function Login() {
           <Button type="submit" size="lg" disabled={busy}>{busy ? 'נכנסת…' : 'כניסה'}</Button>
         </form>
       </Card>
-    </div>
+    </main>
   )
 }
