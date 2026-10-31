@@ -37,9 +37,9 @@ const FAMILY: { icon: IconName; text: string }[] = [
 ]
 
 const PLANS = [
-  { name: 'Business', price: '2,950', meetings: 4, hours: 2, premium: false, featured: false, calendar: '' },
-  { name: 'Platinum', price: '8,350', meetings: 8, hours: 3, premium: true, featured: true, calendar: 'ניהול יומן משפחה חלקי (בפגישות)' },
-  { name: 'Top Platinum', price: '15,950', meetings: 12, hours: 4, premium: true, featured: false, calendar: 'ניהול יומן משפחה ברמה יומית' },
+  { name: 'Business', price: '2,950', extra: 368, meetings: 4, hours: 2, premium: false, featured: false, calendar: '' },
+  { name: 'Platinum', price: '8,350', extra: 347, meetings: 8, hours: 3, premium: true, featured: true, calendar: 'ניהול יומן משפחה חלקי (בפגישות)' },
+  { name: 'Top Platinum', price: '15,950', extra: 332, meetings: 12, hours: 4, premium: true, featured: false, calendar: 'ניהול יומן משפחה ברמה יומית' },
 ]
 const PLAN_SHARED = ['מלווה אישית קבועה', 'תיק אישי עם כל הדגשים והצרכים', 'סיכום כתוב אחרי כל שירות', 'מוקד שירות אחד לכל בקשה']
 
@@ -136,6 +136,7 @@ function Section({ id, tone, title, lead, children }: { id: string; tone?: 'whit
 
 export default function Landing() {
   useReveal()
+  const [plansOpen, setPlansOpen] = useState(false)
 
   return (
     <div className="lp">
@@ -233,7 +234,12 @@ export default function Landing() {
       </Section>
 
       <Section id="plans" tone="white" title="מסלולי מועדון לקוחות יוקרה" lead="בוחרים את המסלול שמתאים לצרכים של ההורים ולקצב של המשפחה.">
-        <div className="lp-grid three plans">
+        <div className="lp-plans-open reveal">
+          <button type="button" className="lp-btn primary lp-btn-xl" aria-expanded={plansOpen} aria-controls="plans-grid" onClick={() => setPlansOpen((o) => !o)}>
+            {plansOpen ? 'הסתרת המסלולים' : 'בחירת מסלול ומחירים'} <Ico name="down" size={22} />
+          </button>
+        </div>
+        <div id="plans-grid" className="lp-grid three plans" style={plansOpen ? undefined : { display: 'none' }}>
           {PLANS.map((p, i) => (
             <article key={p.name} className={`lp-plan reveal ${p.featured ? 'featured' : ''}`} style={delay(i * 80)}>
               <h3>{p.name}</h3>
@@ -246,6 +252,7 @@ export default function Landing() {
                 {p.premium && <li><Ico name="check" size={18} /> צ'ופרים לסופ"ש: זר פרחים, עיתון או חלה</li>}
                 {PLAN_SHARED.map((f) => (<li key={f}><Ico name="check" size={18} /> {f}</li>))}
               </ul>
+              <p className="lp-plan-extra">שעה נוספת: <span dir="ltr">{p.extra} ₪</span></p>
               <a className={`lp-btn sm lp-plan-cta ${p.featured ? 'primary' : 'solid'}`} href="#contact">להצטרפות ופרטים</a>
             </article>
           ))}

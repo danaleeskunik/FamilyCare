@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './store/AuthStore'
 import { homeFor } from './lib/sections'
 import AdminLayout from './layouts/AdminLayout'
@@ -35,9 +36,17 @@ function RequireAnyStaff({ children }: { children: React.ReactNode }) {
 }
 
 // Role resolution (admin / companion / client) will come from auth; until then each surface has its own route.
+/** A new page opens at its top; links with a #anchor keep scrolling to the anchor. */
+function ScrollToTop() {
+  const { pathname, hash } = useLocation()
+  useEffect(() => { if (!hash) window.scrollTo(0, 0) }, [pathname, hash])
+  return null
+}
+
 export default function App() {
   return (
     <>
+    <ScrollToTop />
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/policy" element={<Policy />} />

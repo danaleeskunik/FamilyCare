@@ -4,14 +4,14 @@ import { CONTACT, mailHref, waHref } from '../lib/contact'
 import { ContactBtn, FloatingContact, LpFooter, LpNav, useReveal } from '../components/LandingChrome'
 
 /** "Lead: text" items show the lead in bold. */
-function Item({ n, t, sub }: PolicyItem) {
+function Item({ n, t, sub, em }: PolicyItem) {
   const m0 = t.match(/^([^:]{2,60}):\s+(.+)$/)
   const m = m0 && !m0[1].includes('"') && (m0[1].match(/\(/g)?.length ?? 0) === (m0[1].match(/\)/g)?.length ?? 0) ? m0 : null
   const lead = m ? m[1] : null
   const body = m ? m[2] : t
   const colonOnly = !m && t.endsWith(':')
   return (
-    <li>
+    <li className={em ? 'lp-doc-em' : undefined}>
       <span className="lp-doc-n" dir="ltr">{n}</span>
       <div>
         {lead ? <p><strong>{lead}:</strong> {body}</p> : <p>{colonOnly ? <strong>{t}</strong> : body}</p>}

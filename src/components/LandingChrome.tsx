@@ -123,7 +123,7 @@ export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
           <ContactBtn href={mailHref} icon="mail" variant="ghost">{CONTACT.email || 'מייל'}</ContactBtn>
           {telHref && <ContactBtn href={telHref} icon="call" variant="ghost"><span dir="ltr">{CONTACT.phone}</span></ContactBtn>}
         </div>
-        <small>© {new Date().getFullYear()} Family Care Services. כל הזכויות שמורות.</small>
+        <small>© {new Date().getFullYear()} טיפוח המשפחה שלי בע"מ (My Family Care Services Ltd), ח.פ. 516868817. כל הזכויות שמורות.</small>
       </div>
     </footer>
   )
