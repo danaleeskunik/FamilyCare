@@ -26,6 +26,7 @@ import Team from './pages/admin/Team'
 import Materials from './pages/admin/Materials'
 import Questionnaire from './pages/admin/Questionnaire'
 import VendorFile from './pages/admin/VendorFile'
+import AnalyticsConsent from './components/AnalyticsConsent'
 
 /** The admin shell is for admins and office staff; each page then checks its own section. */
 function RequireAnyStaff({ children }: { children: React.ReactNode }) {
@@ -48,6 +49,7 @@ export default function App() {
   return (
     <>
     <ScrollToTop />
+    <AnalyticsConsent />
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/policy" element={<Policy />} />

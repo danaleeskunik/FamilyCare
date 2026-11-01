@@ -134,6 +134,9 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-foot nav { display: flex; flex-wrap: wrap; gap: 4px 8px; }
 .lp-foot nav a { display: inline-flex; align-items: center; min-height: var(--h-touch); padding: 0 12px; border-radius: 10px; color: var(--on-brand-3); font-size: 15px; }
 .lp-foot nav a:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.lp-foot nav .lp-foot-btn { display: inline-flex; align-items: center; min-height: var(--h-touch); padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--on-brand-3); font: 400 15px/1 var(--font-ui); cursor: pointer; }
+.lp-foot nav .lp-foot-btn:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.lp-foot nav .lp-foot-btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .lp-foot-contact { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .12); }
 .lp-foot-contact .lp-btn { min-height: var(--h-touch); padding: 0 18px; font-size: 15px; }
 .lp-foot small { font-size: 14px; }
@@ -298,3 +301,11 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-skip { position: fixed; inset-block-start: -80px; inset-inline-start: 12px; z-index: 100; padding: 12px 20px; border-radius: 12px; background: #fff; color: var(--brand-deep); font: 600 16px/1.2 var(--font-ui); text-decoration: none; box-shadow: var(--shadow-lift); }
 .lp-skip:focus { inset-block-start: 12px; outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .lp main:focus { outline: none; }
+
+.fc-consent { position: fixed; z-index: 60; inset-inline: 12px; inset-block-end: calc(12px + env(safe-area-inset-bottom)); max-width: 720px; margin-inline: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 16px 20px; border-radius: 16px; background: #fff; color: var(--brand-deep); box-shadow: var(--shadow-lift); font: 400 16px/1.5 var(--font-ui); direction: rtl; }
+.fc-consent p { flex: 1 1 320px; margin: 0; }
+.fc-consent a { color: var(--brand-link); text-decoration: underline; }
+.fc-consent div { display: flex; gap: 10px; }
+.fc-consent button { min-height: 44px; padding: 0 22px; border-radius: 999px; border: 2px solid var(--brand-action-strong); background: var(--brand-action-strong); color: #fff; font: 500 16px/1 var(--font-ui); cursor: pointer; }
+.fc-consent button:last-child { background: #fff; color: var(--brand-action-strong); }
+.fc-consent button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }

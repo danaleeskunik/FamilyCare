@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../store/AuthStore'
 import { homeFor, hasHome } from '../lib/sections'
 import { CONTACT, mailHref, telHref, waHref } from '../lib/contact'
+import { reopenConsent } from '../lib/analytics'
 import '../styles/landing.css'
 
 const PATHS = {
@@ -119,6 +120,7 @@ export function LpFooter({ onPolicy }: { onPolicy?: boolean }) {
             {onPolicy ? <Link to="/">דף הבית</Link> : (<><a href="#about">אודות</a><a href="#services">שירותים</a><a href="#plans">מסלולים</a><a href="#faq">שאלות נפוצות</a></>)}
             <Link to="/policy">מדיניות ותנאי שירות</Link>
             <Link to="/accessibility">הצהרת נגישות</Link>
+            <button type="button" className="lp-foot-btn" onClick={reopenConsent}>הגדרות עוגיות</button>
             <Link to="/login">כניסה</Link>
           </nav>
         </div>
