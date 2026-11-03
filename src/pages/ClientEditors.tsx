@@ -5,6 +5,8 @@ import { SelectField, TextAreaField, TextField } from '../components/Fields'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/AppStore'
 import { INTAKE } from '../data/intake'
+import { JOB_TITLES } from '../data/model'
+import { photoUrl } from '../lib/portal'
 import { cleanAnswers, type Answers } from '../lib/intake'
 
 /** Everything the profile editors below share: one place that saves, reports a failure and asks the file to reload. */
@@ -360,6 +362,59 @@ export function DocumentsCard({ d, onChanged }: { d: any; onChanged: () => void 
           </div>
         </div>
       )}
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------- Regular companion
+type Companion = { id: string; full_name: string; job_title: string; phone: string | null; languages: string[]; photo_path: string | null; is_active: boolean; regions: string[] }
+
+/** Pin the client's regular companion from the staff list and see who they are. */
+export function CompanionCard({ client }: { client: any }) {
+  const { staff, assignCompanion, notify } = useStore()
+  const [info, setInfo] = useState<Companion | null>(null)
+  const [busy, setBusy] = useState(false)
+  const pinned: string = client.regular_companion_id ?? ''
+
+  useEffect(() => {
+    if (!pinned) { setInfo(null); return }
+    let alive = true
+    void (async () => {
+      const { data } = await supabase.from('staff_members').select('id, full_name, job_title, phone, languages, photo_path, is_active, staff_regions(regions(name))').eq('id', pinned).maybeSingle()
+      if (!alive || !data) return
+      const r = data as any
+      setInfo({ ...r, regions: (r.staff_regions ?? []).map((x: any) => (Array.isArray(x.regions) ? x.regions[0] : x.regions)?.name).filter(Boolean) })
+    })()
+    return () => { alive = false }
+  }, [pinned])
+
+  const change = async (id: string) => {
+    setBusy(true)
+    const ok = await assignCompanion(client.id, id || null)
+    setBusy(false)
+    if (ok) notify(id ? 'המלווה/ת הוצמד/ה ללקוח/ה' : 'ההצמדה הוסרה')
+  }
+  const src = photoUrl(info?.photo_path ?? null)
+  return (
+    <Card>
+      <div className="card-title" style={{ marginBottom: 10 }}>מלווה קבוע/ה</div>
+      {info && (
+        <div className="row" style={{ gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+          {src ? <img src={src} alt={info.full_name} width={52} height={52} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+            : <span className="avatar" style={{ width: 52, height: 52, background: '#E6F5F4', fontSize: 18 }}>{info.full_name[0]}</span>}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 15.5 }}>{info.full_name}</div>
+            <div className="card-meta">{JOB_TITLES.find((j) => j.value === info.job_title)?.label ?? info.job_title}{!info.is_active && ' · לא פעיל/ה'}</div>
+            {info.phone && <div className="card-meta"><a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a></div>}
+            {info.regions.length > 0 && <div className="card-meta">אזורים: {info.regions.join(' · ')}</div>}
+            {info.languages.length > 0 && <div className="card-meta">שפות: {info.languages.join(', ')}</div>}
+          </div>
+        </div>
+      )}
+      {!pinned && <p className="muted" style={{ marginBottom: 10 }}>עוד לא הוצמד/ה מלווה/ת. בחרי מהרשימה.</p>}
+      <SelectField label={pinned ? 'החלפת מלווה/ת' : 'הצמדת מלווה/ת'} value={pinned} onChange={(v) => void change(v)} placeholder="ללא מלווה/ת קבוע/ה"
+        options={staff.map((s) => ({ value: s.id, label: s.name }))} />
+      {busy && <p className="card-meta" role="status" style={{ marginTop: 6 }}>שומרת…</p>}
     </Card>
   )
 }

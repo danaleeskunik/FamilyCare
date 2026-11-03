@@ -12,7 +12,7 @@ import { TODAY } from '../data/model'
 import IntakeTab from './IntakeTab'
 import ClientMessages from './ClientMessages'
 import PortalAccess from '../components/PortalAccess'
-import { AllergiesCard, ContactsEditor, DocumentsCard, Hints, MedicationsCard, PreferencesEditor, useIntake } from './ClientEditors'
+import { AllergiesCard, CompanionCard, ContactsEditor, DocumentsCard, Hints, MedicationsCard, PreferencesEditor, useIntake } from './ClientEditors'
 import type { Answers } from '../lib/intake'
 
 const TABS = [
@@ -55,6 +55,7 @@ function Sidebar({ d, refetch, answers }: { d: ClientDetail; refetch: () => void
           </div>
         ))}
       </Card>
+      <CompanionCard client={c} />
       <ContactsEditor d={d} answers={answers} onChanged={refetch} renderAccess={(p) => <PortalAccess contact={p} onChanged={refetch} />} />
       <DocumentsCard d={d} onChanged={refetch} />
     </aside>

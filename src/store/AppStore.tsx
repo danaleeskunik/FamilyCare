@@ -39,6 +39,8 @@ type Store = {
   saveSlot: (id: string | null, s: SlotInput) => Promise<boolean>
   /** Assign (or clear) the companion on a recurring slot; future planned visits follow. */
   assignSlot: (slotId: string, staffId: string | null) => Promise<boolean>
+  /** Pins (or, with null, unpins) a client's regular companion. */
+  assignCompanion: (clientId: string, staffId: string | null) => Promise<boolean>
   /** Create the visits for the next 30 days from the recurring slots (idempotent). */
   generateNow: () => Promise<void>
   saveItem: (id: string | null, i: ItemInput) => Promise<boolean>
@@ -342,6 +344,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     return true
   }, [fail, refresh])
 
+  const assignCompanion = useCallback(async (clientId: string, staffId: string | null) => {
+    const { error } = await supabase.from('clients').update({ regular_companion_id: staffId }).eq('id', clientId)
+    if (error) return fail('assign companion', error)
+    await refresh()
+    return true
+  }, [fail, refresh])
+
   const askDelete = useCallback((kind: FormKind, id: string) => {
     if (kind === 'task') {
       const t = data.tasks.find((x) => x.id === id)
@@ -384,13 +393,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     ...data, loading, loadError,
     reload: () => setNonce((n) => n + 1),
     regionFilter, setRegionFilter,
-    saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime,
+    saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, assignCompanion, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime,
     pendingDelete, askDelete, cancelDelete: () => setPendingDelete(null), confirmDelete,
     form,
     openForm: (kind, preset) => setForm({ kind, preset }),
     closeForm: () => setForm(null),
     toast, notify,
-  }), [data, loading, loadError, regionFilter, saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime, pendingDelete, askDelete, confirmDelete, form, toast, notify])
+  }), [data, loading, loadError, regionFilter, saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, assignCompanion, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime, pendingDelete, askDelete, confirmDelete, form, toast, notify])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
