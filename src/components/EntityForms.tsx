@@ -185,6 +185,10 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
         return
       }
     }
+    // The orderer's phone and relation from the questionnaire belong on their contact card too.
+    if (!editId && withIntake && (intake.orderer_phone?.trim() || intake.orderer_relation?.trim())) {
+      await supabase.from('family_contacts').update({ phone: intake.orderer_phone?.trim() || null, relation: intake.orderer_relation?.trim() || null }).eq('client_id', savedId).eq('is_orderer', true)
+    }
     notify(editId ? 'פרטי הלקוח/ה עודכנו' : `נוסף/ה לקוח/ה: ${name}`)
     closeForm()
   }

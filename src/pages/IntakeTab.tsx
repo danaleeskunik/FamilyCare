@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { Badge, Button, Callout, Card, Ltr } from '../components/ui'
+import { Badge, Button, Callout, Card, Empty, Ltr } from '../components/ui'
 import Modal from '../components/Modal'
 import IntakeFields from '../components/IntakeFields'
 import { supabase } from '../lib/supabase'
@@ -19,6 +19,7 @@ export default function IntakeTab({ clientId, name }: { clientId: string; name: 
   const [setup, setSetup] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
+  const [showEmpty, setShowEmpty] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -38,6 +39,7 @@ export default function IntakeTab({ clientId, name }: { clientId: string; name: 
   }, [clientId])
 
   const all = useMemo(() => ({ ...pub, ...priv }), [pub, priv])
+  const visible = INTAKE.map((s) => ({ s, part: s.part ?? null, fields: s.fields.filter((f) => showEmpty || all[f.key]) })).filter((x) => x.fields.length)
   const total = INTAKE.reduce((n, s) => n + s.fields.length, 0)
   const filled = INTAKE.reduce((n, s) => n + s.fields.filter((f) => all[f.key]).length, 0)
 
@@ -57,16 +59,21 @@ export default function IntakeTab({ clientId, name }: { clientId: string; name: 
             <div className="card-title">שאלון קליטה, היכרות ומיפוי צרכים</div>
             <div className="card-meta">{loading ? 'טוענת…' : `מולאו ${filled} מתוך ${total} שדות`}</div>
           </div>
-          <Button size="sm" icon="edit" onClick={() => setEditing(true)} disabled={loading}>עריכת השאלון</Button>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <Button size="sm" variant="secondary" onClick={() => setShowEmpty((x) => !x)} disabled={loading}>{showEmpty ? 'הסתרת שדות שלא מולאו' : 'הצגת שדות שלא מולאו'}</Button>
+            <Button size="sm" icon="edit" onClick={() => setEditing(true)} disabled={loading}>עריכת השאלון</Button>
+          </div>
         </div>
       </Card>
       {error && <Callout tone="warning" title="משהו לא הצליח">{error}</Callout>}
-      {!loading && INTAKE.map((s) => (
+      {!loading && !showEmpty && filled === 0 && <Empty text="השאלון עוד לא מולא. ״עריכת השאלון״ פותחת אותו למילוי." />}
+      {!loading && visible.map(({ s, fields }, i) => {
+        return (
         <Fragment key={s.id}>
-          {s.part && <h3 className="intake-part">{s.part}</h3>}
+          {s.part && (i === 0 || visible[i - 1].part !== s.part) && <h3 className="intake-part">{s.part}</h3>}
           <Card>
             <div className="card-title" style={{ marginBottom: 6 }}>{s.title}{s.private && <> <Badge tone="orange">מנהלים בלבד</Badge></>}</div>
-            {s.fields.map((f) => (
+            {fields.map((f) => (
               <div key={f.key} className="intake-q">
                 <div className="intake-label">{f.label}{f.private && !s.private && <> <Badge tone="orange">מנהלים בלבד</Badge></>}</div>
                 <div className="intake-a">{show(f, all[f.key])}</div>
@@ -74,7 +81,8 @@ export default function IntakeTab({ clientId, name }: { clientId: string; name: 
             ))}
           </Card>
         </Fragment>
-      ))}
+        )
+      })}
       {editing && (
         <IntakeForm
           clientId={clientId} name={name} initial={all}

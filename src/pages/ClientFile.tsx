@@ -12,6 +12,8 @@ import { TODAY } from '../data/model'
 import IntakeTab from './IntakeTab'
 import ClientMessages from './ClientMessages'
 import PortalAccess from '../components/PortalAccess'
+import { AllergiesCard, ContactsEditor, DocumentsCard, Hints, MedicationsCard, PreferencesEditor, useIntake } from './ClientEditors'
+import type { Answers } from '../lib/intake'
 
 const TABS = [
   ['med', 'רפואי ותפקודי'],
@@ -24,14 +26,13 @@ const TABS = [
 type TabKey = (typeof TABS)[number][0]
 
 const DEPENDENCY: Record<string, string> = { independent: 'עצמאי/ת', light: 'תלות קלה', moderate: 'תלות בינונית', high: 'תלות גבוהה' }
-const AVATAR_BG = ['#E6F5F4', '#EEF2F7', '#FDEEE4']
 const one = (v: any) => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null))
 const age = (birth: string | null) => (birth ? Math.floor((parseISO(TODAY).getTime() - parseISO(birth).getTime()) / (365.25 * 86400000)) : null)
 const initials = (name: string) => name.split(' ').map((w) => w[0]).join('"')
 const ymShort = (iso: string) => `${iso.slice(5, 7)}.${iso.slice(2, 4)}`
 const hm = (mins: number) => `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`
 
-function Sidebar({ d, refetch }: { d: ClientDetail; refetch: () => void }) {
+function Sidebar({ d, refetch, answers }: { d: ClientDetail; refetch: () => void; answers: Answers }) {
   const c = d.client
   const a = age(c.birth_date)
   return (
@@ -54,38 +55,8 @@ function Sidebar({ d, refetch }: { d: ClientDetail; refetch: () => void }) {
           </div>
         ))}
       </Card>
-      <Card>
-        <div className="card-title" style={{ marginBottom: 10 }}>אנשי קשר</div>
-        {d.contacts.length === 0 ? <Empty text="עוד לא הוזנו אנשי קשר." /> : (
-          <div className="stack" style={{ gap: 10 }}>
-            {d.contacts.map((p: any, i: number) => (
-              <div key={p.id} className="row" style={{ gap: 10 }}>
-                <span className="avatar" style={{ width: 34, height: 34, background: AVATAR_BG[i % 3], fontSize: 13 }}>{p.full_name[0]}</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{p.full_name}</div>
-                  <div className="card-meta">
-                    {p.contact_type === 'physician'
-                      ? [p.relation, p.note].filter(Boolean).join(' · ')
-                      : [p.relation, p.is_orderer ? 'מזמין/ת השירות' : null, p.permission === 'full' ? 'הרשאה מלאה' : 'צפייה בלבד'].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
-                {p.contact_type !== 'physician' && <span style={{ marginInlineStart: 'auto' }}><PortalAccess contact={p} onChanged={refetch} /></span>}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-      <Card>
-        <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
-          <div className="card-title">מסמכים משפטיים</div><Badge>מורשים בלבד</Badge>
-        </div>
-        <div className="stack" style={{ gap: 8 }}>
-          {d.documents.map((doc: any) => (
-            <div key={doc.id} className="item-box row" style={{ gap: 8, padding: '9px 11px', fontSize: 13.5 }}><Icon name="document" size={17} />{doc.title}</div>
-          ))}
-          {d.documents.length === 0 && <div className="dashed" style={{ padding: '9px 11px', fontSize: 13.5 }}>עוד לא הועלו מסמכים משפטיים.</div>}
-        </div>
-      </Card>
+      <ContactsEditor d={d} answers={answers} onChanged={refetch} renderAccess={(p) => <PortalAccess contact={p} onChanged={refetch} />} />
+      <DocumentsCard d={d} onChanged={refetch} />
     </aside>
   )
 }
@@ -98,31 +69,15 @@ const InfoCard = ({ title, children }: { title: string; children: React.ReactNod
 )
 const None = ({ text }: { text: string }) => <span className="muted" style={{ fontWeight: 500 }}>{text}</span>
 
-function Medical({ d }: { d: ClientDetail }) {
+function Medical({ d, answers, onChanged }: { d: ClientDetail; answers: Answers; onChanged: () => void }) {
   const c = d.client
-  const medNote: string | undefined = d.medications.find((m: any) => m.notes)?.notes
   return (
     <>
       <div className="grid cols-2" style={{ alignItems: 'start' }}>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 8 }}>תרופות קבועות</div>
-          {d.medications.length === 0 && <None text="עוד לא הוזנו תרופות." />}
-          {d.medications.map((m: any) => (
-            <div key={m.id} className="kv"><span style={{ fontWeight: 600 }}>{[m.name, m.dose].filter(Boolean).join(' ')}</span><span className="muted">{m.schedule ? `/ ${m.schedule}` : ''}</span></div>
-          ))}
-          {medNote && <p className="card-meta" style={{ marginTop: 8 }}>{medNote}</p>}
-        </Card>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 8 }}>רגישויות ואלרגיות</div>
-          {d.allergies.length === 0 ? <None text="לא דווחו רגישויות." /> : (
-            <div className="row" style={{ gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-              {d.allergies.map((x: any) => <Badge key={x.id} tone={x.severity === 'high' ? 'red' : 'orange'}>{x.allergen}</Badge>)}
-            </div>
-          )}
-          <p className="card-meta" style={{ lineHeight: 1.5 }}>מופיע אוטומטית בתדריך לכל מלווה ולכל ספק רפואי שמגיע לבית.</p>
-        </Card>
-        <InfoCard title="ניידות">{c.mobility_notes ?? <None text="עוד לא הוזן מידע על ניידות." />}</InfoCard>
-        <InfoCard title="מצב קוגניטיבי">{c.cognitive_notes ?? <None text="עוד לא הוזן מידע על המצב הקוגניטיבי." />}</InfoCard>
+        <MedicationsCard d={d} answers={answers} onChanged={onChanged} />
+        <AllergiesCard d={d} onChanged={onChanged} />
+        <InfoCard title="ניידות">{c.mobility_notes ?? <None text="עוד לא הוזן מידע על ניידות. אפשר להוסיף דרך ״עריכת פרטים״." />}<Hints keys={['mobility', 'home_difficulties', 'home_floor']} answers={answers} /></InfoCard>
+        <InfoCard title="מצב קוגניטיבי">{c.cognitive_notes ?? <None text="עוד לא הוזן מידע על המצב הקוגניטיבי. אפשר להוסיף דרך ״עריכת פרטים״." />}<Hints keys={['loneliness', 'personality']} answers={answers} /></InfoCard>
       </div>
       {d.incidents.map((i: any) => (
         <Callout key={i.id} tone="warning" title={`חריגה שדווחה ${formatDM(new Date(i.reported_at))}`}>{i.description}</Callout>
@@ -131,23 +86,8 @@ function Medical({ d }: { d: ClientDetail }) {
   )
 }
 
-const PREF_GROUPS = [['food', 'אוכל ומעדניות'], ['culture', 'תרבות ופנאי'], ['routine', 'הרגלי יום־יום'], ['companion', 'העדפות למלווה']] as const
-
-function Preferences({ d }: { d: ClientDetail }) {
-  return (
-    <div className="grid cols-2" style={{ alignItems: 'start' }}>
-      {PREF_GROUPS.map(([cat, title]) => {
-        const items = d.preferences.filter((p: any) => p.category === cat)
-        return (
-          <InfoCard key={cat} title={title}>
-            {items.length === 0 ? <None text="עוד לא הוזנו העדפות." /> : items.map((p: any) => (
-              <div key={p.id}>{p.title}{p.details && <p className="card-meta" style={{ marginTop: 6, lineHeight: 1.5, fontWeight: 500 }}>{p.details}</p>}</div>
-            ))}
-          </InfoCard>
-        )
-      })}
-    </div>
-  )
+function Preferences({ d, answers, onChanged }: { d: ClientDetail; answers: Answers; onChanged: () => void }) {
+  return <PreferencesEditor d={d} answers={answers} onChanged={onChanged} />
 }
 
 function History({ d }: { d: ClientDetail }) {
@@ -282,7 +222,7 @@ function Slots({ clientId }: { clientId: string }) {
   )
 }
 
-function Notes({ d, onChanged }: { d: ClientDetail; onChanged: () => void }) {
+function Notes({ d, answers, onChanged }: { d: ClientDetail; answers: Answers; onChanged: () => void }) {
   const { notify } = useStore()
   const [editing, setEditing] = useState<{ id: string | null; kind: string; body: string } | null>(null)
   const [err, setErr] = useState('')
@@ -335,12 +275,14 @@ function Notes({ d, onChanged }: { d: ClientDetail; onChanged: () => void }) {
           </div>
         )}
       </div>
+      <Hints keys={['sensitive_topics', 'dont_do', 'b_ask_first', 'upd_not_shared', 'upd_speak_for', 'b_tell_kids']} answers={answers} />
     </Card>
   )
 }
 
 export default function ClientFile() {
   const { id } = useParams()
+  const answers = useIntake(id)
   const { openForm, clients } = useStore()
   const [tab, setTab] = useState<TabKey>('med')
   const [d, setD] = useState<ClientDetail | null | undefined>(undefined)
@@ -404,12 +346,12 @@ export default function ClientFile() {
       />
       <main className="container page-body">
         <div className="file-grid">
-          <Sidebar d={d} refetch={refetch} />
+          <Sidebar d={d} refetch={refetch} answers={answers} />
           <div className="stack">
             <Slots clientId={c.id} />
-            <Notes d={d} onChanged={refetch} />
-            {tab === 'med' && <Medical d={d} />}
-            {tab === 'pref' && <Preferences d={d} />}
+            <Notes d={d} answers={answers} onChanged={refetch} />
+            {tab === 'med' && <Medical d={d} answers={answers} onChanged={refetch} />}
+            {tab === 'pref' && <Preferences d={d} answers={answers} onChanged={refetch} />}
             {tab === 'intake' && <IntakeTab clientId={c.id} name={c.full_name} />}
             {tab === 'msgs' && <ClientMessages clientId={c.id} name={c.full_name} />}
             {tab === 'hist' && <History d={d} />}
