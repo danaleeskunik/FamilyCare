@@ -6,7 +6,7 @@ import { SERVICES } from '../data/services'
 import { PLAN_RATES } from '../data/pricing'
 import { CONTACT, ROY } from '../lib/contact'
 import { TODAY } from '../data/model'
-import { loadMessages, loadPortal, photoUrl, sendMessage, sendRequest, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
+import { loadMessages, loadPortal, loadPortalPreview, photoUrl, sendMessage, sendRequest, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
 import { useAuth } from '../store/AuthStore'
 import '../styles/portal.css'
 
@@ -37,7 +37,8 @@ function CallBtn({ phone, label, name }: { phone: string; label?: string; name: 
   return <a className="pt-btn ghost" href={tel(phone)} aria-label={`התקשרות אל ${name}`}>{label ?? 'התקשרות'}</a>
 }
 
-export default function ClientApp() {
+/** previewId = an admin looking at this client's portal exactly as the family sees it (read only). */
+export default function ClientApp({ previewId }: { previewId?: string } = {}) {
   const { signOut } = useAuth()
   const [data, setData] = useState<{ clients: PortalClient[]; setup: boolean; failed: boolean } | null>(null)
   const [idx, setIdx] = useState(0)
@@ -49,7 +50,7 @@ export default function ClientApp() {
   const [msgFailed, setMsgFailed] = useState(false)
   const [seen, setSeen] = useState<string>('')
 
-  const reload = useCallback(async () => setData(await loadPortal()), [])
+  const reload = useCallback(async () => setData(previewId ? await loadPortalPreview(previewId) : await loadPortal()), [previewId])
   useEffect(() => { void reload() }, [reload])
 
   const c = data?.clients[idx]
@@ -78,6 +79,12 @@ export default function ClientApp() {
   return (
     <div className="portal" data-hc={hc ? '1' : '0'} style={{ ['--ts' as string]: ts }}>
       <a className="pt-skip" href="#pt-main">דילוג לתוכן</a>
+      {previewId && (
+        <div role="status" style={{ background: '#FFF4E5', color: '#7A4A00', padding: '10px 16px', textAlign: 'center', fontWeight: 600, position: 'sticky', top: 0, zIndex: 50 }}>
+          תצוגת מנהל בקריאה בלבד: כך הלקוח רואה את האזור האישי. {' '}
+          <a href={`/admin/clients/${previewId}`} style={{ color: 'inherit', textDecoration: 'underline' }}>חזרה לתיק הלקוח</a>
+        </div>
+      )}
       <header className="pt-head">
         <div className="pt-head-in">
           <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={40} alt="Family Care — always with you" />
@@ -86,7 +93,7 @@ export default function ClientApp() {
             <button type="button" aria-pressed={ts === '1.2'} onClick={() => setSize('1.2')} aria-label="טקסט גדול" style={{ fontSize: '1.2em' }}>א</button>
             <button type="button" aria-pressed={ts === '1.4'} onClick={() => setSize('1.4')} aria-label="טקסט גדול מאוד" style={{ fontSize: '1.45em' }}>א</button>
             <button type="button" aria-pressed={hc} onClick={toggleHc} aria-label="ניגודיות גבוהה" className="pt-hc">◐</button>
-            <button type="button" onClick={() => void signOut()} className="pt-out">יציאה</button>
+            {!previewId && <button type="button" onClick={() => void signOut()} className="pt-out">יציאה</button>}
           </div>
         </div>
       </header>
@@ -120,8 +127,8 @@ export default function ClientApp() {
             <div id="pt-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
               {tab === 'home' && <Home c={c} go={setTab} pay={() => setPayOpen(true)} unread={unread} />}
               {tab === 'visits' && <Visits c={c} />}
-              {tab === 'orders' && <Orders c={c} reload={reload} go={setTab} />}
-              {tab === 'messages' && <Messages c={c} messages={messages} failed={msgFailed} onSent={async () => { const m = await loadMessages(c.id); if (m) setMessages(m) }} />}
+              {tab === 'orders' && <Orders c={c} reload={reload} go={setTab} preview={!!previewId} />}
+              {tab === 'messages' && <Messages c={c} preview={!!previewId} messages={messages} failed={msgFailed} onSent={async () => { const m = await loadMessages(c.id); if (m) setMessages(m) }} />}
               {tab === 'info' && <Info c={c} pay={() => setPayOpen(true)} />}
             </div>
           </>
@@ -228,7 +235,7 @@ function Visits({ c }: { c: PortalClient }) {
 }
 
 // ---------------------------------------------------------------- Orders
-function Orders({ c, reload, go }: { c: PortalClient; reload: () => Promise<void>; go: (t: Tab) => void }) {
+function Orders({ c, reload, go, preview }: { c: PortalClient; reload: () => Promise<void>; go: (t: Tab) => void; preview?: boolean }) {
   const [cat, setCat] = useState<number | null>(null)
   const [picked, setPicked] = useState<string[]>([])
   const [details, setDetails] = useState('')
@@ -257,7 +264,9 @@ function Orders({ c, reload, go }: { c: PortalClient; reload: () => Promise<void
     <div className="pt-stack">
       <section className="pt-card" aria-labelledby="h-new">
         <h2 id="h-new">הזמנת שירות חדשה</h2>
-        {!c.can_request ? (
+        {preview ? (
+          <p>בתצוגת מנהל אי אפשר להזמין שירות. כאן הלקוח בוחר תחום ושירות ושולח בקשה.</p>
+        ) : !c.can_request ? (
           <p>לחשבון הזה יש הרשאת צפייה בלבד. אפשר <button type="button" className="pt-link" onClick={() => go('messages')}>לכתוב לנו הודעה</button>.</p>
         ) : (
           <form onSubmit={submit} className="pt-form" noValidate>
@@ -314,7 +323,7 @@ function Orders({ c, reload, go }: { c: PortalClient; reload: () => Promise<void
 }
 
 // ---------------------------------------------------------------- Messages
-function Messages({ c, messages, failed, onSent }: { c: PortalClient; messages: PortalMessage[] | null; failed: boolean; onSent: () => Promise<void> }) {
+function Messages({ c, messages, failed, onSent, preview }: { c: PortalClient; messages: PortalMessage[] | null; failed: boolean; onSent: () => Promise<void>; preview?: boolean }) {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(false)
@@ -343,11 +352,11 @@ function Messages({ c, messages, failed, onSent }: { c: PortalClient; messages: 
           </div>
         ))}
       </div>
-      <form onSubmit={send} className="pt-form">
+      {preview ? <p className="pt-sub">בתצוגת מנהל אי אפשר לשלוח הודעה. המענה ללקוח נעשה מתיק הלקוח, בלשונית "הודעות".</p> : <form onSubmit={send} className="pt-form">
         <label>הודעה חדשה<textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} maxLength={4000} /></label>
         <button type="submit" className="pt-btn" disabled={busy || !text.trim()}>{busy ? 'שולחים…' : 'שליחה'}</button>
         {err && <p className="pt-msg err" role="alert">לא הצלחנו לשלוח. נסו שוב.</p>}
-      </form>
+      </form>}
     </section>
   )
 }

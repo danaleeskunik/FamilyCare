@@ -7,6 +7,7 @@ const ICONS: Record<string, string> = {
   export: 'M12 3v12M7.5 10.5L12 15l4.5-4.5M4 19h16',
   message: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
   check: 'M4 12.5l5 5L20 6.5',
+  eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
   document: 'M6 3h7l5 5v13H6zM13 3v5h5',
   bell: 'M12 3a5 5 0 0 0-5 5v3c0 1.2-.5 2.3-1.4 3.1L4 16h16l-1.6-1.9C17.5 13.3 17 12.2 17 11V8a5 5 0 0 0-5-5zM9.5 19a2.5 2.5 0 0 0 5 0',
   warning: 'M12 4l9 16H3zM12 10v4M12 17h.01',

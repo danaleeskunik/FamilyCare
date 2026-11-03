@@ -332,6 +332,7 @@ export default function ClientFile() {
         actions={
           <>
             <span className="plan-pill">{trial ? 'תקופת היכרות' : `מסלול ${plan?.name ?? '—'}`}</span>
+            <Link className="btn on-navy sm" to={`/admin/clients/${c.id}/view-as`}><Icon name="eye" size={16} />תצוגה כלקוח</Link>
             <Button variant="on-navy" size="sm" icon="edit" onClick={() => openForm('client', { id: c.id })}>עריכת פרטים</Button>
             <Button variant="on-navy" size="sm" icon="message" onClick={() => setTab('msgs')}>הודעה למשפחה</Button>
             <Button size="sm" icon="plus" onClick={() => openForm('task', { clientId: c.id })}>הזמנת שירות</Button>

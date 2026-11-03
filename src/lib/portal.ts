@@ -24,6 +24,16 @@ export async function loadPortal(): Promise<{ clients: PortalClient[]; setup: bo
   return { clients: (data ?? []) as PortalClient[], setup: false, failed: false }
 }
 
+/** Admin preview ("תצוגה כלקוח"): the same data the family sees, for one client. Read only; each view is logged by the database. */
+export async function loadPortalPreview(clientId: string): Promise<{ clients: PortalClient[]; setup: boolean; failed: boolean }> {
+  const { data, error } = await supabase.rpc('portal_data_for', { p_client_id: clientId })
+  if (error) {
+    console.error('portal preview failed', error)
+    return { clients: [], setup: missingFn(error), failed: !missingFn(error) }
+  }
+  return { clients: (data ?? []) as PortalClient[], setup: false, failed: false }
+}
+
 export async function loadMessages(clientId: string): Promise<PortalMessage[] | null> {
   const { data, error } = await supabase.from('client_messages').select('id, from_family, sender_name, body, created_at').eq('client_id', clientId).order('created_at', { ascending: true }).limit(300)
   if (error) { console.error('messages load failed', error); return null }

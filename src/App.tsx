@@ -29,6 +29,7 @@ import Materials from './pages/admin/Materials'
 import Questionnaire from './pages/admin/Questionnaire'
 import VendorFile from './pages/admin/VendorFile'
 import Todos from './pages/admin/Todos'
+import ClientPreview from './pages/ClientPreview'
 import AnalyticsConsent from './components/AnalyticsConsent'
 
 /** The admin shell is for admins and office staff; each page then checks its own section. */
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="todos" element={<RequireSection section="todos"><Todos /></RequireSection>} />
         <Route path="team" element={<RequireSection section="team"><Team /></RequireSection>} />
       </Route>
+      <Route path="/admin/clients/:id/view-as" element={<RequireSection section="clients"><ClientPreview /></RequireSection>} />
       <Route path="/admin/clients/:id" element={<RequireSection section="clients"><ClientFile /></RequireSection>} />
       <Route path="/companion" element={<RequireRole role="companion"><CompanionApp /></RequireRole>} />
       <Route path="/client" element={<RequireRole role="family"><ClientApp /></RequireRole>} />
