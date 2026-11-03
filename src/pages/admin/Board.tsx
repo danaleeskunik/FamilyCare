@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Callout, Card, CardHead, RowActions, StatCard, money } from '../../components/ui'
 import { TODAY } from '../../data/model'
-import { formatDM, parseISO } from '../../lib/dates'
+import { addDays, formatDM, parseISO, toISO } from '../../lib/dates'
+import PlanTable, { isOverdue } from '../../components/PlanTable'
 import { useStore } from '../../store/AppStore'
 import RegionFilter from '../../components/RegionFilter'
 import DaySummary from './DaySummary'
@@ -17,7 +18,7 @@ function countBy(list: { region: string }[]) {
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 
 export default function Board() {
-  const { tasks, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete, decisions, pricing } = useStore()
+  const { tasks, items, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete, decisions, pricing } = useStore()
   const nav = useNavigate()
   const [view, setView] = useState<'today' | 'unassigned'>('today')
   const today = tasks.filter((t) => t.date === TODAY).sort((a, b) => a.time.localeCompare(b.time))
@@ -31,6 +32,10 @@ export default function Board() {
   const openOvertimeTasks = tasks.filter((t) => t.staffId && t.end && t.checkedIn && t.checkedOut
     && toMin(t.checkedOut) - toMin(t.checkedIn) - (toMin(t.end) - toMin(t.time)) >= pricing.graceMinutes && !decisions[t.id])
   const openOvertime = openOvertimeTasks.length
+  // Things the office must arrange before the visit: due in the next two days, or already late.
+  const soon = toISO(addDays(parseISO(TODAY), 2))
+  const prep = items.filter((i) => ['new', 'in_progress', 'ordered'].includes(i.status) && (isOverdue(i) || (i.eventDate >= TODAY && i.eventDate <= soon)))
+    .sort((a, b) => a.eventDate.localeCompare(b.eventDate))
   const [summaryDay, setSummaryDay] = useState(TODAY)
   // The overrun list shows one day at a time: open the earliest day that still waits for a decision.
   const showOvertime = () => {
@@ -60,6 +65,17 @@ export default function Board() {
       <Callout tone="warning" title="דורש החלטה עכשיו">
         מרים אדלר — הדרכת WhatsApp ב-16:00 עדיין ללא מלווה. שני מלווים זמינים באזור הרצליה. דניאל כ. דיווח על ירידה בתיאבון אצל יעקב ברנע — ממתין לפתיחת תחקיר.
       </Callout>
+
+      <Card flush>
+        <CardHead title="להכנה לפני היום">
+          <span className="card-meta">{prep.length} פריטים · היום והיומיים הקרובים, ופריטים שבאיחור</span>
+          <Link className="btn secondary sm" to="/admin/planning">תכנון חודשי מלא</Link>
+          <Button size="sm" icon="plus" onClick={() => openForm('item')}>פריט חדש</Button>
+        </CardHead>
+        {prep.length === 0
+          ? <p className="muted" style={{ padding: '4px 18px 18px' }}>אין כרגע דברים להכין. הסעות, כרטיסים, בעלי מקצוע ורופאים שצריך לתאם יופיעו כאן לפני האירוע.</p>
+          : <PlanTable list={prep} />}
+      </Card>
 
       <div id="board-tasks" className="anchor">
       <Card flush>
