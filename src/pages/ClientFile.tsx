@@ -348,9 +348,13 @@ export default function ClientFile() {
         <div className="file-grid">
           <Sidebar d={d} refetch={refetch} answers={answers} />
           <div className="stack">
-            <Slots clientId={c.id} />
-            <Notes d={d} answers={answers} onChanged={refetch} />
-            {tab === 'med' && <Medical d={d} answers={answers} onChanged={refetch} />}
+            {tab === 'med' && (
+              <>
+                <Slots clientId={c.id} />
+                <Notes d={d} answers={answers} onChanged={refetch} />
+                <Medical d={d} answers={answers} onChanged={refetch} />
+              </>
+            )}
             {tab === 'pref' && <Preferences d={d} answers={answers} onChanged={refetch} />}
             {tab === 'intake' && <IntakeTab clientId={c.id} name={c.full_name} />}
             {tab === 'msgs' && <ClientMessages clientId={c.id} name={c.full_name} />}
