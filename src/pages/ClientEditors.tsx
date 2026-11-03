@@ -418,3 +418,61 @@ export function CompanionCard({ client }: { client: any }) {
     </Card>
   )
 }
+
+// ---------------------------------------------------------------- Service requests from the family
+type Req = { id: string; category: string | null; description: string; preferred_date: string | null; status: 'new' | 'converted' | 'declined'; created_at: string }
+const REQ_STATUS: Record<Req['status'], [string, 'orange' | 'green' | 'neutral']> = { new: ['ממתינה', 'orange'], converted: ['טופלה', 'green'], declined: ['לא ניתן', 'neutral'] }
+const dm = (iso: string) => `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.${iso.slice(2, 4)}`
+
+/** What the family asked for in the client portal ("tickets to the concert"): open until someone handles it, and kept as history after. */
+export function ServiceRequestsCard({ clientId }: { clientId: string }) {
+  const { openForm, notify } = useStore()
+  const [reqs, setReqs] = useState<Req[] | null>(null)
+  const load = async () => {
+    const { data, error } = await supabase.from('service_requests').select('id, category, description, preferred_date, status, created_at').eq('client_id', clientId).order('created_at', { ascending: false })
+    if (!error) setReqs(data as Req[])
+  }
+  useEffect(() => { void load() }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
+  const setStatus = async (id: string, status: Req['status']) => {
+    const { error } = await supabase.from('service_requests').update({ status }).eq('id', id)
+    if (error) { console.error('request update failed', error); notify('לא הצלחנו לעדכן. נסי שוב.'); return }
+    void load()
+  }
+  if (reqs === null) return null
+  const open = reqs.filter((r) => r.status === 'new')
+  const closed = reqs.filter((r) => r.status !== 'new')
+  const item = (r: Req) => (
+    <div key={r.id} className="row" style={{ gap: 12, alignItems: 'flex-start', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid var(--border-card)' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontWeight: 600, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{r.description}</div>
+        <div className="card-meta">{r.category ?? 'בקשה'} · נשלחה {dm(r.created_at.slice(0, 10))}{r.preferred_date ? ` · מועד מבוקש ${dm(r.preferred_date)}` : ''}</div>
+      </div>
+      <div className="row" style={{ gap: 6, flex: 'none', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        {r.status === 'new' ? (
+          <>
+            <button type="button" className="pill-action" onClick={() => openForm('task', { clientId, task: r.description.slice(0, 80), ...(r.preferred_date ? { date: r.preferred_date } : {}) })}>יצירת משימה</button>
+            <button type="button" className="pill-action" onClick={() => void setStatus(r.id, 'converted')}>טופל</button>
+            <button type="button" className="pill-action" onClick={() => void setStatus(r.id, 'declined')}>לא ניתן</button>
+          </>
+        ) : (
+          <>
+            <Badge tone={REQ_STATUS[r.status][1]}>{REQ_STATUS[r.status][0]}</Badge>
+            <button type="button" className="pill-action" onClick={() => void setStatus(r.id, 'new')}>החזרה לפתוח</button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+  return (
+    <Card>
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+        <div className="card-title">בקשות שירות מהמשפחה</div>
+        <Badge tone={open.length ? 'orange' : 'neutral'}>{open.length} פתוחות</Badge>
+      </div>
+      {reqs.length === 0 && <p className="muted">עוד לא התקבלו בקשות מהאזור האישי של המשפחה.</p>}
+      {open.map(item)}
+      {closed.length > 0 && <div className="card-label" style={{ marginTop: 12 }}>הסתיימו</div>}
+      {closed.map(item)}
+    </Card>
+  )
+}

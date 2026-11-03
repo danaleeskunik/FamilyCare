@@ -75,7 +75,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
   const existing = editId ? tasks.find((t) => t.id === editId) : undefined
   const [v, setV] = useState({
     date: existing?.date ?? preset.date ?? TODAY, time: existing?.time ?? preset.time ?? nowHM(), clientId: existing?.clientId ?? preset.clientId ?? '',
-    task: existing?.task ?? '', staffId: existing?.staffId ?? '', vendorId: existing?.vendorId ?? '',
+    task: existing?.task ?? preset.task ?? '', staffId: existing?.staffId ?? '', vendorId: existing?.vendorId ?? '',
     regionId: existing?.regionId ? String(existing.regionId) : '', status: existing?.statusKey ?? 'planned',
     checkedIn: existing?.checkedIn ?? '', checkedOut: existing?.checkedOut ?? '',
   })

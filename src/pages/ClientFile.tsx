@@ -12,7 +12,7 @@ import { TODAY } from '../data/model'
 import IntakeTab from './IntakeTab'
 import ClientMessages from './ClientMessages'
 import PortalAccess from '../components/PortalAccess'
-import { AllergiesCard, CompanionCard, ContactsEditor, DocumentsCard, Hints, MedicationsCard, PreferencesEditor, useIntake } from './ClientEditors'
+import { AllergiesCard, CompanionCard, ServiceRequestsCard, ContactsEditor, DocumentsCard, Hints, MedicationsCard, PreferencesEditor, useIntake } from './ClientEditors'
 import type { Answers } from '../lib/intake'
 
 const TABS = [
@@ -351,6 +351,7 @@ export default function ClientFile() {
           <div className="stack">
             {tab === 'med' && (
               <>
+                <ServiceRequestsCard clientId={c.id} />
                 <Slots clientId={c.id} />
                 <Notes d={d} answers={answers} onChanged={refetch} />
                 <Medical d={d} answers={answers} onChanged={refetch} />
