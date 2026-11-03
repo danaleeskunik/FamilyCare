@@ -177,6 +177,7 @@ export default function Landing() {
           </div>
 
         </div>
+        <a className="lp-scroll" href="#about"><span>גללו כדי לראות עוד</span><Ico name="down" size={22} /></a>
       </header>
 
       <Section id="about" tone="white" title="אודות Family Care" lead="מועדון לקוחות יוקרה לאיכות חיים, המציע שירותי Concierge אישיים למשפחה, במודל One Stop Shop.">
