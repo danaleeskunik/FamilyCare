@@ -245,6 +245,8 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
   const [v, setV] = useState({
     name: initial?.vendor.name ?? '', trade: initial?.vendor.trade ?? '', regionIds: initial?.regionIds ?? ([] as number[]),
     license: ymOf(initial?.vendor.license_expires_on ?? null), insurance: ymOf(initial?.vendor.insurance_expires_on ?? null),
+    contactName: initial?.vendor.contact_name ?? '', phone: initial?.vendor.phone ?? '', email: initial?.vendor.email ?? '',
+    website: initial?.vendor.website ?? '', since: initial?.vendor.relationship_started_on ?? '', notes: initial?.vendor.notes ?? '',
   })
   const [prices, setPrices] = useState<{ id?: string; label: string; amount: string }[]>(
     initial?.prices.length ? initial.prices.map((p) => ({ id: String(p.id), label: String(p.label), amount: String(p.amount) })) : [{ label: 'ביקור', amount: '' }],
@@ -254,6 +256,16 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
   const cutoff = TODAY.slice(0, 7)
   const expired = (!!v.license && v.license < cutoff) || (!!v.insurance && v.insurance < cutoff)
 
+  /** Contact columns come from migration 0019; until it runs, send only what has a value or already exists, so saving still works. */
+  const contactRow = () => {
+    const url = v.website.trim()
+    const vals: Record<string, string | null> = {
+      contact_name: v.contactName.trim() || null, phone: v.phone.trim() || null, email: v.email.trim() || null,
+      website: url ? (/^https?:\/\//i.test(url) ? url : `https://${url}`) : null, relationship_started_on: v.since || null, notes: v.notes.trim() || null,
+    }
+    return Object.fromEntries(Object.entries(vals).filter(([k, x]) => x !== null || (initial?.vendor && k in initial.vendor)))
+  }
+
   const submit = async () => {
     const e: Errors = {}
     const name = v.name.trim()
@@ -261,6 +273,8 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
     else if (vendors.some((x) => x.name === name && x.id !== editId)) e.name = 'ספק בשם הזה כבר קיים'
     if (!v.trade.trim()) e.trade = REQUIRED
     if (!v.regionIds.length) e.regionIds = 'בחרי לפחות אזור אחד'
+    if (v.email.trim() && !/^\S+@\S+\.\S+$/.test(v.email.trim())) e.email = 'כתובת מייל לא תקינה'
+    if (v.since && v.since > TODAY) e.since = 'התאריך עוד לא הגיע'
     if (!v.license) e.license = 'הזיני תוקף רישיון'
     if (!v.insurance) e.insurance = 'הזיני תוקף ביטוח'
     const items = prices.filter((p) => p.label.trim() || p.amount)
@@ -270,7 +284,7 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
     if (Object.keys(e).length) return
     const ok = await saveVendor(editId, {
       name, trade: v.trade.trim(), regionIds: v.regionIds, licenseExpiry: endOfMonth(v.license), insuranceExpiry: endOfMonth(v.insurance),
-      prices: items.map((p) => ({ id: p.id, label: p.label.trim(), amount: Number(p.amount) })),
+      contact: contactRow(), prices: items.map((p) => ({ id: p.id, label: p.label.trim(), amount: Number(p.amount) })),
     })
     if (!ok) return
     notify(editId ? 'פרטי הספק עודכנו' : expired ? `${name} נוסף ומוקפא עד העלאת מסמך מעודכן` : `נוסף ספק: ${name}`)
@@ -282,6 +296,12 @@ function VendorForm({ editId, initial }: { editId: string | null; initial?: { ve
       <div className="full"><TextField label="שם בעל המקצוע / העסק" value={v.name} onChange={(e) => set('name')(e.target.value)} error={err.name} /></div>
       <div className="full"><TextField label="תחום" value={v.trade} onChange={(e) => set('trade')(e.target.value)} error={err.trade} placeholder="למשל: אינסטלציה" /></div>
       <div className="full"><CheckGroup label="אזורי פעילות" options={regions.map((r) => ({ value: r.id, label: r.name }))} value={v.regionIds} onChange={set('regionIds')} error={err.regionIds} /></div>
+      <TextField label="איש קשר" value={v.contactName} onChange={(e) => set('contactName')(e.target.value)} />
+      <TextField label="טלפון" type="tel" inputMode="tel" dir="ltr" value={v.phone} onChange={(e) => set('phone')(e.target.value)} />
+      <TextField label="מייל" type="email" dir="ltr" value={v.email} onChange={(e) => set('email')(e.target.value)} error={err.email} />
+      <TextField label="אתר הספק (קישור)" type="url" dir="ltr" placeholder="https://" value={v.website} onChange={(e) => set('website')(e.target.value)} />
+      <TextField label="תחילת קשר עם החברה" type="date" max={TODAY} value={v.since} onChange={(e) => set('since')(e.target.value)} error={err.since} />
+      <div className="full"><TextAreaField label="הערות" value={v.notes} onChange={set('notes')} rows={3} /></div>
       <TextField label="תוקף רישיון" type="month" value={v.license} onChange={(e) => set('license')(e.target.value)} error={err.license} />
       <TextField label="תוקף ביטוח צד ג׳" type="month" value={v.insurance} onChange={(e) => set('insurance')(e.target.value)} error={err.insurance} />
       <div className="full stack" style={{ gap: 8 }}>

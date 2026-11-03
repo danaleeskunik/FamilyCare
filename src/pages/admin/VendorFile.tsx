@@ -89,6 +89,12 @@ export default function VendorFile() {
           </div>
           <Badge tone={vendor.status[0]}>{vendor.status[1]}</Badge>
         </div>
+        {vendor.contactName && <div className="kv"><span>איש קשר</span><span>{vendor.contactName}</span></div>}
+        {vendor.phone && <div className="kv"><span>טלפון</span><a href={`tel:${vendor.phone}`}><Ltr>{vendor.phone}</Ltr></a></div>}
+        {vendor.email && <div className="kv"><span>מייל</span><a href={`mailto:${vendor.email}`}><Ltr>{vendor.email}</Ltr></a></div>}
+        {vendor.website && <div className="kv"><span>אתר</span><a href={vendor.website} target="_blank" rel="noopener noreferrer"><Ltr>{vendor.website.replace(/^https?:\/\//, '')}</Ltr></a></div>}
+        {vendor.since && <div className="kv"><span>תחילת קשר</span><span>{formatDM(parseISO(vendor.since))}.{vendor.since.slice(2, 4)}</span></div>}
+        {vendor.notes && <div className="kv"><span>הערות</span><span style={{ whiteSpace: 'pre-wrap' }}>{vendor.notes}</span></div>}
         <div className="kv"><span>מחירון מוסכם</span><span>{vendor.price}</span></div>
         <div className="kv"><span>רישיון / ביטוח</span><span style={vendor.licBad ? { color: 'var(--danger)' } : undefined}>{vendor.lic}</span></div>
         <div className="kv"><span>דירוג</span><span className="num">{vendor.rating}</span></div>

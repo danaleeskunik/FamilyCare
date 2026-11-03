@@ -11,7 +11,7 @@ export type ClientInput = {
   name: string; birthDate: string; regionId: number; planId: string; trialEndsOn: string | null; companionId: string; orderer: string
   phone: string; address: string; buildingCode: string; dependency: string; mobilityNotes: string; cognitiveNotes: string; cap: string; cardLast4: string
 }
-export type VendorInput = { name: string; trade: string; regionIds: number[]; licenseExpiry: string; insuranceExpiry: string; prices: { id?: string; label: string; amount: number }[] }
+export type VendorInput = { name: string; trade: string; regionIds: number[]; licenseExpiry: string; insuranceExpiry: string; contact: Record<string, string | null>; prices: { id?: string; label: string; amount: number }[] }
 export type StaffInput = { name: string; jobTitle: string; gender: string; phone: string; languages: string; regionIds: number[]; email: string; currentEmail: string | null }
 
 export type ItemInput = { clientId: string; kind: string; title: string; eventDate: string; dueDate: string; assigneeId: string; vendorId: string; status: string; notes: string }
@@ -190,7 +190,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [fail, refresh])
 
   const saveVendor = useCallback(async (id: string | null, v: VendorInput) => {
-    const row = { name: v.name, trade: v.trade, license_expires_on: v.licenseExpiry, insurance_expires_on: v.insuranceExpiry }
+    const row = { name: v.name, trade: v.trade, license_expires_on: v.licenseExpiry, insurance_expires_on: v.insuranceExpiry, ...v.contact }
     let vid = id
     if (id) {
       const { error } = await supabase.from('vendors').update(row).eq('id', id)

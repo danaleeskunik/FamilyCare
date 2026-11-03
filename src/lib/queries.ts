@@ -144,6 +144,8 @@ export async function loadAll(): Promise<Loaded> {
       lic, licBad: frozen,
       rating: ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—',
       status: frozen ? ['red', 'מוקפא'] : ['green', 'פעיל'],
+      contactName: r.contact_name ?? '', phone: r.phone ?? '', email: r.email ?? '', website: r.website ?? '',
+      since: (r.relationship_started_on as string | null) ?? null, notes: r.notes ?? '',
     }
   })
 

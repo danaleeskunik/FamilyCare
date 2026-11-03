@@ -32,6 +32,7 @@ export type Task = {
 export type Vendor = {
   id: string; name: string; field: string; area: string; price: string
   lic: string; licBad: boolean; rating: string; status: [Tone, string]
+  contactName: string; phone: string; email: string; website: string; since: string | null; notes: string
 }
 
 export type Client = {

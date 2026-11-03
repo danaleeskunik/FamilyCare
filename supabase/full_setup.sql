@@ -165,6 +165,10 @@ create table public.vendors (
   trade text not null,                                    -- אינסטלציה / מיזוג אוויר / הסעות …
   contact_name text,
   phone text,
+  email text,
+  website text,                                           -- link to the vendor's own site
+  relationship_started_on date,                           -- when the vendor started working with the company
+  notes text,                                             -- free text
   license_expires_on date,
   insurance_expires_on date,
   is_active boolean not null default true,                -- manual off switch, separate from auto-freeze
