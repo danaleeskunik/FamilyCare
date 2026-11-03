@@ -44,6 +44,10 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-eyebrow { display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; background: rgba(43, 196, 188, .16); border: 1px solid rgba(43, 196, 188, .4); color: var(--on-brand-3); font: 500 14.5px/1 var(--font-ui); }
 .lp-hero h1 { margin-top: 20px; font: 500 clamp(34px, 5.6vw, 58px)/1.15 var(--font-ui); letter-spacing: -.01em; }
 .lp-sub { margin-top: 20px; max-width: 34em; color: var(--on-brand-3); font-size: clamp(17px, 2vw, 19.5px); line-height: 1.75; }
+.lp-sub strong { color: #fff; font-weight: 500; }
+.lp-areas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 40em; margin-top: 26px; }
+.lp-areas li { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .22); color: #fff; font: 400 15px/1 var(--font-ui); }
+.lp-areas svg { color: var(--brand-bright); flex: none; }
 .lp-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .lp-cta.center { justify-content: center; }
 .lp-trust { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 30px; color: var(--on-brand-3); font-size: 15.5px; }

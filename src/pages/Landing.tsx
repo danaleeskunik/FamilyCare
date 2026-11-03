@@ -159,8 +159,11 @@ export default function Landing() {
             <span className="lp-eyebrow reveal">מועדון קונסיירז' לגיל השלישי ולמשפחות</span>
             <h1 className="reveal" style={delay(80)}>הורים בטוחים יותר,<br />משפחה רגועה יותר</h1>
             <p className="lp-sub reveal" style={delay(160)}>
-              Family Care מלווה את ההורים שלכם בכל מה שצריך: מלווה אישית קבועה, בעלי מקצוע נבחרים וטיפול מלא מההזמנה ועד הסיום. אתם נשארים רגועים.
+              <strong>מלווה אישית קבועה</strong> שמגיעה להורים שלכם הביתה ודואגת לכל מה שצריך: תיקונים, תורים לרופא, בירוקרטיה ובילויים. בעלי מקצוע מאושרים וטיפול מלא מההזמנה ועד הסיום, ואתם נשארים רגועים.
             </p>
+            <ul className="lp-areas reveal" style={delay(200)} aria-label="תחומי השירות">
+              {SERVICES.map((sv) => <li key={sv.title}><Ico name={sv.icon} size={18} /> {sv.title}</li>)}
+            </ul>
             <div className="lp-cta reveal" style={delay(240)}>
               <a className="lp-btn primary" href="#contact">צרו קשר <Ico name="arrow" size={20} /></a>
               <a className="lp-btn ghost" href="#services">מה כלול במועדון</a>
