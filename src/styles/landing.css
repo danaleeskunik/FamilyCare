@@ -207,7 +207,18 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 }
 @media (max-width: 600px) {
   .lp { --lp-body: 16.5px; }
-  .lp-nav-contact { display: none; }
+  .lp-nav-end { gap: 8px; }
+  .lp-nav-end .lp-btn.sm { padding: 0 14px; }
+  .lp-hero-in { gap: 0; }
+  .lp-hero h1 { margin-top: 32px; }
+  .lp-hero .lp-sub { margin-top: 28px; }
+  .lp-areas { margin-top: 36px; gap: 12px; }
+  .lp-areas li { min-height: 44px; padding: 0 16px; }
+  .lp-hero .lp-cta { margin-top: 40px; }
+  .lp-hero .lp-cta .primary { display: none; }
+  .lp-hero .lp-cta .ghost { flex: 0 0 auto; min-height: 44px; padding: 0 12px; background: none; border-color: transparent; color: var(--brand-bright); }
+  .lp-hero .lp-cta .ghost::after { content: '\2193'; }
+  .lp-hero .lp-trust { margin-top: 36px; gap: 14px 24px; line-height: 1.7; }
   .lp-grid.five > * { flex-basis: 100%; }
   .lp-doc-sec { padding: 22px; }
   .lp-foot-contact .lp-btn { flex: 1 1 100%; }
