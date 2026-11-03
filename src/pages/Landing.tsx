@@ -172,6 +172,7 @@ export default function Landing() {
               <li><Ico name="check" size={18} /> מלווה אישית קבועה למשפחה</li>
               <li><Ico name="check" size={18} /> איכות חיים ובטחון אישי להורים</li>
               <li><Ico name="check" size={18} /> אחריות מלאה ושקיפות עבורכם</li>
+              <li><Ico name="check" size={18} /> פגישות שבועיות לפי בחירתכם</li>
             </ul>
           </div>
 
