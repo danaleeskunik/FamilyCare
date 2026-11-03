@@ -371,7 +371,7 @@ type Companion = { id: string; full_name: string; job_title: string; phone: stri
 
 /** Pin the client's regular companion from the staff list and see who they are. */
 export function CompanionCard({ client }: { client: any }) {
-  const { staff, assignCompanion, notify } = useStore()
+  const { staff, assignCompanion, openForm, notify } = useStore()
   const [info, setInfo] = useState<Companion | null>(null)
   const [busy, setBusy] = useState(false)
   const pinned: string = client.regular_companion_id ?? ''
@@ -405,7 +405,10 @@ export function CompanionCard({ client }: { client: any }) {
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 15.5 }}>{info.full_name}</div>
             <div className="card-meta">{JOB_TITLES.find((j) => j.value === info.job_title)?.label ?? info.job_title}{!info.is_active && ' · לא פעיל/ה'}</div>
-            {info.phone && <div className="card-meta"><a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a></div>}
+            <div className="card-meta">
+              טלפון: {info.phone ? <a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a>
+                : <button type="button" className="pt-link" style={{ font: 'inherit', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 0, padding: 0, color: 'var(--brand-link)' }} onClick={() => openForm('staff', { id: info.id })}>לא הוזן, להוספה</button>}
+            </div>
             {info.regions.length > 0 && <div className="card-meta">אזורים: {info.regions.join(' · ')}</div>}
             {info.languages.length > 0 && <div className="card-meta">שפות: {info.languages.join(', ')}</div>}
           </div>
