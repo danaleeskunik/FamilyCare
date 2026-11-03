@@ -65,7 +65,7 @@ export default function Todos() {
     return <Badge tone={late ? 'red' : t.dueOn === TODAY ? 'orange' : 'neutral'}>{late ? 'באיחור · ' : ''}{t.dueOn === TODAY ? 'היום' : formatDM(parseISO(t.dueOn))}</Badge>
   }
   const row = (t: Todo) => (
-    <div key={t.id} className="row" style={{ gap: 12, alignItems: 'flex-start', padding: '12px 18px', borderTop: '1px solid var(--line)' }}>
+    <div key={t.id} className="row" style={{ gap: 12, alignItems: 'flex-start', padding: '12px 18px', borderTop: '1px solid var(--border-card)' }}>
       <input type="checkbox" checked={t.done} onChange={() => void toggle(t)} aria-label={`סימון ״${t.title}״ כבוצע`} style={{ width: 22, height: 22, marginTop: 2 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--ink-2)' : undefined }}>{t.title} {due(t)}</div>
