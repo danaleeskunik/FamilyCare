@@ -98,7 +98,7 @@ export default function Team() {
                       <td>
                         <div className="team-sections">
                           {OFFICE_SECTIONS.map((o) => (
-                            <label key={o.id} className="check">
+                            <label key={o.id} className="team-check">
                               <input type="checkbox" checked={m.sections.includes(o.id)} onChange={() => toggle(m, o.id)} /> {o.label}
                             </label>
                           ))}

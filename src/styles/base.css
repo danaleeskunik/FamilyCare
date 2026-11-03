@@ -291,7 +291,9 @@ select.input { appearance: none; -webkit-appearance: none; padding-inline-end: 3
 
 /* Team permissions */
 .team-add { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 12px; padding: 14px 18px 18px; align-items: end; }
-.team-sections { display: flex; flex-wrap: wrap; gap: 14px; }
+.team-sections { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.team-check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font: 500 14px var(--font-ui); color: var(--ink); }
+.team-check input { width: 20px; height: 20px; accent-color: var(--brand-action-strong); cursor: pointer; flex: none; }
 @media (max-width: 700px) { .team-add { grid-template-columns: 1fr; } }
 
 /* Anchors for in-page jumps (sticky header) */
