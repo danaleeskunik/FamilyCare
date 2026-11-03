@@ -12,6 +12,8 @@ const overlaps = (a: readonly [number, number], b: readonly [number, number]) =>
 export default function Schedule() {
   const { tasks, staff, slots, clients, assignSlot, generateNow, openForm } = useStore()
   const [anchor, setAnchor] = useState(parseISO(TODAY))
+  // Same week, two ways to read it: one row per companion, or one row per client.
+  const [mode, setMode] = useState<'staff' | 'clients'>('staff')
   const weekStart = startOfWeek(anchor)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const dayIsos = days.map(toISO)
@@ -45,10 +47,9 @@ export default function Schedule() {
   }
 
   const unassigned = slots.filter((s) => s.active && !s.staffId)
-  const rows: { key: string; label: string; staffId: string | null }[] = [
-    ...staff.map((s) => ({ key: s.id, label: s.name, staffId: s.id })),
-    { key: 'none', label: 'ללא שיבוץ', staffId: null },
-  ]
+  const rows: { key: string; label: string; staffId: string | null; clientId?: string }[] = mode === 'staff'
+    ? [...staff.map((s) => ({ key: s.id, label: s.name, staffId: s.id })), { key: 'none', label: 'ללא שיבוץ', staffId: null }]
+    : clients.map((c) => ({ key: c.id, label: c.name, staffId: null, clientId: c.id }))
 
   return (
     <>
@@ -60,7 +61,11 @@ export default function Schedule() {
             <button className="icon-btn" aria-label="שבוע הבא" onClick={() => setAnchor(addDays(anchor, 7))}><Icon name="chevron-left" /></button>
             <Button variant="secondary" size="sm" onClick={() => setAnchor(parseISO(TODAY))}>השבוע</Button>
           </div>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <div className="seg" role="group" aria-label="תצוגה">
+              <button aria-pressed={mode === 'staff'} onClick={() => setMode('staff')}>תכנית שבועית מלווים</button>
+              <button aria-pressed={mode === 'clients'} onClick={() => setMode('clients')}>תכנית שבועית לקוחות</button>
+            </div>
             <Button variant="secondary" size="sm" onClick={generateNow}>עדכון לו"ז לחודש הקרוב</Button>
             <Button size="sm" icon="plus" onClick={() => openForm('slot')}>ביקור קבוע חדש</Button>
           </div>
@@ -70,7 +75,7 @@ export default function Schedule() {
           <table style={{ minWidth: 980 }}>
             <thead>
               <tr>
-                <th style={{ width: 150 }}>מלווה/ת</th>
+                <th style={{ width: 150 }}>{mode === 'staff' ? 'מלווה/ת' : 'לקוח/ה'}</th>
                 {days.map((d, i) => <th key={i} className={dayIsos[i] === TODAY ? 'today-col' : ''}>{DAY_NAMES[i]} <span className="num">{formatDM(d)}</span></th>)}
               </tr>
             </thead>
@@ -79,7 +84,7 @@ export default function Schedule() {
                 <tr key={r.key}>
                   <td style={{ fontWeight: 500, verticalAlign: 'top' }}>{r.label}</td>
                   {dayIsos.map((iso) => {
-                    const list = weekTasks.filter((t) => t.date === iso && (r.staffId ? t.staffId === r.staffId : !t.staffId)).sort((a, b) => a.time.localeCompare(b.time))
+                    const list = weekTasks.filter((t) => t.date === iso && (r.clientId ? t.clientId === r.clientId : r.staffId ? t.staffId === r.staffId : !t.staffId)).sort((a, b) => a.time.localeCompare(b.time))
                     return (
                       <td key={iso} style={{ verticalAlign: 'top', minWidth: 120 }}>
                         <div className="stack" style={{ gap: 4 }}>
@@ -87,7 +92,7 @@ export default function Schedule() {
                             <button key={t.id} type="button" className={`evt ${clashing.has(t.id) || !t.staffId ? 'open' : ''}`} onClick={() => openForm('task', { id: t.id })}
                               aria-label={`עריכת ביקור: ${t.client}, ${t.time}${clashing.has(t.id) ? ', חפיפה בשעות' : ''}`}>
                               <div className="t">{t.time}{t.end ? `–${t.end}` : ''}</div>
-                              <div>{t.client}</div>
+                              <div>{mode === 'staff' ? t.client : (t.who ?? 'ללא שיבוץ')}</div>
                               <div className="w">{t.task}</div>
                               {clashing.has(t.id) && <div style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 11.5 }}>חפיפה בשעות</div>}
                             </button>
