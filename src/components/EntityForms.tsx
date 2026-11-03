@@ -67,11 +67,14 @@ function EditLoader<T>({ title, load, children }: { title: string; load: () => P
 }
 
 // ---------------------------------------------------------------- Task
+/** Current local time as HH:MM, to prefill a new task. */
+const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
+
 function TaskForm({ editId, preset }: { editId: string | null; preset: Record<string, string> }) {
   const { tasks, clients, staff, vendors, regions, saveTask, closeForm, setRegionFilter, notify } = useStore()
   const existing = editId ? tasks.find((t) => t.id === editId) : undefined
   const [v, setV] = useState({
-    date: existing?.date ?? preset.date ?? TODAY, time: existing?.time ?? '', clientId: existing?.clientId ?? preset.clientId ?? '',
+    date: existing?.date ?? preset.date ?? TODAY, time: existing?.time ?? preset.time ?? nowHM(), clientId: existing?.clientId ?? preset.clientId ?? '',
     task: existing?.task ?? '', staffId: existing?.staffId ?? '', vendorId: existing?.vendorId ?? '',
     regionId: existing?.regionId ? String(existing.regionId) : '', status: existing?.statusKey ?? 'planned',
     checkedIn: existing?.checkedIn ?? '', checkedOut: existing?.checkedOut ?? '',
@@ -109,8 +112,8 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
 
   return (
     <FormShell title={editId ? 'עריכת משימה' : 'משימה חדשה'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספת משימה'}>
-      <TextField label="תאריך" type="date" value={v.date} onChange={(e) => set('date')(e.target.value)} error={err.date} />
-      <TextField label="שעה" type="time" value={v.time} onChange={(e) => set('time')(e.target.value)} error={err.time} />
+      <TextField label="למתי צריך לבצע (תאריך)" type="date" value={v.date} onChange={(e) => set('date')(e.target.value)} error={err.date} hint="ברירת המחדל: היום" />
+      <TextField label="שעה" type="time" value={v.time} onChange={(e) => set('time')(e.target.value)} error={err.time} hint={editId ? undefined : 'מולאה לפי השעה עכשיו, אפשר לשנות'} />
       <div className="full"><SelectField label="לקוח/ה" value={v.clientId} onChange={pickClient} options={clients.map((c) => ({ value: c.id, label: c.name }))} placeholder="בחרי לקוח/ה" error={err.clientId} /></div>
       <div className="full"><TextField label="משימה" value={v.task} onChange={(e) => set('task')(e.target.value)} error={err.task} placeholder="למשל: ליווי לרופא + מרשמים" /></div>
       <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={staff.map((s) => ({ value: s.id, label: s.name }))} placeholder="ללא מלווה/ת" />
