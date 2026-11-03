@@ -59,18 +59,19 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
   .lp-scroll { position: absolute; inset-inline: 0; inset-block-end: 0; }
   .lp-hero h1 { font-size: clamp(46px, 4.6vw, 64px); margin-top: 28px; }
   .lp-hero .lp-sub { max-width: 46em; margin-top: 28px; font-size: 20px; text-wrap: balance; }
-  .lp-areas { max-width: 1000px; margin-top: 40px; gap: 12px; }
-  .lp-areas li { min-height: 46px; padding: 0 20px; font-size: 16px; white-space: nowrap; }
+  .lp-areas { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 1000px; margin-top: 44px; gap: 14px; }
+  .lp-areas li { flex-direction: column; justify-content: center; gap: 8px; min-height: 92px; padding: 14px 12px; border-radius: 18px; font-size: 16px; line-height: 1.35; text-align: center; }
+  .lp-areas svg { width: 26px; height: 26px; }
   .lp-hero .lp-cta { margin-top: 44px; gap: 16px; }
   .lp-hero .lp-trust { width: 100%; max-width: 1000px; margin-top: 64px; padding-top: 28px; border-top: 1px solid rgba(255, 255, 255, .16); justify-content: center; gap: 12px 36px; font-size: 16px; }
 }
 @media (min-width: 601px) and (max-width: 1100px) {
-  .lp-areas { max-width: 640px; }
+  .lp-areas { max-width: 720px; }
   .lp-hero .lp-trust { display: grid; grid-template-columns: auto auto; justify-content: center; gap: 14px 48px; max-width: 700px; }
 }
 @media (min-width: 1101px) {
-  .lp-areas { flex-wrap: nowrap; }
-  .lp-hero .lp-trust { flex-wrap: nowrap; justify-content: space-between; gap: 12px 20px; }
+  .lp-areas { grid-template-columns: repeat(6, 1fr); }
+  .lp-hero .lp-trust { flex-wrap: nowrap; justify-content: space-between; gap: 12px 20px; padding-inline: 0; }
 }
 .lp-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .lp-cta.center { justify-content: center; }
