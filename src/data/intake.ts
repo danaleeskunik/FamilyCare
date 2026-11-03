@@ -209,9 +209,8 @@ export const INTAKE: IntakeSection[] = [
     id: 'access', title: 'ג4. נגישות, אבטחה ופרטי כניסה לנכס',
     fields: [
       { key: 'address_details', label: 'כתובת מלאה (רחוב, מספר, דירה, קומה, יש מעלית?)', kind: 'text' },
-      { key: 'door_code', label: 'קוד כניסה לבית (אם יש קודן)', kind: 'text', private: true, ltr: true },
+      { key: 'entry_method', label: 'איך נכנסים לבית (קודן, פעמון, מי פותח)? בלי לרשום את הקוד עצמו: הוא נמסר בעל פה', kind: 'text' },
       { key: 'spare_key', label: 'מיקום מפתח פיזי רזרבי לחירום', kind: 'text', private: true },
-      { key: 'alarm_code', label: 'קוד אזעקה בבית (אם יש)', kind: 'text', private: true, ltr: true },
       { key: 'emergency_service', label: 'מוקד מצוקה (נטלי, שחל, פרטי מנוי)', kind: 'text' },
       { key: 'cameras', label: 'מצלמות בבית? (האם המשפחה צופה?)', kind: 'text' },
     ],
@@ -221,7 +220,6 @@ export const INTAKE: IntakeSection[] = [
     fields: [
       { key: 'electric_panel', label: 'ארון חשמל ומפסק ראשי (מיקום)', kind: 'text' },
       { key: 'water_shutoff', label: 'שיבר מים ראשי של הדירה (מיקום)', kind: 'text' },
-      { key: 'wifi', label: 'רשת WiFi ביתית (שם וסיסמה)', kind: 'text', private: true, ltr: true },
       { key: 'tv_provider', label: 'ספק כבלים וטלוויזיה (YES, HOT, אחר)', kind: 'text' },
       { key: 'health_fund', label: 'קופת חולים, שם המרפאה ורופא המשפחה המטפל', kind: 'long' },
     ],

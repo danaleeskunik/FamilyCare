@@ -1237,7 +1237,7 @@ create table if not exists public.client_intake (
   updated_at timestamptz not null default now()
 );
 
--- Sensitive answers (ID number, door and alarm codes, spare key, WiFi password, payment method): admins only.
+-- Sensitive answers (ID number, spare key location, payment method): admins only.
 create table if not exists public.client_intake_private (
   client_id uuid primary key references public.clients (id) on delete cascade,
   answers jsonb not null default '{}' check (jsonb_typeof(answers) = 'object'),
