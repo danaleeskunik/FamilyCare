@@ -5,9 +5,9 @@ import { useAuth } from '../store/AuthStore'
 
 const TABS = [
   { id: 'board', to: '/admin', label: 'לוח היום', end: true },
-  { id: 'vendors', to: '/admin/vendors', label: 'ספקים ובעלי מקצוע' },
   { id: 'clients', to: '/admin/clients', label: 'לקוחות' },
   { id: 'staff', to: '/admin/staff', label: 'מלווים' },
+  { id: 'vendors', to: '/admin/vendors', label: 'ספקים ובעלי מקצוע' },
   { id: 'schedule', to: '/admin/schedule', label: 'לו"ז מלווים' },
   { id: 'planning', to: '/admin/planning', label: 'לוח ניהול' },
   { id: 'todos', to: '/admin/todos', label: 'משימות לטיפול' },
