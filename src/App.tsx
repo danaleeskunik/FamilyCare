@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './store/AuthStore'
 import { homeFor } from './lib/sections'
+import { toISO } from './lib/dates'
+import { TODAY } from './data/model'
 import AdminLayout from './layouts/AdminLayout'
 import Board from './pages/admin/Board'
 import Vendors from './pages/admin/Vendors'
@@ -26,6 +28,7 @@ import Team from './pages/admin/Team'
 import Materials from './pages/admin/Materials'
 import Questionnaire from './pages/admin/Questionnaire'
 import VendorFile from './pages/admin/VendorFile'
+import Todos from './pages/admin/Todos'
 import AnalyticsConsent from './components/AnalyticsConsent'
 
 /** The admin shell is for admins and office staff; each page then checks its own section. */
@@ -45,7 +48,19 @@ function ScrollToTop() {
   return null
 }
 
+/** A tab left open overnight still thinks it is yesterday: when the date changes, reload so "today" is right. */
+function useReloadOnNewDay() {
+  useEffect(() => {
+    const check = () => { if (toISO(new Date()) !== TODAY) location.reload() }
+    const timer = setInterval(check, 60_000)
+    document.addEventListener('visibilitychange', check)
+    window.addEventListener('focus', check)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', check); window.removeEventListener('focus', check) }
+  }, [])
+}
+
 export default function App() {
+  useReloadOnNewDay()
   return (
     <>
     <ScrollToTop />
@@ -69,6 +84,7 @@ export default function App() {
         <Route path="finance" element={<RequireSection section="finance"><Finance /></RequireSection>} />
         <Route path="calendar" element={<RequireSection section="board"><Calendar /></RequireSection>} />
         <Route path="materials" element={<RequireSection section="materials"><Materials /></RequireSection>} />
+        <Route path="todos" element={<RequireSection section="todos"><Todos /></RequireSection>} />
         <Route path="team" element={<RequireSection section="team"><Team /></RequireSection>} />
       </Route>
       <Route path="/admin/clients/:id" element={<RequireSection section="clients"><ClientFile /></RequireSection>} />

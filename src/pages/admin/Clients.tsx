@@ -11,11 +11,10 @@ export default function Clients() {
 
   return (
     <>
-      <div className="grid cols-4">
+      <div className="grid cols-3">
         <StatCard label="לקוחות פעילים" figure={9 + clients.length} note="יעד שנתיים: 100 משפחות" />
         <StatCard label="בתקופת היכרות" figure={2 + trial} note="חודש ראשון ללא התחייבות" />
         <StatCard label={`ניצול מכסה — ממוצע כל ${9 + clients.length} הלקוחות`} figure="71%" note="מהמפגשים שבמסלול נוצלו החודש" />
-        <StatCard label="פגישות היכרות השבוע" figure="2" note="ביקור ראשון חינם" />
       </div>
 
       <Card flush>
@@ -27,12 +26,12 @@ export default function Clients() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>לקוח/ה</th><th>גיל</th><th>אזור</th><th>מסלול</th><th>מפגשים</th><th>מלווה קבוע/ה</th><th>מזמין/ת השירות</th><th>הביקור הבא</th><th /><th><span className="sr-only">פעולות</span></th></tr>
+              <tr><th>לקוח/ה</th><th>גיל</th><th>אזור</th><th>מסלול</th><th>מפגשים</th><th>מלווה קבוע/ה</th><th>מזמין/ת השירות</th><th>הביקור הבא</th><th><span className="sr-only">פעולות</span></th></tr>
             </thead>
             <tbody>
               {rows.map((c) => (
                 <tr key={c.id}>
-                  <td className="name">{c.name}</td>
+                  <td className="name"><Link to={`/admin/clients/${c.id}`}>{c.name}</Link></td>
                   <td className="num">{c.age}</td>
                   <td>{c.area}</td>
                   <td><Badge tone={c.plan[0]}>{c.plan[1]}</Badge></td>
@@ -40,11 +39,10 @@ export default function Clients() {
                   <td>{c.companion ?? <span style={{ color: 'var(--danger)', fontWeight: 500 }}>אין מלווה קבועה</span>}</td>
                   <td>{c.orderer}</td>
                   <td>{c.next}</td>
-                  <td><Link to={`/admin/clients/${c.id}`}>תיק לקוח</Link></td>
                   <td><RowActions what={`הלקוח/ה ${c.name}`} onEdit={() => openForm('client', { id: c.id })} onDelete={() => askDelete('client', c.id)} /></td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={10} className="muted">לא נמצאו לקוחות. אפשר לנסות שם אחר או להוסיף לקוח/ה חדש/ה.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={9} className="muted">לא נמצאו לקוחות. אפשר לנסות שם אחר או להוסיף לקוח/ה חדש/ה.</td></tr>}
             </tbody>
           </table>
         </div>

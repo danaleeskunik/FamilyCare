@@ -16,7 +16,7 @@ import { AllergiesCard, CompanionCard, ContactsEditor, DocumentsCard, Hints, Med
 import type { Answers } from '../lib/intake'
 
 const TABS = [
-  ['med', 'רפואי ותפקודי'],
+  ['med', 'סקירה כללית'],
   ['pref', 'העדפות אישיות'],
   ['intake', 'שאלון היכרות'],
   ['msgs', 'הודעות'],
