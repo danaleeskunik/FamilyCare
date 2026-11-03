@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 export type PortalContact = { id: string; name: string; relation: string | null; phone: string | null; type: 'family' | 'physician'; orderer: boolean }
-export type PortalVisit = { id: string; date: string; start: string; end: string | null; title: string; status: string; who: string | null; summary: string | null }
+export type PortalVisit = { id: string; date: string; start: string; end: string | null; title: string; status: string; who: string | null; summary: string | null; location?: string | null }
 export type PortalRequest = { id: string; description: string; category: string | null; status: 'new' | 'converted' | 'declined'; preferred_date: string | null; created_at: string }
 export type PortalInvoice = { id: string; month: string; status: string; total: number }
 export type PortalClient = {

@@ -77,7 +77,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
     date: existing?.date ?? preset.date ?? TODAY, time: existing?.time ?? preset.time ?? nowHM(), clientId: existing?.clientId ?? preset.clientId ?? '',
     task: existing?.task ?? preset.task ?? '', staffId: existing?.staffId ?? '', vendorId: existing?.vendorId ?? '',
     regionId: existing?.regionId ? String(existing.regionId) : '', status: existing?.statusKey ?? 'planned',
-    checkedIn: existing?.checkedIn ?? '', checkedOut: existing?.checkedOut ?? '',
+    checkedIn: existing?.checkedIn ?? '', checkedOut: existing?.checkedOut ?? '', location: existing?.location ?? '',
   })
   const [err, setErr] = useState<Errors>({})
   const set = (k: keyof typeof v) => (val: string) => setV((s) => ({ ...s, [k]: val }))
@@ -102,7 +102,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
     if (v.checkedIn && v.checkedOut && v.checkedOut <= v.checkedIn) e.checkedOut = 'שעת היציאה חייבת להיות אחרי הכניסה'
     setErr(e)
     if (Object.keys(e).length) return
-    const ok = await saveTask(editId, { clientId: v.clientId, date: v.date, time: v.time, title: v.task.trim(), regionId: Number(v.regionId), staffId: v.staffId, vendorId: v.vendorId, status: v.status, checkedIn: v.checkedIn, checkedOut: v.checkedOut })
+    const ok = await saveTask(editId, { clientId: v.clientId, date: v.date, time: v.time, title: v.task.trim(), regionId: Number(v.regionId), staffId: v.staffId, vendorId: v.vendorId, status: v.status, checkedIn: v.checkedIn, checkedOut: v.checkedOut, location: v.location.trim() || existing?.location ? v.location : undefined })
     if (!ok) return
     const region = regions.find((r) => r.id === Number(v.regionId))
     if (v.date === TODAY && region) setRegionFilter((f) => (f.length && !f.includes(region.name) ? [...f, region.name] : f))
@@ -114,6 +114,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
     <FormShell title={editId ? 'עריכת משימה' : 'משימה חדשה'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספת משימה'}>
       <TextField label="למתי צריך לבצע (תאריך)" type="date" value={v.date} onChange={(e) => set('date')(e.target.value)} error={err.date} hint="ברירת המחדל: היום" />
       <TextField label="שעה" type="time" value={v.time} onChange={(e) => set('time')(e.target.value)} error={err.time} hint={editId ? undefined : 'מולאה לפי השעה עכשיו, אפשר לשנות'} />
+      <div className="full"><TextField label="איפה הפגישה" value={v.location} onChange={(e) => set('location')(e.target.value)} placeholder="בבית" hint="אם לא כותבים, הפגישה בבית הלקוח/ה" /></div>
       <div className="full"><SelectField label="לקוח/ה" value={v.clientId} onChange={pickClient} options={clients.map((c) => ({ value: c.id, label: c.name }))} placeholder="בחרי לקוח/ה" error={err.clientId} /></div>
       <div className="full"><TextField label="משימה" value={v.task} onChange={(e) => set('task')(e.target.value)} error={err.task} placeholder="למשל: ליווי לרופא + מרשמים" /></div>
       <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={staff.map((s) => ({ value: s.id, label: s.name }))} placeholder="ללא מלווה/ת" />

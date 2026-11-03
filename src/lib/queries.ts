@@ -106,7 +106,7 @@ export async function loadAll(): Promise<Loaded> {
       // No staff and no vendor = unassigned: the board shows the "שיבוץ" action instead of a status.
       status: who ? (TASK_STATUS[r.status] ?? null) : null, statusKey: r.status,
       checkedIn: localHM(r.checked_in_at), checkedOut: localHM(r.checked_out_at),
-      region: one<Row>(r.regions)?.name ?? '', regionId: r.region_id,
+      region: one<Row>(r.regions)?.name ?? '', regionId: r.region_id, location: r.location ?? null,
     }
   })
 

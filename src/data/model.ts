@@ -27,6 +27,7 @@ export type Task = {
   checkedOut: string // actual end HH:MM (local) or ''
   region: string
   regionId: number | null
+  location: string | null // where the meeting takes place; null = at home
 }
 
 export type Vendor = {

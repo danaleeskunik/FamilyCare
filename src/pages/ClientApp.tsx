@@ -18,6 +18,7 @@ const ALON = { name: 'אלון', display: '054-9995858', tel: '0549995858' }
 const dayLabel = (iso: string) => { const d = new Date(`${iso}T00:00:00`); return `יום ${WEEKDAYS[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}` }
 const hm = (t: string | null) => (t ? t.slice(0, 5) : '')
 const tel = (p: string) => `tel:${p.replace(/[^\d+]/g, '')}`
+const waLink = (p: string) => { const d = p.replace(/\D/g, ''); return `https://wa.me/${d.startsWith('972') ? d : d.startsWith('0') ? `972${d.slice(1)}` : `972${d}`}` }
 const initials = (name: string) => name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('')
 const safe = (k: string, v?: string) => { try { if (v === undefined) return window.localStorage.getItem(k); window.localStorage.setItem(k, v); return v } catch { return null } }
 
@@ -157,6 +158,23 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
         {next ? <VisitLine v={next} big /> : <p>עוד לא נקבעה פגישה. אפשר להזמין בלשונית "הזמנות", או לכתוב לנו.</p>}
       </section>
 
+      {c.companion && (
+        <section className="pt-card pt-person" aria-labelledby="h-comp">
+          <Avatar name={c.companion.name} photo={c.companion.photo} />
+          <div>
+            <h2 id="h-comp">המלווה שלכם</h2>
+            <p className="pt-big">{c.companion.name}</p>
+            {c.companion.phone && <p className="pt-sub"><Ltr>{c.companion.phone}</Ltr></p>}
+          </div>
+          {c.companion.phone && (
+            <div className="pt-row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              <CallBtn phone={c.companion.phone} name={c.companion.name} />
+              <a className="pt-btn ghost" href={waLink(c.companion.phone)} target="_blank" rel="noopener noreferrer" aria-label={`הודעת וואטסאפ אל ${c.companion.name}`}>וואטסאפ</a>
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="pt-actions">
         <button type="button" className="pt-action main" onClick={() => go('orders')}><b>הזמנת שירות</b><span>תיקון, רופא, קניות, בילוי ועוד</span></button>
         <button type="button" className="pt-action" onClick={() => go('messages')}><b>הודעה לחברה</b><span>{unread ? `${unread} הודעות חדשות` : 'כתיבה חופשית'}</span></button>
@@ -164,14 +182,17 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
         <a className="pt-action" href={tel(ALON.tel)}><b>להתקשר לאלון</b><span><Ltr>{ALON.display}</Ltr></span></a>
       </div>
 
-      {c.companion && (
-        <section className="pt-card pt-person" aria-labelledby="h-comp">
-          <Avatar name={c.companion.name} photo={c.companion.photo} />
-          <div>
-            <h2 id="h-comp">המלווה שלכם</h2>
-            <p className="pt-big">{c.companion.name}</p>
+      {c.requests.length > 0 && (
+        <section className="pt-card" aria-labelledby="h-req">
+          <div className="pt-row"><h2 id="h-req">ההזמנות שלכם</h2><button type="button" className="pt-link" onClick={() => go('orders')}>לכל ההזמנות</button></div>
+          <div className="pt-list">
+            {c.requests.slice(0, 3).map((r) => (
+              <div key={r.id} className="pt-row" style={{ alignItems: 'flex-start' }}>
+                <span><b>{r.category ?? 'בקשה'}</b><br />{r.description.split('\n')[0]}</span>
+                <span className={`pt-status ${REQUEST_STATUS[r.status]?.[1] ?? ''}`}>{r.status === 'new' ? 'הזמנה חדשה' : r.status === 'converted' ? 'בטיפול ומשובצת' : 'לא ניתן לבצע'}</span>
+              </div>
+            ))}
           </div>
-          {c.companion.phone && <CallBtn phone={c.companion.phone} name={c.companion.name} />}
         </section>
       )}
 
@@ -191,6 +212,7 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
           <h2 id="h-last">סיכום הביקור האחרון</h2>
           <p className="pt-sub">{dayLabel(lastDone.date)}{lastDone.who ? ` · ${lastDone.who}` : ''}</p>
           <p>{lastDone.summary}</p>
+          <button type="button" className="pt-link" onClick={() => go('visits')}>כל הסיכומים בלשונית "פגישות"</button>
         </section>
       )}
     </div>
@@ -201,7 +223,7 @@ function VisitLine({ v, big }: { v: PortalVisit; big?: boolean }) {
   return (
     <div className={`pt-visit ${big ? 'big' : ''}`}>
       <div className="pt-when"><b>{dayLabel(v.date)}</b><span><Ltr>{hm(v.start)}{v.end ? `–${hm(v.end)}` : ''}</Ltr></span></div>
-      <div className="pt-what"><b>{v.title}</b>{v.who && <span>עם {v.who}</span>}</div>
+      <div className="pt-what"><b>{v.title}</b>{v.who && <span>עם {v.who}</span>}<span>מקום: {v.location?.trim() || 'בבית'}</span></div>
       <span className={`pt-status ${v.status}`}>{VISIT_STATUS[v.status] ?? v.status}</span>
     </div>
   )

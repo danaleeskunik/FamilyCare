@@ -5,7 +5,7 @@ import { loadAll } from '../lib/queries'
 import { DAY_NAMES, formatDM, parseISO } from '../lib/dates'
 import { useAuth } from './AuthStore'
 
-export type TaskInput = { clientId: string; date: string; time: string; title: string; regionId: number; staffId: string; vendorId: string; status: string; checkedIn: string; checkedOut: string }
+export type TaskInput = { clientId: string; date: string; time: string; title: string; regionId: number; staffId: string; vendorId: string; status: string; checkedIn: string; checkedOut: string; location?: string }
 export type SlotInput = { clientId: string; weekday: number; start: string; end: string; purpose: string; staffId: string; validFrom: string; validTo: string; active: boolean }
 export type ClientInput = {
   name: string; birthDate: string; regionId: number; planId: string; trialEndsOn: string | null; companionId: string; orderer: string; ordererPhone: string
@@ -135,6 +135,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const row = {
       client_id: t.clientId, scheduled_date: t.date, start_time: t.time, title: t.title, region_id: t.regionId,
       staff_id: t.staffId || null, vendor_id: t.vendorId || null, status: t.status,
+      // The column comes with migration 0024: only sent when the field is used, so saving keeps working before it runs.
+      ...(t.location !== undefined ? { location: t.location.trim() || null } : {}),
       checked_in_at: t.checkedIn ? new Date(`${t.date}T${t.checkedIn}:00`).toISOString() : null,
       checked_out_at: t.checkedOut ? new Date(`${t.date}T${t.checkedOut}:00`).toISOString() : null,
     }
