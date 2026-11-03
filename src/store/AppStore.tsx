@@ -8,7 +8,7 @@ import { useAuth } from './AuthStore'
 export type TaskInput = { clientId: string; date: string; time: string; title: string; regionId: number; staffId: string; vendorId: string; status: string; checkedIn: string; checkedOut: string }
 export type SlotInput = { clientId: string; weekday: number; start: string; end: string; purpose: string; staffId: string; validFrom: string; validTo: string; active: boolean }
 export type ClientInput = {
-  name: string; birthDate: string; regionId: number; planId: string; trialEndsOn: string | null; companionId: string; orderer: string
+  name: string; birthDate: string; regionId: number; planId: string; trialEndsOn: string | null; companionId: string; orderer: string; ordererPhone: string
   phone: string; address: string; buildingCode: string; dependency: string; mobilityNotes: string; cognitiveNotes: string; cap: string; cardLast4: string
 }
 export type VendorInput = { name: string; trade: string; regionIds: number[]; licenseExpiry: string; insuranceExpiry: string; contact: Record<string, string | null>; prices: { id?: string; label: string; amount: number }[] }
@@ -159,8 +159,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       if (error) { fail('update client', error); return null }
       const cur = await supabase.from('family_contacts').select('id').eq('client_id', id).eq('is_orderer', true).maybeSingle()
       const r = cur.data
-        ? await supabase.from('family_contacts').update({ full_name: c.orderer }).eq('id', cur.data.id)
-        : await supabase.from('family_contacts').insert({ client_id: id, full_name: c.orderer, permission: 'full', is_orderer: true })
+        ? await supabase.from('family_contacts').update({ full_name: c.orderer, phone: nul(c.ordererPhone) }).eq('id', cur.data.id)
+        : await supabase.from('family_contacts').insert({ client_id: id, full_name: c.orderer, phone: nul(c.ordererPhone), permission: 'full', is_orderer: true })
       if (r.error) { fail('save orderer', r.error); return null }
       if (billing.card_last4 || billing.monthly_budget_cap !== null) {
         const b = await supabase.from('client_billing').upsert({ client_id: id, ...billing })
@@ -172,7 +172,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       const { data: created, error } = await supabase.from('clients').insert({ ...row, member_since: new Date().toISOString().slice(0, 10) }).select('id').single()
       if (error) { fail('create client', error); return null }
       newId = created.id
-      const { error: e2 } = await supabase.from('family_contacts').insert({ client_id: created.id, full_name: c.orderer, permission: 'full', is_orderer: true })
+      const { error: e2 } = await supabase.from('family_contacts').insert({ client_id: created.id, full_name: c.orderer, phone: nul(c.ordererPhone), permission: 'full', is_orderer: true })
       if (e2) {
         await supabase.from('clients').delete().eq('id', created.id) // no half-created client without an orderer
         fail('create orderer', e2)

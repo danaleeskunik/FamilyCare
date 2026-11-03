@@ -260,7 +260,11 @@ export function ContactsEditor({ d, answers, onChanged, renderAccess }: { d: any
                     ? [p.relation ?? 'רופא/ה', p.note].filter(Boolean).join(' · ')
                     : [p.relation, p.is_orderer ? 'מזמין/ת השירות' : null, p.permission === 'full' ? 'הרשאה מלאה' : 'צפייה בלבד'].filter(Boolean).join(' · ')}
                 </div>
-                {p.phone && <div className="card-meta"><a href={`tel:${p.phone}`}><Ltr>{p.phone}</Ltr></a></div>}
+                <div className="card-meta">
+                  טלפון: {p.phone ? <a href={`tel:${p.phone}`}><Ltr>{p.phone}</Ltr></a>
+                    : <button type="button" style={{ font: 'inherit', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 0, padding: 0, color: 'var(--brand-link)' }}
+                        onClick={() => { setErr(''); setEditing({ id: p.id, type: p.contact_type, name: p.full_name, relation: p.relation ?? '', phone: '', permission: p.permission, note: p.note ?? '', orderer: p.is_orderer }) }}>לא הוזן, להוספה</button>}
+                </div>
               </div>
               <div style={{ marginInlineStart: 'auto' }} className="stack">
                 {p.contact_type !== 'physician' && renderAccess(p)}

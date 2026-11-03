@@ -236,7 +236,7 @@ export async function loadClientDetail(id: string): Promise<ClientDetail | null>
 export async function fetchClientForEdit(id: string) {
   const [c, o, b] = await Promise.all([
     supabase.from('clients').select('*').eq('id', id).maybeSingle(),
-    supabase.from('family_contacts').select('id, full_name').eq('client_id', id).eq('is_orderer', true).maybeSingle(),
+    supabase.from('family_contacts').select('id, full_name, phone').eq('client_id', id).eq('is_orderer', true).maybeSingle(),
     Promise.resolve(supabase.from('client_billing').select('*').eq('client_id', id).maybeSingle()).then((r) => optional(r, 'client_billing')),
   ])
   const err = c.error ?? o.error ?? b.error

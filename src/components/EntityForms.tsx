@@ -129,14 +129,14 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
 
 // ---------------------------------------------------------------- Client
 type ClientRow = Record<string, string | number | null>
-function ClientForm({ editId, initial, ordererName }: { editId: string | null; initial?: ClientRow; ordererName?: string }) {
+function ClientForm({ editId, initial, ordererName, ordererPhone }: { editId: string | null; initial?: ClientRow; ordererName?: string; ordererPhone?: string }) {
   const { clients, staff, regions, plans, saveClient, closeForm, notify } = useStore()
   const i = initial ?? {}
   const str = (k: string) => (i[k] == null ? '' : String(i[k]))
   const existingTrial = str('trial_ends_on')
   const [v, setV] = useState({
     name: str('full_name'), birthDate: str('birth_date'), regionId: str('region_id'), planId: str('plan_id') || 'basic',
-    trial: editId ? !!existingTrial && existingTrial >= TODAY : true, companionId: str('regular_companion_id'), orderer: ordererName ?? '',
+    trial: editId ? !!existingTrial && existingTrial >= TODAY : true, companionId: str('regular_companion_id'), orderer: ordererName ?? '', ordererPhone: ordererPhone ?? '',
     phone: str('phone'), address: str('address'), buildingCode: str('building_code'), dependency: str('dependency_level'),
     mobilityNotes: str('mobility_notes'), cognitiveNotes: str('cognitive_notes'), cap: str('monthly_budget_cap'), cardLast4: str('card_last4'),
   })
@@ -176,7 +176,7 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
     const monthAhead = new Date(); monthAhead.setMonth(monthAhead.getMonth() + 1)
     const trialEndsOn = !v.trial ? null : existingTrial && existingTrial >= TODAY ? existingTrial : monthAhead.toISOString().slice(0, 10)
     const savedId = await saveClient(editId, {
-      name, birthDate: v.birthDate, regionId: Number(v.regionId), planId: v.planId, trialEndsOn, companionId: v.companionId, orderer: v.orderer.trim(),
+      name, birthDate: v.birthDate, regionId: Number(v.regionId), planId: v.planId, trialEndsOn, companionId: v.companionId, orderer: v.orderer.trim(), ordererPhone: v.ordererPhone.trim(),
       phone: v.phone, address: v.address, buildingCode: v.buildingCode, dependency: v.dependency, mobilityNotes: v.mobilityNotes, cognitiveNotes: v.cognitiveNotes, cap: v.cap, cardLast4: v.cardLast4,
     })
     if (!savedId) return
@@ -234,6 +234,7 @@ function ClientForm({ editId, initial, ordererName }: { editId: string | null; i
         בתקופת היכרות (חודש ראשון ללא התחייבות)
       </label>
       <div className="full"><TextField label="מזמין/ת השירות" value={v.orderer} onChange={(e) => set('orderer')(e.target.value)} error={err.orderer} hint="בן או בת משפחה שמזמינים ומקבלים את החשבוניות" /></div>
+      <div className="full"><TextField label="טלפון המזמין/ת" type="tel" dir="ltr" value={v.ordererPhone} onChange={(e) => set('ordererPhone')(e.target.value)} placeholder="052-000-0000" /></div>
       <TextField label="טלפון" type="tel" dir="ltr" value={v.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="052-000-0000" />
       <TextField label="קוד לבניין" dir="ltr" value={v.buildingCode} onChange={(e) => set('buildingCode')(e.target.value)} />
       <div className="full"><TextField label="כתובת" value={v.address} onChange={(e) => set('address')(e.target.value)} /></div>
@@ -526,7 +527,7 @@ export default function FormHost() {
     case 'client':
       return id
         ? <EditLoader key={`c-${id}`} title="עריכת פרטי לקוח/ה" load={() => fetchClientForEdit(id)}>
-            {(d) => <ClientForm editId={id} initial={d.client as ClientRow} ordererName={(d.orderer?.full_name as string) ?? ''} />}
+            {(d) => <ClientForm editId={id} initial={d.client as ClientRow} ordererName={(d.orderer?.full_name as string) ?? ''} ordererPhone={(d.orderer?.phone as string) ?? ''} />}
           </EditLoader>
         : <ClientForm key="client" editId={null} />
     case 'vendor':
