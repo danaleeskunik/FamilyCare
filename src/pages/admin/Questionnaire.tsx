@@ -6,11 +6,15 @@ import IntakeFields from '../../components/IntakeFields'
 import { supabase } from '../../lib/supabase'
 import { cleanAnswers, missingTable, saveIntake, type Answers } from '../../lib/intake'
 import { useStore } from '../../store/AppStore'
-import { INTAKE } from '../../data/intake'
+import { INTAKE, fieldIsPrivate } from '../../data/intake'
 
 const draftKey = (id: string) => `fc-intake-draft-${id}`
-const readDraft = (id: string): Answers | null => { try { const r = window.localStorage.getItem(draftKey(id)); return r ? JSON.parse(r) as Answers : null } catch { return null } }
-const writeDraft = (id: string, v: Answers | null) => { try { if (v) window.localStorage.setItem(draftKey(id), JSON.stringify(v)); else window.localStorage.removeItem(draftKey(id)) } catch { /* private mode: no draft */ } }
+
+/** Sensitive answers (ID number, door and alarm codes, Wi-Fi password…) are never kept in the browser; only the non-private part is drafted. */
+const PRIVATE_KEYS = new Set(INTAKE.flatMap((sec) => sec.fields.filter((f) => fieldIsPrivate(sec, f)).map((f) => f.key)))
+const withoutPrivate = (v: Answers): Answers => Object.fromEntries(Object.entries(v).filter(([k]) => !PRIVATE_KEYS.has(k)))
+const readDraft = (id: string): Answers | null => { try { const r = window.localStorage.getItem(draftKey(id)); return r ? withoutPrivate(JSON.parse(r) as Answers) : null } catch { return null } }
+const writeDraft = (id: string, v: Answers | null) => { try { if (v) window.localStorage.setItem(draftKey(id), JSON.stringify(withoutPrivate(v))); else window.localStorage.removeItem(draftKey(id)) } catch { /* private mode: no draft */ } }
 
 /** The intake questionnaire as a web form for the interview itself: pick a client, fill in, save. Unsaved typing is kept as a draft on this device. */
 export default function Questionnaire() {
