@@ -356,8 +356,8 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-form label { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 500; color: var(--ink-1); }
 .lp-form label small { font-weight: 400; color: var(--ink-2); font-size: 14px; }
 .lp-form label.wide { grid-column: 1 / -1; }
-.lp-form input:not(.lp-hp) { box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; font: 400 17px/1 var(--font-ui); color: var(--ink-1); background: #fff; border: 1.5px solid var(--border-input, #8B97A5); border-radius: 12px; }
-.lp-form input:not(.lp-hp):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-color: var(--brand-link, #0E7C77); }
+.lp-form :is(input:not(.lp-hp), textarea) { box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; font: 400 17px/1.5 var(--font-ui); color: var(--ink-1); background: #fff; border: 1.5px solid var(--border-input, #8B97A5); border-radius: 12px; }
+.lp-form :is(input:not(.lp-hp), textarea):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-color: var(--brand-link, #0E7C77); }
 .lp-hp { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; opacity: 0; }
 .lp-form .lp-btn { width: 100%; margin-top: 18px; }
 .lp-form .lp-btn:disabled { opacity: .7; cursor: default; }
@@ -369,3 +369,4 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-contact .lp-form.done p { margin-top: 8px; color: var(--ink-1); }
 .lp-contact .lp-or { margin: 30px 0 14px; font-size: 16px; }
 @media (max-width: 520px) { .lp-form-grid { grid-template-columns: 1fr; } }
+.lp-form textarea { padding: 12px 14px; resize: vertical; }

@@ -19,7 +19,7 @@ export default function LeadForm() {
     setStatus('sending'); setMsg('')
     const { error } = await supabase.rpc('submit_lead', {
       p_first: String(f.get('first') ?? ''), p_last: String(f.get('last') ?? ''), p_phone: String(f.get('phone') ?? ''),
-      p_email: String(f.get('email') ?? ''), p_country: String(f.get('country') ?? ''),
+      p_email: String(f.get('email') ?? ''), p_notes: String(f.get('notes') ?? ''),
     })
     if (error) {
       setStatus('error')
@@ -46,7 +46,7 @@ export default function LeadForm() {
         <label><span>שם משפחה</span><input name="last" required maxLength={60} autoComplete="family-name" /></label>
         <label><span>טלפון</span><input name="phone" type="tel" inputMode="tel" dir="ltr" required maxLength={30} autoComplete="tel" /></label>
         <label><span>מייל <small>(לא חובה)</small></span><input name="email" type="email" dir="ltr" maxLength={120} autoComplete="email" /></label>
-        <label className="wide"><span>מדינה <small>(אם הילדים גרים בחו"ל)</small></span><input name="country" maxLength={60} autoComplete="country-name" /></label>
+        <label className="wide"><span>הערות <small>(לא חובה)</small></span><textarea name="notes" rows={3} maxLength={1000} /></label>
       </div>
       <input className="lp-hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
       <button type="submit" className="lp-btn primary" disabled={status === 'sending'}>{status === 'sending' ? 'שולחים…' : 'השאירו פרטים ונחזור אליכם'}</button>

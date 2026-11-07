@@ -1,10 +1,9 @@
 -- Landing-page lead form: anyone can leave details; the lead lands in public.leads (source 'landing')
 -- and an email goes to the office. anon has no table access; it can only call submit_lead().
 
-alter table public.leads add column if not exists country text;
-
-create or replace function public.submit_lead(
-  p_first text, p_last text, p_phone text, p_email text default null, p_country text default null
+drop function if exists public.submit_lead(text, text, text, text, text);
+create function public.submit_lead(
+  p_first text, p_last text, p_phone text, p_email text default null, p_notes text default null
 ) returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -12,20 +11,20 @@ declare
   v_last text := btrim(coalesce(p_last, ''));
   v_phone text := btrim(coalesce(p_phone, ''));
   v_email text := nullif(btrim(coalesce(p_email, '')), '');
-  v_country text := nullif(btrim(coalesce(p_country, '')), '');
+  v_notes text := btrim(coalesce(p_notes, ''));
   v_digits text := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g');
 begin
   if length(v_first) not between 1 and 60 or length(v_last) not between 1 and 60 then raise exception 'invalid_name'; end if;
   if length(v_digits) not between 7 and 15 or length(v_phone) > 30 then raise exception 'invalid_phone'; end if;
   if v_email is not null and (length(v_email) > 120 or v_email !~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$') then raise exception 'invalid_email'; end if;
-  if v_country is not null and length(v_country) > 60 then raise exception 'invalid_country'; end if;
+  if length(v_notes) > 1000 then raise exception 'invalid_notes'; end if;
 
   -- Abuse guards: at most 20 landing leads an hour; the same phone twice in a day is accepted but not duplicated.
   if (select count(*) from public.leads where source = 'landing' and created_at > now() - interval '1 hour') >= 20 then raise exception 'rate_limited'; end if;
   if exists (select 1 from public.leads where source = 'landing' and regexp_replace(coalesce(phone, ''), '\D', '', 'g') = v_digits and created_at > now() - interval '1 day') then return; end if;
 
-  insert into public.leads (name, phone, email, country, source)
-  values (v_first || ' ' || v_last, v_phone, v_email, v_country, 'landing');
+  insert into public.leads (name, phone, email, notes, source)
+  values (v_first || ' ' || v_last, v_phone, v_email, v_notes, 'landing');
 end $$;
 
 revoke all on function public.submit_lead(text, text, text, text, text) from public;
@@ -46,11 +45,11 @@ begin
   select decrypted_secret into k from vault.decrypted_secrets where name = 'resend_api_key' limit 1;
   if k is null then return new; end if;
 
-  rows_html := format('<tr><td><b>שם</b></td><td>%s</td></tr><tr><td><b>טלפון</b></td><td dir="ltr" style="text-align:right">%s</td></tr><tr><td><b>מייל</b></td><td>%s</td></tr><tr><td><b>מדינה</b></td><td>%s</td></tr>',
+  rows_html := format('<tr><td><b>שם</b></td><td>%s</td></tr><tr><td><b>טלפון</b></td><td dir="ltr" style="text-align:right">%s</td></tr><tr><td><b>מייל</b></td><td>%s</td></tr><tr><td><b>הערות</b></td><td>%s</td></tr>',
     replace(replace(replace(new.name, '&', '&amp;'), '<', '&lt;'), '>', '&gt;'),
     replace(replace(replace(coalesce(new.phone, '-'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;'),
     replace(replace(replace(coalesce(new.email, '-'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;'),
-    replace(replace(replace(coalesce(new.country, '-'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;'));
+    replace(replace(replace(coalesce(nullif(new.notes, ''), '-'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;'));
 
   perform net.http_post(
     url := 'https://api.resend.com/emails',
