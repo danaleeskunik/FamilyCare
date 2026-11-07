@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import LeadForm from '../components/LeadForm'
 import { CONTACT, ROY, mailHref, telHref, waHref } from '../lib/contact'
 import { SERVICES } from '../data/services'
 import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, type IconName, useReveal } from '../components/LandingChrome'
@@ -291,7 +292,9 @@ export default function Landing() {
       <section id="contact" className="lp-contact">
         <div className="lp-wrap lp-contact-in reveal">
           <h2>בואו נכיר</h2>
-          <p>שיחה קצרה להיכרות, ונתאים את המלווה והמסלול להורים שלכם.</p>
+          <p>שיחה קצרה להיכרות, ונתאים את המלווה והמסלול להורים שלכם. השאירו פרטים ונחזור אליכם.</p>
+          <LeadForm />
+          <p className="lp-or">או פנו אלינו ישירות</p>
           <div className="lp-cta center">
             <ContactBtn href={waHref} icon="chat">WhatsApp</ContactBtn>
             <ContactBtn href={mailHref} icon="mail" variant="ghost">{CONTACT.email || 'שלחו לנו מייל'}</ContactBtn>

@@ -51,4 +51,11 @@ export function trackContactClick(e: MouseEvent) {
   window.gtag!('event', name, { page_path: location.pathname })
 }
 
+/** A submitted contact form is the lead we care most about. */
+export function trackLead() {
+  if (getChoice() !== 'yes' || !isPublicPath(location.pathname)) return
+  load()
+  window.gtag!('event', 'generate_lead', { page_path: location.pathname })
+}
+
 export const reopenConsent = () => window.dispatchEvent(new Event('fc-consent-open'))

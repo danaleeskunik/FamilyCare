@@ -3,7 +3,7 @@ import { Button, Callout, Card, CardHead, Empty, Icon, Ltr } from '../../compone
 import { supabase } from '../../lib/supabase'
 
 type Status = 'new' | 'talked' | 'meeting' | 'joined' | 'not_relevant'
-type Lead = { id: string; name: string; phone: string | null; status: Status; notes: string; createdAt: string; updatedAt: string }
+type Lead = { id: string; name: string; phone: string | null; email: string | null; country: string | null; source: string; status: Status; notes: string; createdAt: string; updatedAt: string }
 
 const STATUSES: { value: Status; label: string }[] = [
   { value: 'new', label: 'חדש' },
@@ -13,8 +13,8 @@ const STATUSES: { value: Status; label: string }[] = [
   { value: 'not_relevant', label: 'לא רלוונטי' },
 ]
 
-type Row = { id: string; name: string; phone: string | null; status: Status; notes: string; created_at: string; updated_at: string }
-const fromRow = (r: Row): Lead => ({ id: r.id, name: r.name, phone: r.phone, status: r.status, notes: r.notes, createdAt: r.created_at, updatedAt: r.updated_at })
+type Row = { id: string; name: string; phone: string | null; email?: string | null; country?: string | null; source?: string; status: Status; notes: string; created_at: string; updated_at: string }
+const fromRow = (r: Row): Lead => ({ id: r.id, name: r.name, phone: r.phone, email: r.email ?? null, country: r.country ?? null, source: r.source ?? 'manual', status: r.status, notes: r.notes, createdAt: r.created_at, updatedAt: r.updated_at })
 
 /** Israeli mobile/landline → international digits for wa.me; null if there is no usable number. */
 function waNumber(phone: string | null): string | null {
@@ -70,6 +70,9 @@ function LeadCard({ lead, onStatus, onNotes, onDelete }: {
         <div className="lead-id">
           <strong>{lead.name}</strong>
           {lead.phone && <Ltr>{lead.phone}</Ltr>}
+          {lead.email && <Ltr>{lead.email}</Ltr>}
+          {lead.country && <span className="card-meta">מדינה: {lead.country}</span>}
+          {lead.source === 'landing' && <span className="card-meta">מהאתר</span>}
         </div>
         <div className="lead-actions">
           <select className="input lead-status" aria-label={`סטטוס של ${lead.name}`} value={lead.status} onChange={(e) => onStatus(lead.id, e.target.value as Status)}>
@@ -107,7 +110,7 @@ export default function Leads() {
   useEffect(() => {
     let alive = true
     void (async () => {
-      const { data, error: e } = await supabase.from('leads').select('id, name, phone, status, notes, created_at, updated_at').order('created_at', { ascending: false })
+      const { data, error: e } = await supabase.from('leads').select('id, name, phone, email, country, source, status, notes, created_at, updated_at').order('created_at', { ascending: false })
       if (!alive) return
       if (e) { if (isMissingTable(e)) setSetupNeeded(true); else setError('לא הצלחנו לטעון את הלידים. אפשר לרענן ולנסות שוב.') }
       else setLeads((data as Row[]).map(fromRow))
@@ -120,7 +123,7 @@ export default function Leads() {
     ev.preventDefault()
     if (!name.trim()) return
     setAdding(true); setError(null)
-    const { data, error: e } = await supabase.from('leads').insert({ name: name.trim(), phone: phone.trim() || null }).select('id, name, phone, status, notes, created_at, updated_at').single()
+    const { data, error: e } = await supabase.from('leads').insert({ name: name.trim(), phone: phone.trim() || null }).select('id, name, phone, email, country, source, status, notes, created_at, updated_at').single()
     setAdding(false)
     if (e || !data) { setError('לא הצלחנו להוסיף את הליד. אפשר לנסות שוב.'); return }
     setLeads((cur) => [fromRow(data as Row), ...cur]); setName(''); setPhone('')
@@ -152,7 +155,7 @@ export default function Leads() {
     return c
   }, [leads])
 
-  const shown = leads.filter((l) => (filter === 'all' || l.status === filter) && (!q.trim() || `${l.name} ${l.phone ?? ''} ${l.notes}`.toLowerCase().includes(q.trim().toLowerCase())))
+  const shown = leads.filter((l) => (filter === 'all' || l.status === filter) && (!q.trim() || `${l.name} ${l.phone ?? ''} ${l.email ?? ''} ${l.country ?? ''} ${l.notes}`.toLowerCase().includes(q.trim().toLowerCase())))
 
   if (setupNeeded) {
     return (

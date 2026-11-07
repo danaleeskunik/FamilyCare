@@ -349,3 +349,23 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .fc-consent button { min-height: 44px; padding: 0 22px; border-radius: 999px; border: 2px solid var(--brand-action-strong); background: var(--brand-action-strong); color: #fff; font: 500 16px/1 var(--font-ui); cursor: pointer; }
 .fc-consent button:last-child { background: #fff; color: var(--brand-action-strong); }
 .fc-consent button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Contact form (landing) */
+.lp-form { margin: 28px auto 0; padding: clamp(18px, 3vw, 28px); max-width: 560px; text-align: start; background: #fff; color: var(--ink-1); border-radius: var(--lp-radius); box-shadow: var(--shadow-lg, 0 18px 50px rgba(0, 0, 0, .25)); }
+.lp-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.lp-form label { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 500; color: var(--ink-1); }
+.lp-form label small { font-weight: 400; color: var(--ink-2); font-size: 14px; }
+.lp-form label.wide { grid-column: 1 / -1; }
+.lp-form input:not(.lp-hp) { box-sizing: border-box; width: 100%; min-height: 50px; padding: 0 14px; font: 400 17px/1 var(--font-ui); color: var(--ink-1); background: #fff; border: 1.5px solid var(--border-input, #8B97A5); border-radius: 12px; }
+.lp-form input:not(.lp-hp):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-color: var(--brand-link, #0E7C77); }
+.lp-hp { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; opacity: 0; }
+.lp-form .lp-btn { width: 100%; margin-top: 18px; }
+.lp-form .lp-btn:disabled { opacity: .7; cursor: default; }
+.lp-contact .lp-form .lp-form-err { margin-top: 12px; color: #B3261E; font-size: 15px; }
+.lp-contact .lp-form .lp-form-note { margin-top: 14px; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+.lp-contact .lp-form .lp-form-note a { color: var(--brand-link, #0E7C77); text-decoration: underline; }
+.lp-form.done { text-align: center; }
+.lp-form.done h3 { font: 500 24px/1.3 var(--font-ui); color: var(--brand-header); }
+.lp-contact .lp-form.done p { margin-top: 8px; color: var(--ink-1); }
+.lp-contact .lp-or { margin: 30px 0 14px; font-size: 16px; }
+@media (max-width: 520px) { .lp-form-grid { grid-template-columns: 1fr; } }
