@@ -121,6 +121,14 @@ function ServiceGrid() {
                 </div>
               ))}
               {s.note && <p className="lp-pop-note">{s.note}</p>}
+              {s.partners && (
+                <div className="lp-pop-group">
+                  <h4>בשיתוף אנשי מקצוע</h4>
+                  <ul className="lp-pop-partners">{s.partners.map((p) => (
+                    <li key={p.url}><a href={p.url} target="_blank" rel="noopener noreferrer"><strong>{p.name}</strong></a><span>{p.role}</span></li>
+                  ))}</ul>
+                </div>
+              )}
               <a className="lp-btn sm solid lp-pop-cta" href="#contact" onClick={() => close(false)}>רוצים לשמוע עוד? צרו קשר</a>
             </div>
           )}

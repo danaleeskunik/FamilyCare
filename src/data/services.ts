@@ -1,7 +1,7 @@
 import type { IconName } from '../components/LandingChrome'
 
 /** What the company does, by domain. Shared by the public landing page and the client portal's order form. */
-export type Service = { icon: IconName; title: string; text: string; lead: string; groups: { title?: string; items: string[] }[]; note?: string }
+export type Service = { icon: IconName; title: string; text: string; lead: string; groups: { title?: string; items: string[] }[]; note?: string; partners?: { name: string; role: string; url: string }[] }
 
 export const SERVICES: Service[] = [
   {
@@ -38,6 +38,7 @@ export const SERVICES: Service[] = [
       { title: 'רופאים ומטפלים', items: ['רופא משפחה, אף אוזן גרון, אורתופד', 'קרדיולוג, פסיכולוג, פיזיותרפיסט'] },
       { title: 'שירותים בבית ובדרך', items: ['בדיקות דם, שתן וצואה', 'צילום רנטגן ביתי', 'רפואת עיניים ביתית', 'מרשמים ותרופות מיידיים', 'שיחות עם רופא בטלפון', 'אחות מלווה צמודה בשהייה בבית חולים', 'שיתוף פעולה עם בית חולים גדול במרכז'] },
     ],
+    partners: [{ name: 'ד"ר עדיאל רויטמן', role: 'רופא מומחה בגריאטריה ורפואה פנימית', url: 'https://dr-roitman.co.il/' }],
   },
   {
     icon: 'phone', title: 'טכנולוגיה ודיגיטל',
@@ -82,5 +83,6 @@ export const SERVICES: Service[] = [
       'הסכמי התקשרות במעבר לדיור מוגן או למוסד אחר',
     ] }],
     note: 'כולל התייעצות עם עורך דין לענייני משפחה.',
+    partners: [{ name: "כהן-ראובן ושות'", role: 'משרד עו"ד לענייני משפחה, נדל"ן, גישור ונוטריון', url: 'https://cohenreuvenlaw.co.il/' }],
   },
 ]

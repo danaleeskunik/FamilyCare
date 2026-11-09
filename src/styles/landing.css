@@ -370,3 +370,7 @@ html:has(.lp) { scroll-behavior: smooth; scroll-padding-top: 76px; }
 .lp-contact .lp-or { margin: 30px 0 14px; font-size: 16px; }
 @media (max-width: 520px) { .lp-form-grid { grid-template-columns: 1fr; } }
 .lp-form textarea { padding: 12px 14px; resize: vertical; }
+
+.lp-pop-partners li { display: flex; flex-direction: column; gap: 2px; }
+.lp-pop-partners a { align-self: flex-start; color: var(--brand-link); text-decoration: underline; text-underline-offset: 3px; }
+.lp-pop-partners span { color: var(--ink-2); font-size: 15px; }
