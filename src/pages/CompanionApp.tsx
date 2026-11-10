@@ -18,8 +18,10 @@ const STATUS: Record<string, [string, 'neutral' | 'green' | 'blue' | 'orange' | 
   planned: ['מתוכנן', 'neutral'], confirmed: ['מאושר', 'blue'], in_progress: ['בביקור', 'green'], completed: ['הושלם', 'green'], cancelled: ['בוטל', 'red'],
 }
 
-export default function CompanionApp() {
+/** previewId = an admin looking at one companion's app exactly as that companion sees it (read only). */
+export default function CompanionApp({ previewId }: { previewId?: string } = {}) {
   const { signOut, fullName } = useAuth()
+  const preview = !!previewId
   const [tab, setTab] = useState<Tab>('week')
   const [data, setData] = useState<Data | null | undefined>(undefined)
   const [failed, setFailed] = useState(false)
@@ -27,16 +29,22 @@ export default function CompanionApp() {
 
   const load = useCallback(async () => {
     try {
-      setData(await loadCompanion(toISO(addDays(parseISO(TODAY), -40)), toISO(addDays(parseISO(TODAY), 40))))
+      setData(await loadCompanion(toISO(addDays(parseISO(TODAY), -40)), toISO(addDays(parseISO(TODAY), 40)), previewId))
       setFailed(false)
     } catch (e) { console.error('companion load failed', e); setFailed(true) }
-  }, [])
+  }, [previewId])
   useEffect(() => { void load() }, [load])
 
   const flash = (m: string) => { setNote(m); window.setTimeout(() => setNote(null), 4000) }
 
   return (
     <div className="mobile companion" style={{ maxWidth: 520 }}>
+      {preview && (
+        <div role="status" style={{ background: '#FFF4E5', color: '#7A4A00', padding: '10px 16px', textAlign: 'center', fontWeight: 600, borderRadius: 12, marginBottom: 8 }}>
+          תצוגת מנהל בקריאה בלבד: כך המלווה/ת רואה את האפליקציה. {' '}
+          <a href="/admin/staff" style={{ color: 'inherit', textDecoration: 'underline' }}>חזרה למלווים</a>
+        </div>
+      )}
       <div className="hero">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div>
@@ -45,7 +53,7 @@ export default function CompanionApp() {
           </div>
           <div className="row" style={{ gap: 8 }}>
             <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={30} alt="Family Care — always with you" />
-            <Button variant="on-navy" size="sm" onClick={signOut}>יציאה</Button>
+            {!preview && <Button variant="on-navy" size="sm" onClick={signOut}>יציאה</Button>}
           </div>
         </div>
       </div>
@@ -60,15 +68,15 @@ export default function CompanionApp() {
       {failed && <Card><p style={{ fontWeight: 700 }}>לא הצלחנו לטעון את הנתונים.</p><p className="muted" style={{ margin: '6px 0 10px' }}>בדקי את החיבור לאינטרנט.</p><Button size="sm" onClick={() => void load()}>ניסיון חוזר</Button></Card>}
       {data === undefined && !failed && <p className="muted" role="status">טוענת…</p>}
       {data === null && <Empty text="החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד." />}
-      {data && tab === 'week' && <Week data={data} reload={load} flash={flash} />}
+      {data && tab === 'week' && <Week data={data} reload={load} flash={flash} preview={preview} />}
       {data && tab === 'clients' && <ByClient data={data} />}
-      {data && tab === 'hours' && <Hours data={data} flash={flash} />}
+      {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} />}
     </div>
   )
 }
 
 // ---------------------------------------------------------------- Week
-function Week({ data, reload, flash }: { data: Data; reload: () => Promise<void>; flash: (m: string) => void }) {
+function Week({ data, reload, flash, preview }: { data: Data; reload: () => Promise<void>; flash: (m: string) => void; preview: boolean }) {
   const [anchor, setAnchor] = useState(parseISO(TODAY))
   const [open, setOpen] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -123,7 +131,7 @@ function Week({ data, reload, flash }: { data: Data; reload: () => Promise<void>
                     {notes.some((n) => n.kind === 'highlight') && <div className="alert-block" style={{ marginTop: 8 }}>{notes.filter((n) => n.kind === 'highlight').map((n) => n.body).join(' · ')}</div>}
 
                     <div className="row" style={{ gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                      {iso === TODAY && t.status !== 'completed' && (t.checked_in_at
+                      {!preview && iso === TODAY && t.status !== 'completed' && (t.checked_in_at
                         ? <Button size="sm" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</Button>
                         : <Button size="sm" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</Button>)}
                       {c?.address && <a className="btn secondary sm" href={mapsUrl(c.address)} target="_blank" rel="noreferrer">ניווט</a>}
@@ -187,7 +195,7 @@ function ByClient({ data }: { data: Data }) {
 }
 
 // ---------------------------------------------------------------- Hours + expenses
-function Hours({ data, flash }: { data: Data; flash: (m: string) => void }) {
+function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => void; preview: boolean }) {
   const [month, setMonth] = useState(() => new Date(parseISO(TODAY).getFullYear(), parseISO(TODAY).getMonth(), 1))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [failed, setFailed] = useState(false)
@@ -270,11 +278,11 @@ function Hours({ data, flash }: { data: Data; flash: (m: string) => void }) {
               <div key={x.id} className="kv" style={{ fontSize: 14 }}>
                 <span>{x.description}<div className="card-meta">{formatDM(parseISO(x.date))} · <Badge tone={EXP[x.status][1]}>{EXP[x.status][0]}</Badge></div></span>
                 <span className="row" style={{ gap: 4 }}><span className="v">{money(x.amount)}</span>
-                  {x.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול הוצאה: ${x.description}`} onClick={() => remove(x.id)}><Icon name="trash" size={16} /></button>}
+                  {!preview && x.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול הוצאה: ${x.description}`} onClick={() => remove(x.id)}><Icon name="trash" size={16} /></button>}
                 </span>
               </div>
             ))}
-            <form onSubmit={add} noValidate className="stack" style={{ gap: 10, marginTop: 12 }}>
+            {!preview && <form onSubmit={add} noValidate className="stack" style={{ gap: 10, marginTop: 12 }}>
               <div className="card-label">דיווח על הוצאה חדשה</div>
               <TextField label="מה ההוצאה" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="למשל: ארוחת צהריים בזמן הביקור" />
               <TextField label="סכום (₪)" type="number" inputMode="decimal" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
@@ -282,7 +290,7 @@ function Hours({ data, flash }: { data: Data; flash: (m: string) => void }) {
                 options={report.visits.map((v) => ({ value: v.id, label: `${formatDM(parseISO(v.date))} · ${v.client}` }))} />
               {err && <div role="alert" style={{ color: 'var(--danger)', font: '600 13px var(--font-ui)' }}>{err}</div>}
               <Button type="submit" size="lg">שליחה לאישור</Button>
-            </form>
+            </form>}
           </Card>
         </>
       )}

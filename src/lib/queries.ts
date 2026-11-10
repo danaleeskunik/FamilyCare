@@ -284,16 +284,33 @@ export async function loadStaffMonth(staffId: string, monthISO: string) {
 }
 
 // ---- Companion's own app ----
-export async function loadCompanion(fromISO: string, toISO: string) {
-  const me = await supabase.from('staff_members').select('id, full_name').limit(1).maybeSingle()
+/** The companion's own view. A signed-in companion gets only their rows from the database (RLS). With `asStaffId` an admin previews
+ *  one companion: the same filter the database applies (clients where they are the regular companion or have a visit) is applied here. */
+export async function loadCompanion(fromISO: string, toISO: string, asStaffId?: string) {
+  const me = asStaffId
+    ? await supabase.from('staff_members').select('id, full_name').eq('id', asStaffId).maybeSingle()
+    : await supabase.from('staff_members').select('id, full_name').limit(1).maybeSingle()
   if (me.error) throw me.error
   if (!me.data) return null
+  let ids: string[] | null = null
+  if (asStaffId) {
+    const [reg, any] = await Promise.all([
+      supabase.from('clients').select('id').eq('regular_companion_id', asStaffId),
+      supabase.from('tasks').select('client_id').eq('staff_id', asStaffId),
+    ])
+    const err = reg.error ?? any.error
+    if (err) throw err
+    ids = [...new Set([...(reg.data ?? []).map((r: Row) => r.id as string), ...(any.data ?? []).map((r: Row) => r.client_id as string)])]
+    if (!ids.length) ids = ['00000000-0000-0000-0000-000000000000'] // nothing: `in ()` would be an error
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const only = (q: any, col: string): any => (ids ? q.in(col, ids) : q)
   const [tasks, slots, notes, clients, allergies] = await Promise.all([
     supabase.from('tasks').select('*, regions(name), clients(id, full_name, address, phone, building_code, mobility_notes)').eq('staff_id', me.data.id).gte('scheduled_date', fromISO).lte('scheduled_date', toISO).order('scheduled_date').order('start_time'),
-    supabase.from('client_visit_slots').select('*, clients(full_name)').eq('is_active', true).order('weekday').order('start_time'),
-    supabase.from('client_notes').select('*').order('created_at'),
-    supabase.from('clients').select('id, full_name, address, phone, building_code, mobility_notes, cognitive_notes, regions(name)').order('full_name'),
-    supabase.from('client_allergies').select('client_id, allergen, severity'),
+    only(supabase.from('client_visit_slots').select('*, clients(full_name)').eq('is_active', true), 'client_id').order('weekday').order('start_time'),
+    only(supabase.from('client_notes').select('*'), 'client_id').order('created_at'),
+    only(supabase.from('clients').select('id, full_name, address, phone, building_code, mobility_notes, cognitive_notes, regions(name)'), 'id').order('full_name'),
+    only(supabase.from('client_allergies').select('client_id, allergen, severity'), 'client_id'),
   ])
   const err = tasks.error ?? slots.error ?? notes.error ?? clients.error ?? allergies.error
   if (err) throw err

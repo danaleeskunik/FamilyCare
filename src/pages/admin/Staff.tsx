@@ -30,7 +30,7 @@ export default function Staff() {
                   <td>{s.regulars}</td>
                   <td><Ltr>{s.hours}</Ltr></td>
                   <td><Badge tone={s.avail[0]}>{s.avail[1]}</Badge></td>
-                  <td><RowActions what={`המלווה ${s.name}`} onEdit={() => openForm('staff', { id: s.id })} onDelete={() => askDelete('staff', s.id)} /></td>
+                  <td><Link className="btn secondary sm" to={`/admin/staff/${s.id}/view-as`}>תצוגה כמלווה</Link> <RowActions what={`המלווה ${s.name}`} onEdit={() => openForm('staff', { id: s.id })} onDelete={() => askDelete('staff', s.id)} /></td>
                 </tr>
               ))}
             </tbody>
