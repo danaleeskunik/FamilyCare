@@ -97,6 +97,18 @@ export default function Materials() {
   return (
     <>
       <Card>
+        <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div className="card-title">קישור לאתר לשליחה בוואטסאפ</div>
+            <p className="muted" style={{ marginTop: 4, lineHeight: 1.6 }}>מי שמקבל רואה את השם Family Care ואת תמונת החברה, ובלחיצה נפתח האתר.</p>
+          </div>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <a className="btn sm" href={`https://wa.me/?text=${encodeURIComponent(shareHref('site'))}`} target="_blank" rel="noreferrer">שליחה בוואטסאפ</a>
+            <button type="button" className="btn secondary sm" onClick={() => void copyHref(shareHref('site'))}>העתקת קישור</button>
+          </div>
+        </div>
+      </Card>
+      <Card>
         <div className="card-title">חומרים</div>
         <p className="muted" style={{ marginTop: 4, lineHeight: 1.6 }}>
           קבצים מוכנים לשליחה ולפרסום. "העתקת קישור" מעתיקה כתובת שאפשר להדביק בוואטסאפ או במייל, והקובץ נפתח ממנה גם למי שאין לו חשבון. "שליחה בוואטסאפ" שולחת גלויה יפה עם תמונה וכותרת, ולחיצה עליה פותחת את הקובץ.
