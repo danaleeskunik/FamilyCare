@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import MfaSetup from '../components/MfaSetup'
 import { Button, Callout, Icon } from '../components/ui'
 import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
@@ -42,6 +44,7 @@ export function Header({ title, sub, actions, tabs, lead }: {
 export default function AdminLayout() {
   const { openForm, loading, loadError, reload } = useStore()
   const { fullName, signOut, can } = useAuth()
+  const [mfaOpen, setMfaOpen] = useState(false)
   return (
     <>
       <Header
@@ -52,6 +55,7 @@ export default function AdminLayout() {
             <Link to="/" className="btn on-navy sm"><Icon name="home" size={16} />לאתר החברה</Link>
             {can('board') && <Link to="/admin/calendar" className="btn on-navy sm"><Icon name="calendar" size={16} />לוח שנה</Link>}
             {can('board') && <Button size="sm" icon="plus" onClick={() => openForm('task')}>משימה חדשה</Button>}
+            <Button variant="on-navy" size="sm" onClick={() => setMfaOpen(true)}>אימות דו-שלבי</Button>
             <Button variant="on-navy" size="sm" onClick={signOut}>התנתקות</Button>
           </>
         }
@@ -65,6 +69,7 @@ export default function AdminLayout() {
           </nav>
         }
       />
+      {mfaOpen && <MfaSetup onClose={() => setMfaOpen(false)} />}
       <main className="container page-body stack">
         {loadError ? (
           <Callout tone="warning" title="לא הצלחנו לטעון את הנתונים">

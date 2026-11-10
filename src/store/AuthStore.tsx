@@ -16,12 +16,17 @@ type Auth = {
   /** Resolves to an error message, or null on success. */
   signIn: (email: string, password: string) => Promise<string | null>
   signOut: () => Promise<void>
+  /** Password accepted, but the account has two-step verification on and the code has not been entered yet. */
+  mfaPending: boolean
+  /** Check the 6-digit code from the authenticator app. Resolves to an error message, or null on success. */
+  verifyMfa: (code: string) => Promise<string | null>
 }
 
 const Ctx = createContext<Auth | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
+  const [rawSession, setSession] = useState<Session | null>(null)
+  const [aal, setAal] = useState<{ current: string | null; next: string | null } | null>(null)
   const [profile, setProfile] = useState<{ role: Role; fullName: string; sections: string[]; isOwner: boolean } | null>(null)
   const [ready, setReady] = useState(false) // initial getSession finished
   const [profileLoading, setProfileLoading] = useState(false)
@@ -33,7 +38,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  const uid = session?.user.id
+  const refreshAal = useCallback(async () => {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    setAal({ current: data?.currentLevel ?? null, next: data?.nextLevel ?? null })
+  }, [])
+  const token = rawSession?.access_token
+  useEffect(() => {
+    if (!token) { setAal(null); return }
+    void refreshAal()
+  }, [token, refreshAal])
+  // Password alone is not enough once a second step is set up: until the code is entered the app treats the visitor as signed out.
+  const mfaPending = !!rawSession && aal?.next === 'aal2' && aal.current !== 'aal2'
+  const session = mfaPending ? null : rawSession
+
+  const uid = rawSession?.user.id
   useEffect(() => {
     let cancelled = false
     if (!uid) {
@@ -67,13 +85,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error.status === 400 ? 'האימייל או הסיסמה שגויים' : 'לא הצלחנו להתחבר. נסי שוב בעוד רגע.'
   }, [])
 
+  const verifyMfa = useCallback(async (code: string) => {
+    const { data: f, error: fe } = await supabase.auth.mfa.listFactors()
+    const factor = f?.totp?.find((x) => x.status === 'verified')
+    if (fe || !factor) return 'לא נמצאה אפליקציית אימות. התנתקי ונסי שוב.'
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.replace(/\s/g, '') })
+    if (error) return error.status === 400 ? 'הקוד שגוי או שפג תוקפו. נסי עם הקוד החדש.' : 'לא הצלחנו לאמת. נסי שוב בעוד רגע.'
+    await refreshAal()
+    return null
+  }, [refreshAal])
+
   const signOut = useCallback(async () => { await supabase.auth.signOut() }, [])
 
   const value = useMemo<Auth>(() => ({
     session, role: profile?.role ?? null, sections: profile?.sections ?? [], isOwner: !!profile?.isOwner,
     can: (section: string) => profile?.role === 'admin' || (profile?.role === 'office' && profile.sections.includes(section)),
-    fullName: profile?.fullName ?? '', loading: !ready || profileLoading || (!!session && loadedUid !== session.user.id), signIn, signOut,
-  }), [session, profile, ready, profileLoading, loadedUid, signIn, signOut])
+    fullName: profile?.fullName ?? '', loading: !ready || profileLoading || (!!rawSession && (aal === null || loadedUid !== rawSession.user.id)), signIn, signOut, mfaPending, verifyMfa,
+  }), [session, profile, ready, profileLoading, loadedUid, rawSession, aal, signIn, signOut, mfaPending, verifyMfa])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
