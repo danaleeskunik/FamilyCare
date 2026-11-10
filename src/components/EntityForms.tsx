@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import Modal from './Modal'
-import { Button, Callout } from './ui'
+import { Button, Callout, Icon, RowActions } from './ui'
 import { CheckGroup, SelectField, TextAreaField, TextField } from './Fields'
 import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
@@ -361,6 +361,81 @@ function StaffPhoto({ staffId, current, name }: { staffId: string; current: stri
   )
 }
 
+const HR_KINDS = [
+  { kind: 'interview', title: 'טופס ראיון אישי', hint: 'ראיון הקבלה למלווה' },
+  { kind: 'contract', title: 'חוזה עבודה חתום', hint: 'החוזה החתום' },
+  { kind: 'other', title: 'טפסים נוספים', hint: 'כל מסמך אחר' },
+] as const
+type HrDoc = { id: string; kind: string; title: string; storage_path: string }
+
+/** Admin-only HR file: meeting notes + uploaded documents. Documents upload right away; notes save with the form. */
+function StaffHr({ staffId, notes, onNotes }: { staffId: string; notes: string; onNotes: (v: string) => void }) {
+  const { notify } = useStore()
+  const [docs, setDocs] = useState<HrDoc[]>([])
+  const [ready, setReady] = useState(true)
+  const [busy, setBusy] = useState<string | null>(null)
+  const load = async () => {
+    const { data, error } = await supabase.from('staff_documents').select('id, kind, title, storage_path').eq('staff_id', staffId).order('uploaded_at')
+    if (error) { setReady(false); return }
+    setDocs((data ?? []) as HrDoc[])
+  }
+  useEffect(() => { void load() }, [staffId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const upload = async (kind: string, file: File | undefined) => {
+    if (!file) return
+    if (file.size > 15_000_000) { notify('הקובץ גדול מ-15MB'); return }
+    setBusy(kind)
+    const key = `${staffId}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, '_')}`
+    const up = await supabase.storage.from('staff-documents').upload(key, file, { contentType: file.type || undefined })
+    if (up.error) { console.error('staff document upload failed', up.error); setBusy(null); notify('לא הצלחנו להעלות את הקובץ'); return }
+    const { data: u } = await supabase.auth.getUser()
+    const { error } = await supabase.from('staff_documents').insert({ staff_id: staffId, kind, title: file.name, storage_path: key, uploaded_by: u.user?.id ?? null })
+    setBusy(null)
+    if (error) { console.error('staff document save failed', error); notify('הקובץ הועלה אבל לא נשמר'); return }
+    notify('הקובץ הועלה'); void load()
+  }
+  const open = async (d: HrDoc) => {
+    const { data, error } = await supabase.storage.from('staff-documents').createSignedUrl(d.storage_path, 120)
+    if (error || !data) { notify('לא הצלחנו לפתוח את הקובץ'); return }
+    window.open(data.signedUrl, '_blank', 'noopener')
+  }
+  const remove = async (d: HrDoc) => {
+    await supabase.storage.from('staff-documents').remove([d.storage_path])
+    const { error } = await supabase.from('staff_documents').delete().eq('id', d.id)
+    if (error) { notify('לא הצלחנו למחוק'); return }
+    void load()
+  }
+
+  if (!ready) return <div className="full notice">תיק המלווה (סיכום פגישות ומסמכים) יופעל אחרי הרצת upgrade_0026 ב-Supabase.</div>
+  return (
+    <>
+      <div className="full"><TextAreaField label="סיכום פגישות איתי" rows={5} value={notes} onChange={onNotes} hint="מוצג למנהלים בלבד. נשמר עם לחיצה על שמירה." /></div>
+      {HR_KINDS.map((k) => {
+        const mine = docs.filter((d) => d.kind === k.kind)
+        return (
+          <div key={k.kind} className="full stack" style={{ gap: 8 }}>
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <strong style={{ font: '600 14px var(--font-ui)' }}>{k.title}</strong>
+              <label className="btn secondary sm" style={{ cursor: 'pointer' }}>{busy === k.kind ? 'מעלה…' : 'העלאת קובץ'}
+                <input type="file" accept="application/pdf,image/*,.doc,.docx" hidden disabled={busy !== null} onChange={(e) => { void upload(k.kind, e.target.files?.[0]); e.target.value = '' }} />
+              </label>
+            </div>
+            {mine.map((d) => (
+              <div key={d.id} className="item-box row" style={{ gap: 8, padding: '9px 11px', fontSize: 13.5, justifyContent: 'space-between' }}>
+                <button type="button" className="row" style={{ gap: 8, background: 'none', border: 0, cursor: 'pointer', font: 'inherit', color: 'inherit', textAlign: 'start' }} onClick={() => void open(d)}>
+                  <Icon name="document" size={17} />{d.title}
+                </button>
+                <RowActions what={d.title} onEdit={() => void open(d)} onDelete={() => void remove(d)} />
+              </div>
+            ))}
+            {mine.length === 0 && <div className="card-meta">{k.hint}: עוד לא הועלה.</div>}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 function StaffForm({ editId, initial }: { editId: string | null; initial?: { staff: Record<string, unknown>; regionIds: number[] } }) {
   const { staff, regions, saveStaff, closeForm, notify } = useStore()
   const s0 = initial?.staff ?? {}
@@ -371,6 +446,12 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
     phone: (s0.phone as string) ?? '', languages: ((s0.languages as string[]) ?? []).join(', '), regionIds: initial?.regionIds ?? ([] as number[]),
     email: currentEmail ?? '',
   })
+  const [notes, setNotes] = useState('')
+  const [notesLoaded, setNotesLoaded] = useState(false)
+  useEffect(() => {
+    if (!editId) return
+    void supabase.from('staff_hr_notes').select('meeting_notes').eq('staff_id', editId).maybeSingle().then(({ data }) => { setNotes((data?.meeting_notes as string) ?? ''); setNotesLoaded(true) })
+  }, [editId])
   const [err, setErr] = useState<Errors>({})
   const set = <K extends keyof typeof v>(k: K) => (val: (typeof v)[K]) => setV((s) => ({ ...s, [k]: val }))
 
@@ -386,6 +467,10 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
     if (Object.keys(e).length) return
     const ok = await saveStaff(editId, { name, jobTitle: v.jobTitle, gender: v.gender, phone: v.phone, languages: v.languages, regionIds: v.regionIds, email: v.email, currentEmail })
     if (!ok) return
+    if (editId && notesLoaded) {
+      const { error } = await supabase.from('staff_hr_notes').upsert({ staff_id: editId, meeting_notes: notes, updated_at: new Date().toISOString() })
+      if (error) { console.error('hr notes save failed', error); notify('סיכום הפגישות לא נשמר'); return }
+    }
     notify(editId ? 'פרטי המלווה עודכנו' : `נוסף/ה מלווה: ${shortName(name)}`)
     closeForm()
   }
@@ -401,6 +486,7 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
       {editId && <StaffPhoto staffId={editId} current={(s0.photo_path as string) ?? null} name={v.name || 'מלווה'} />}
       <div className="full"><TextField label="אימייל להתחברות לאפליקציה" type="email" dir="ltr" value={v.email} onChange={(e) => set('email')(e.target.value)} error={err.email}
         hint={currentEmail ? 'החשבון מחובר. מחיקת האימייל תנתק את הגישה.' : 'קודם יוצרים משתמש ב-Supabase ← Authentication ← Add user, ואז מזינים כאן את אותו אימייל.'} /></div>
+      {editId && <StaffHr staffId={editId} notes={notes} onNotes={setNotes} />}
     </FormShell>
   )
 }
