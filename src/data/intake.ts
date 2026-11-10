@@ -29,7 +29,18 @@ const t = (key: string, label: string, extra: Partial<IntakeField> = {}): Intake
 const l = (key: string, label: string): IntakeField => ({ key, label, kind: 'long' })
 const c = (key: string, label: string, options: string[]): IntakeField => ({ key, label, kind: 'checks', options })
 
+/** Read to the client (or whoever orders the service) before the questionnaire starts. */
+export const INTAKE_CONSENT = 'פרטי הלקוח/ה ומשפחתו/ה נאספים כדי לתת את השירות בלבד, ועשויים לכלול מידע רגיש (בריאות, מצב קוגניטיבי, פרטי גישה לבית). המידע נשמר במערכת מאובטחת, נגיש לצוות המורשה בלבד, ומועבר לספק חיצוני רק כשצריך לצורך השירות (למשל בעל מקצוע). המידע נשמר בענן אצל ספקי תשתית שייתכן ששרתיהם מחוץ לישראל. לכל אחד זכות לעיין במידע שנשמר עליו, לבקש תיקון או מחיקה, ולחזור בו מהסכמה בכל עת. פרטים מלאים בסעיף 7 בתקנון באתר.'
+
 export const INTAKE: IntakeSection[] = [
+  {
+    id: 'a0_consent', private: true, title: 'הודעה והסכמה לאיסוף מידע',
+    fields: [
+      c('consent_privacy', INTAKE_CONSENT, ['הוסבר ואושר: הלקוח/ה או מזמין/ת השירות מסכימ/ה לאיסוף ולשמירת המידע כמפורט']),
+      t('consent_by', 'מי אישר ובאיזה אופן (שם, בעל פה או בכתב)'),
+      t('consent_date', 'תאריך האישור'),
+    ],
+  },
   {
     id: 'a_basic', part: 'חלק א: שיחה עם הבן או הבת', private: true, title: 'א1. פרטים בסיסיים',
     fields: [

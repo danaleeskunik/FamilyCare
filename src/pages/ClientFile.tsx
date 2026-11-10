@@ -14,6 +14,7 @@ import ClientMessages from './ClientMessages'
 import PortalAccess from '../components/PortalAccess'
 import { AllergiesCard, CompanionCard, ServiceRequestsCard, ContactsEditor, DocumentsCard, Hints, MedicationsCard, PreferencesEditor, useIntake } from './ClientEditors'
 import type { Answers } from '../lib/intake'
+import { downloadHtml, exportClientHtml, logAccess } from '../lib/exportClient'
 
 const TABS = [
   ['med', 'סקירה כללית'],
@@ -281,6 +282,34 @@ function Notes({ d, answers, onChanged }: { d: ClientDetail; answers: Answers; o
   )
 }
 
+/** Who opened or exported this file recently. Shows nothing until upgrade_0027 has been run. */
+function AccessLogCard({ clientId }: { clientId: string }) {
+  const [rows, setRows] = useState<{ id: number; action: string; at: string; profiles: { full_name: string } | { full_name: string }[] | null }[] | null>(null)
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      // Give this visit's own log line a moment to land first.
+      await new Promise((r) => setTimeout(r, 600))
+      const r = await supabase.from('access_log').select('id, action, at, profiles(full_name)').eq('client_id', clientId).order('at', { ascending: false }).limit(15)
+      if (alive) setRows(r.error ? null : (r.data as never))
+    })()
+    return () => { alive = false }
+  }, [clientId])
+  if (!rows) return null
+  const who = (p: (typeof rows)[number]['profiles']) => (Array.isArray(p) ? p[0] : p)?.full_name ?? 'משתמש/ת'
+  return (
+    <Card>
+      <div className="card-title" style={{ marginBottom: 8 }}>יומן גישה לתיק</div>
+      <div className="stack" style={{ gap: 6 }}>
+        {rows.map((r) => (
+          <div key={r.id} className="card-meta">{who(r.profiles)} · {r.action === 'export' ? 'ייצוא מידע' : 'פתיחת התיק'} · {new Date(r.at).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })}</div>
+        ))}
+        {rows.length === 0 && <div className="card-meta">עוד לא נרשמו כניסות.</div>}
+      </div>
+    </Card>
+  )
+}
+
 export default function ClientFile() {
   const { id } = useParams()
   const answers = useIntake(id)
@@ -299,6 +328,20 @@ export default function ClientFile() {
       .catch((e) => { console.error('client file load failed', e); if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
   }, [id, version, clients])
+
+  // Access log: one line per time a file is opened (silent until upgrade_0027 has been run).
+  useEffect(() => { if (id) void logAccess(id, 'view') }, [id])
+  const [exporting, setExporting] = useState(false)
+  const exportData = async () => {
+    if (!id) return
+    setExporting(true)
+    try {
+      const { html, name } = await exportClientHtml(id)
+      downloadHtml(html, name)
+      void logAccess(id, 'export')
+    } catch (e) { console.error('export failed', e) }
+    setExporting(false)
+  }
 
   if (failed) {
     return <main className="container page-body stack">
@@ -335,6 +378,7 @@ export default function ClientFile() {
             <Link className="btn on-navy sm" to={`/admin/clients/${c.id}/view-as`}><Icon name="eye" size={16} />תצוגה כלקוח</Link>
             <Button variant="on-navy" size="sm" icon="edit" onClick={() => openForm('client', { id: c.id })}>עריכת פרטים</Button>
             <Button variant="on-navy" size="sm" icon="message" onClick={() => setTab('msgs')}>הודעה למשפחה</Button>
+            <Button variant="on-navy" size="sm" icon="document" disabled={exporting} onClick={() => void exportData()}>{exporting ? 'מכינה…' : 'ייצוא מידע'}</Button>
             <Button size="sm" icon="plus" onClick={() => openForm('task', { clientId: c.id })}>הזמנת שירות</Button>
           </>
         }
@@ -363,6 +407,7 @@ export default function ClientFile() {
             {tab === 'msgs' && <ClientMessages clientId={c.id} name={c.full_name} />}
             {tab === 'hist' && <History d={d} />}
             {tab === 'fin' && <Finance d={d} />}
+            {tab === 'med' && <AccessLogCard clientId={c.id} />}
           </div>
         </div>
       </main>

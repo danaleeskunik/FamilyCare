@@ -1768,3 +1768,45 @@ drop policy if exists "staff documents admin" on storage.objects;
 create policy "staff documents admin" on storage.objects for all to authenticated
   using (bucket_id = 'staff-documents' and public.is_admin())
   with check (bucket_id = 'staff-documents' and public.is_admin());
+
+
+-- ===== 0027_access_log.sql =====
+-- 0027: access log. Who opened or exported a client's file, and when. Admin only. Safe to run more than once.
+
+create table if not exists public.access_log (
+  id bigint generated always as identity primary key,
+  user_id uuid references public.profiles (id) on delete set null default auth.uid(),
+  client_id uuid references public.clients (id) on delete cascade,
+  action text not null check (action in ('view', 'export')),
+  at timestamptz not null default now()
+);
+create index if not exists access_log_client_idx on public.access_log (client_id, at desc);
+
+alter table public.access_log enable row level security;
+revoke all on public.access_log from anon;
+drop policy if exists "admin all" on public.access_log;
+create policy "admin all" on public.access_log for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+
+-- ===== 0028_company_documents.sql =====
+-- 0028: internal contracts and forms library (client agreement, companion agreement, NDA, ...). Admin only.
+-- Files live in a private bucket and open through short-lived links, never from a public address. Safe to run more than once.
+
+create table if not exists public.company_documents (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  storage_path text not null,
+  uploaded_by uuid references public.profiles (id) on delete set null default auth.uid(),
+  uploaded_at timestamptz not null default now()
+);
+
+alter table public.company_documents enable row level security;
+revoke all on public.company_documents from anon;
+drop policy if exists "admin all" on public.company_documents;
+create policy "admin all" on public.company_documents for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+insert into storage.buckets (id, name, public) values ('company-documents', 'company-documents', false) on conflict (id) do nothing;
+drop policy if exists "company documents admin" on storage.objects;
+create policy "company documents admin" on storage.objects for all to authenticated
+  using (bucket_id = 'company-documents' and public.is_admin())
+  with check (bucket_id = 'company-documents' and public.is_admin());
