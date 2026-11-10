@@ -116,9 +116,10 @@ export function Empty({ text, action }: { text: string; action?: ReactNode }) {
 }
 
 /** Edit + delete icon buttons for a table row. `what` names the record for screen readers. */
-export function RowActions({ what, onEdit, onDelete }: { what: string; onEdit: () => void; onDelete: () => void }) {
+export function RowActions({ what, onEdit, onDelete, extra }: { what: string; onEdit: () => void; onDelete: () => void; extra?: ReactNode }) {
   return (
-    <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
+    <div className="row" style={{ gap: 2, justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+      {extra}
       <button type="button" className="icon-btn" aria-label={`עריכת ${what}`} title="עריכה" onClick={onEdit}><Icon name="edit" size={17} /></button>
       <button type="button" className="icon-btn danger" aria-label={`מחיקת ${what}`} title="מחיקה" onClick={onDelete}><Icon name="trash" size={17} /></button>
     </div>

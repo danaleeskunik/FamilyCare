@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Badge, Button, Card, CardHead, Ltr, RowActions, StatCard, money } from '../../components/ui'
+import { Badge, Button, Card, CardHead, Icon, Ltr, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
 export default function Staff() {
@@ -30,7 +30,7 @@ export default function Staff() {
                   <td>{s.regulars}</td>
                   <td><Ltr>{s.hours}</Ltr></td>
                   <td><Badge tone={s.avail[0]}>{s.avail[1]}</Badge></td>
-                  <td><Link className="btn secondary sm" to={`/admin/staff/${s.id}/view-as`}>תצוגה כמלווה</Link> <RowActions what={`המלווה ${s.name}`} onEdit={() => openForm('staff', { id: s.id })} onDelete={() => askDelete('staff', s.id)} /></td>
+                  <td><RowActions what={`המלווה ${s.name}`} extra={<Link className="icon-btn" to={`/admin/staff/${s.id}/view-as`} aria-label={`תצוגה כמלווה: ${s.name}`} title="תצוגה כמלווה"><Icon name="eye" size={17} /></Link>} onEdit={() => openForm('staff', { id: s.id })} onDelete={() => askDelete('staff', s.id)} /></td>
                 </tr>
               ))}
             </tbody>
