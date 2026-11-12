@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Badge, Button, Card, CardHead, Icon, Ltr, RowActions, StatCard, money } from '../../components/ui'
+import { Badge, Card, CardHead, Icon, Ltr, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 import { STAFF_STATUS } from '../../data/model'
 
@@ -25,7 +25,7 @@ export default function Staff() {
       </div>
 
       <Card flush>
-        <CardHead title="צוות המלווים"><Link className="btn secondary sm" to="/admin/staff/interviews/new">ראיון חדש</Link><Button size="sm" icon="plus" onClick={() => openForm('staff')}>מלווה חדש/ה</Button></CardHead>
+        <CardHead title="צוות המלווים"><Link className="btn sm" to="/admin/staff/interviews/new"><Icon name="plus" size={16} /> מלווה חדש/ה</Link></CardHead>
         <div className="table-wrap">
           <table>
             <thead>

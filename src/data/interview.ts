@@ -21,6 +21,7 @@ export const INTERVIEW: IvSection[] = [
   { id: 'general', title: 'פרטים כלליים', fields: [
     t('name', 'שם מלא'), { key: 'date', label: 'תאריך הראיון', kind: 'date' },
     t('phone', 'טלפון', { ltr: true }), t('email', 'דוא"ל', { ltr: true }),
+    { key: 'gender', label: 'מגדר', kind: 'choice', options: ['אישה', 'גבר'] },
     t('city', 'עיר מגורים'), t('interviewer', 'שם המראיין/ת'),
     t('source', 'איך הגיע/ה אלינו (המלצה, מודעה, רשתות...)'),
     l('hobbies', 'תחביבים'),

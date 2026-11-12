@@ -19,7 +19,7 @@ async function createStaffFrom(a: IvAnswers, regions: { id: number; name: string
   const picked = (a.profession ?? '').split('\n')
   const jobTitle = JOB_BY_PROFESSION.find(([label]) => picked.includes(label))?.[1] ?? 'personal_companion'
   const languages = [...(a.langs ?? '').split('\n').filter((x) => x && x !== 'אחר'), ...(a.langs_other ?? '').split(/[,،]/).map((x) => x.trim()).filter(Boolean)]
-  const row = { full_name: a.name, job_title: jobTitle, phone: a.phone || null, languages }
+  const row = { full_name: a.name, job_title: jobTitle, gender: a.gender === 'אישה' ? 'f' : a.gender === 'גבר' ? 'm' : null, phone: a.phone || null, languages }
   let { data, error } = await supabase.from('staff_members').insert({ ...row, status: statusFor(a.decision) }).select('id').single()
   // The status column comes with upgrade_0031; until it is run, still add the companion (without a status).
   if (error && /status/i.test(error.message ?? '')) ({ data, error } = await supabase.from('staff_members').insert(row).select('id').single())
@@ -113,7 +113,7 @@ export function InterviewForm() {
           <Card>
             <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <div className="card-title">{isNew ? 'ראיון חדש למלווה/ת' : values.name ? `ראיון: ${values.name}` : 'ראיון למלווה/ת'}</div>
+                <div className="card-title">{isNew ? 'מלווה/ת חדש/ה: ראיון והוספה' : values.name ? `ראיון: ${values.name}` : 'ראיון למלווה/ת'}</div>
                 <div className="card-meta">{loading ? 'טוענת…' : `מולאו ${filled} מתוך ${IV_TOTAL} שדות${dirty ? ' · יש שינויים שלא נשמרו' : ''}`}</div>
               </div>
               <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
