@@ -1,10 +1,20 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 import { Badge, Button, Card, CardHead, Icon, Ltr, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 import { STAFF_STATUS } from '../../data/model'
 
 export default function Staff() {
   const { staff, openForm, askDelete } = useStore()
+  // Companions that came from an interview: staff id -> interview id (empty until the interview migrations are run).
+  const [interviews, setInterviews] = useState<Record<string, string>>({})
+  useEffect(() => {
+    void supabase.from('staff_interviews').select('id, staff_id').not('staff_id', 'is', null).then(({ data, error }) => {
+      if (error || !data) return
+      setInterviews(Object.fromEntries((data as { id: string; staff_id: string }[]).map((r) => [r.staff_id, r.id])))
+    })
+  }, [staff.length])
   return (
     <>
       <div className="grid cols-4">
@@ -15,7 +25,7 @@ export default function Staff() {
       </div>
 
       <Card flush>
-        <CardHead title="צוות המלווים"><Link className="btn secondary sm" to="/admin/staff/interviews">ראיונות מועמדים</Link><Button size="sm" icon="plus" onClick={() => openForm('staff')}>מלווה חדש/ה</Button></CardHead>
+        <CardHead title="צוות המלווים"><Link className="btn secondary sm" to="/admin/staff/interviews/new">ראיון חדש</Link><Button size="sm" icon="plus" onClick={() => openForm('staff')}>מלווה חדש/ה</Button></CardHead>
         <div className="table-wrap">
           <table>
             <thead>
@@ -24,7 +34,7 @@ export default function Staff() {
             <tbody>
               {staff.map((s) => (
                 <tr key={s.id}>
-                  <td className="name"><Link to={`/admin/staff/${s.id}`} aria-label={`דוח חודשי של ${s.name}`}>{s.name}</Link>{s.email && <div className="card-meta">מחובר/ת לאפליקציה</div>}</td>
+                  <td className="name"><Link to={`/admin/staff/${s.id}`} aria-label={`דוח חודשי של ${s.name}`}>{s.name}</Link>{s.email && <div className="card-meta">מחובר/ת לאפליקציה</div>}{interviews[s.id] && <div className="card-meta"><Link to={`/admin/staff/interviews/${interviews[s.id]}`}>עריכת הראיון / המשך מילוי</Link></div>}</td>
                   <td>{(() => { const st = STAFF_STATUS.find((x) => x.value === s.status)!; return <Badge tone={st.tone}>{st.label}</Badge> })()}</td>
                   <td>{s.role}</td>
                   <td>{s.areas}</td>

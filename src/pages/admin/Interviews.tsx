@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Badge, Button, Callout, Card, CardHead, Empty, Ltr } from '../../components/ui'
+import { Button, Callout, Card } from '../../components/ui'
 import InterviewFields from '../../components/InterviewFields'
 import { supabase } from '../../lib/supabase'
 import { cleanAnswers, missingTable } from '../../lib/intake'
 import { useStore } from '../../store/AppStore'
 import { DECISIONS, INTERVIEW, IV_TOTAL, type IvAnswers } from '../../data/interview'
-import { formatDM, parseISO } from '../../lib/dates'
 
-type Row = { id: string; candidate_name: string; interviewed_on: string | null; decision: string; updated_at: string; staff_id?: string | null }
 const SETUP = <Callout tone="warning" title="צריך להקים את ראיונות המועמדים">מריצים פעם אחת ב-SQL Editor של Supabase את הקובץ upgrade_0029_staff_interviews.sql, ואז מרעננים.</Callout>
-const tone = (d: string) => (d === DECISIONS[0] ? 'green' : d === DECISIONS[3] ? 'red' : d ? 'orange' : 'neutral') as 'green' | 'red' | 'orange' | 'neutral'
 
 
 /** The companion's status follows the recommendation: suitable (also with reservations) / not suitable / still open. */
@@ -31,63 +28,6 @@ async function createStaffFrom(a: IvAnswers, regions: { id: number; name: string
   const rows = regions.filter((r) => areas.includes(r.name)).map((r) => ({ staff_id: data.id as string, region_id: r.id }))
   if (rows.length) await supabase.from('staff_regions').insert(rows)
   return data.id as string
-}
-
-/** List of candidate interviews. */
-export function InterviewList() {
-  const { notify } = useStore()
-  const [rows, setRows] = useState<Row[]>([])
-  const [loading, setLoading] = useState(true)
-  const [setup, setSetup] = useState(false)
-
-  const load = useCallback(async () => {
-    const { data, error } = await supabase.from('staff_interviews').select('*').order('interviewed_on', { ascending: false, nullsFirst: true }).order('created_at', { ascending: false })
-    if (error) { if (missingTable(error)) setSetup(true); else notify('לא הצלחנו לטעון את הראיונות'); setLoading(false); return }
-    setRows(data as Row[]); setLoading(false)
-  }, [notify])
-  useEffect(() => { void load() }, [load])
-
-  const remove = async (r: Row) => {
-    if (!window.confirm(`למחוק לצמיתות את הראיון עם ${r.candidate_name || 'מועמד/ת ללא שם'}? אי אפשר לשחזר.`)) return
-    const { error } = await supabase.from('staff_interviews').delete().eq('id', r.id)
-    if (error) { notify('לא הצלחנו למחוק. נסי שוב.'); return }
-    setRows((cur) => cur.filter((x) => x.id !== r.id))
-  }
-
-  return (
-    <div className="stack">
-      {setup && SETUP}
-      <Card flush>
-        <CardHead title="ראיונות מועמדים/ות למלווים">
-          <Link className="btn secondary sm" to="/admin/staff">חזרה למלווים</Link>
-          <a className="btn secondary sm" href={`${import.meta.env.BASE_URL}materials/companion-interview.pdf`} target="_blank" rel="noreferrer">טופס להדפסה</a>
-          <Link className="btn sm" to="/admin/staff/interviews/new">ראיון חדש</Link>
-        </CardHead>
-        {loading ? <p className="muted" style={{ padding: 16 }}>טוענת…</p> : rows.length === 0 ? (
-          <Empty text={setup ? 'עדיין לא הוקם' : 'עוד לא מילאת ראיונות. "ראיון חדש" פותח את הטופס.'} />
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>מועמד/ת</th><th>תאריך</th><th>המלצה</th><th><span className="sr-only">פעולות</span></th></tr></thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id}>
-                    <td className="name"><Link to={`/admin/staff/interviews/${r.id}`}>{r.candidate_name || 'ללא שם'}</Link></td>
-                    <td>{r.interviewed_on ? <Ltr>{formatDM(parseISO(r.interviewed_on))}</Ltr> : '—'}</td>
-                    <td>{r.decision ? <Badge tone={tone(r.decision)}>{r.decision}</Badge> : <span className="muted">טרם הוחלט</span>} {r.staff_id && <Badge tone="blue">ברשימת המלווים</Badge>}</td>
-                    <td><div className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
-                      <Link className="btn secondary sm" to={`/admin/staff/interviews/${r.id}`}>פתיחה</Link>
-                      <Button size="sm" variant="quiet" onClick={() => void remove(r)}>מחיקה</Button>
-                    </div></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-    </div>
-  )
 }
 
 /** One interview: fill in during the conversation, save. */
@@ -111,7 +51,7 @@ export function InterviewForm() {
       const { data, error } = await supabase.from('staff_interviews').select('*').eq('id', id).maybeSingle()
       if (!alive) return
       if (error) { if (missingTable(error)) setSetup(true); else notify('לא הצלחנו לטעון את הראיון'); setLoading(false); return }
-      if (!data) { notify('הראיון לא נמצא'); nav('/admin/staff/interviews', { replace: true }); return }
+      if (!data) { notify('הראיון לא נמצא'); nav('/admin/staff', { replace: true }); return }
       setValues(cleanAnswers(data.answers)); setStaffId((data as { staff_id?: string | null }).staff_id ?? null); setLoading(false)
     })()
     return () => { alive = false }
@@ -158,8 +98,9 @@ export function InterviewForm() {
     } else if (!staffId && !answers.name) problem = 'בלי שם מלא לא ניתן להוסיף את המועמד/ת לרשימת המלווים.'
     setBusy(false)
     if (problem) notify(problem)
-    if (isNew) { if (!problem) notify(added ? 'הראיון נשמר והמועמד/ת נוספ/ה לרשימת המלווים' : 'הראיון נשמר'); nav(`/admin/staff/interviews/${iid}`, { replace: true }) }
-    else setNote({ ok: true, text: added ? 'הראיון נשמר והמועמד/ת נוספ/ה לרשימת המלווים.' : 'הראיון נשמר.' })
+    if (added) { notify('הראיון נשמר והמועמד/ת נוספ/ה לרשימת המלווים'); nav('/admin/staff'); return }
+    if (isNew) { if (!problem) notify('הראיון נשמר'); nav(`/admin/staff/interviews/${iid}`, { replace: true }) }
+    else setNote({ ok: true, text: 'הראיון נשמר.' })
   }
 
   const back = (e: React.MouseEvent) => { if (dirty && !window.confirm('יש שינויים שלא נשמרו. לצאת בלי לשמור?')) e.preventDefault() }
@@ -173,11 +114,11 @@ export function InterviewForm() {
             <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div className="card-title">{isNew ? 'ראיון חדש למלווה/ת' : values.name ? `ראיון: ${values.name}` : 'ראיון למלווה/ת'}</div>
-                {staffId && <div style={{ marginTop: 4 }}><Link to="/admin/staff">נוסף/ה לרשימת המלווים</Link></div>}
                 <div className="card-meta">{loading ? 'טוענת…' : `מולאו ${filled} מתוך ${IV_TOTAL} שדות${dirty ? ' · יש שינויים שלא נשמרו' : ''}`}</div>
               </div>
               <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                <Link className="btn secondary sm" to="/admin/staff/interviews" onClick={back}>לכל הראיונות</Link>
+                <a className="btn secondary sm" href={`${import.meta.env.BASE_URL}materials/companion-interview.pdf`} target="_blank" rel="noreferrer">טופס להדפסה</a>
+                <Link className="btn secondary sm" to="/admin/staff" onClick={back}>חזרה למלווים</Link>
                 <Button size="sm" disabled={busy || loading || (!dirty && !!staffId)} onClick={() => void save()}>{busy ? 'שומרת…' : 'שמירה'}</Button>
               </div>
             </div>
