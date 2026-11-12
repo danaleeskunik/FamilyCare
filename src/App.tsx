@@ -9,6 +9,7 @@ import Board from './pages/admin/Board'
 import Vendors from './pages/admin/Vendors'
 import Clients from './pages/admin/Clients'
 import Staff from './pages/admin/Staff'
+import { InterviewForm, InterviewList } from './pages/admin/Interviews'
 import Finance from './pages/admin/Finance'
 import ClientFile from './pages/ClientFile'
 import CompanionApp from './pages/CompanionApp'
@@ -79,6 +80,8 @@ export default function App() {
         <Route path="clients" element={<RequireSection section="clients"><Clients /></RequireSection>} />
         <Route path="questionnaire" element={<RequireSection section="clients"><Questionnaire /></RequireSection>} />
         <Route path="staff" element={<RequireSection section="staff"><Staff /></RequireSection>} />
+        <Route path="staff/interviews" element={<RequireSection section="staff"><InterviewList /></RequireSection>} />
+        <Route path="staff/interviews/:id" element={<RequireSection section="staff"><InterviewForm /></RequireSection>} />
         <Route path="staff/:id" element={<RequireSection section="staff"><StaffReport /></RequireSection>} />
         <Route path="schedule" element={<RequireSection section="schedule"><Schedule /></RequireSection>} />
         <Route path="planning" element={<RequireSection section="planning"><Planning /></RequireSection>} />

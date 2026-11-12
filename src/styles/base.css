@@ -330,6 +330,14 @@ select.input { appearance: none; -webkit-appearance: none; padding-inline-end: 3
 .intake-checks { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; border: 0; }
 .intake-checks legend { padding: 0 0 4px; font: 700 13px var(--font-ui); }
 .intake-check { display: flex; align-items: center; gap: 10px; min-height: var(--h-touch); font-size: 15px; line-height: 1.4; cursor: pointer; }
+.iv-rate { margin: 0; padding: 0; border: 0; }
+.iv-rate legend { padding: 0 0 4px; font: 700 13px var(--font-ui); }
+.iv-rate-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.iv-dot { position: relative; display: inline-flex; align-items: center; justify-content: center; width: var(--h-touch); height: var(--h-touch); border: 1.5px solid var(--border-card); border-radius: 50%; cursor: pointer; font: 500 15px var(--font-ui); color: var(--ink-2); background: var(--card); }
+.iv-dot input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
+.iv-dot.on { background: var(--brand-action); border-color: var(--brand-action); color: #fff; }
+.iv-dot:focus-within { outline: 3px solid var(--brand-link); outline-offset: 2px; }
+.iv-clear { border: 0; background: none; color: var(--brand-link); cursor: pointer; font: 500 13px var(--font-ui); padding: 8px; }
 .intake-check input { width: 20px; height: 20px; flex: none; accent-color: var(--brand-action); }
 
 /* Materials */

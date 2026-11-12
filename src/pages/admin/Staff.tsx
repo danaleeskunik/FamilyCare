@@ -14,7 +14,7 @@ export default function Staff() {
       </div>
 
       <Card flush>
-        <CardHead title="צוות המלווים"><Button size="sm" icon="plus" onClick={() => openForm('staff')}>מלווה חדש/ה</Button></CardHead>
+        <CardHead title="צוות המלווים"><Link className="btn secondary sm" to="/admin/staff/interviews">ראיונות מועמדים</Link><Button size="sm" icon="plus" onClick={() => openForm('staff')}>מלווה חדש/ה</Button></CardHead>
         <div className="table-wrap">
           <table>
             <thead>
