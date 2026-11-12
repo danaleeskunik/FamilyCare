@@ -22,7 +22,10 @@ async function createStaffFrom(a: IvAnswers, regions: { id: number; name: string
   const picked = (a.profession ?? '').split('\n')
   const jobTitle = JOB_BY_PROFESSION.find(([label]) => picked.includes(label))?.[1] ?? 'personal_companion'
   const languages = [...(a.langs ?? '').split('\n').filter((x) => x && x !== 'אחר'), ...(a.langs_other ?? '').split(/[,،]/).map((x) => x.trim()).filter(Boolean)]
-  const { data, error } = await supabase.from('staff_members').insert({ full_name: a.name, status: statusFor(a.decision), job_title: jobTitle, phone: a.phone || null, languages }).select('id').single()
+  const row = { full_name: a.name, job_title: jobTitle, phone: a.phone || null, languages }
+  let { data, error } = await supabase.from('staff_members').insert({ ...row, status: statusFor(a.decision) }).select('id').single()
+  // The status column comes with upgrade_0031; until it is run, still add the companion (without a status).
+  if (error && /status/i.test(error.message ?? '')) ({ data, error } = await supabase.from('staff_members').insert(row).select('id').single())
   if (error || !data) { console.error('create staff from interview failed', error); return null }
   const areas = a.areas ?? ''
   const rows = regions.filter((r) => areas.includes(r.name)).map((r) => ({ staff_id: data.id as string, region_id: r.id }))
@@ -142,7 +145,7 @@ export function InterviewForm() {
       if (staff.some((x) => x.name === answers.name)) problem = 'כבר יש מלווה בשם הזה ברשימה, לכן לא נוספה רשומה חדשה.'
       else {
         const sid = await createStaffFrom(answers as IvAnswers, regions)
-        if (!sid) problem = 'הראיון נשמר, אבל לא הצלחנו להוסיף את המועמד/ת לרשימת המלווים.'
+        if (!sid) problem = 'הראיון נשמר, אבל לא הצלחנו להוסיף את המועמד/ת לרשימת המלווים. בדקי שהורץ ה-SQL האחרון.'
         else {
           const link = await supabase.from('staff_interviews').update({ staff_id: sid }).eq('id', iid)
           if (link.error) console.error('link interview to staff failed', link.error)
