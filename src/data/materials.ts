@@ -8,12 +8,18 @@ export type Material = {
   group: string
   title: string
   text: string
-  kind: 'PDF' | 'PNG' | 'JPG'
+  kind: 'PDF' | 'PNG' | 'JPG' | 'LINK'
+  link?: string // a page on the site instead of a file (opens the page; the WhatsApp postcard lives at /s/<share>/)
   file: string // path under /materials
   thumb: string // path under /materials/thumbs
 }
 
 export const MATERIALS: Material[] = [
+  {
+    id: 'site-link', group: 'האתר', kind: 'LINK', file: '', link: '/', share: 'site', thumb: 'site-link.jpg',
+    title: 'דף הנחיתה של החברה',
+    text: 'קישור שנשלח בוואטסאפ: המקבל רואה את השם Family Care ואת תמונת החברה, ובלחיצה נפתח האתר.',
+  },
   {
     id: 'companions-brochure', group: 'גיוס מלווים', kind: 'PDF', file: 'companions-brochure.pdf', share: 'companions', thumb: 'companions-brochure.jpg',
     title: 'ברושור גיוס מלווים (A4)',

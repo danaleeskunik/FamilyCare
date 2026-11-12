@@ -97,18 +97,6 @@ export default function Materials() {
   return (
     <>
       <Card>
-        <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div>
-            <div className="card-title">קישור לאתר לשליחה בוואטסאפ</div>
-            <p className="muted" style={{ marginTop: 4, lineHeight: 1.6 }}>מי שמקבל רואה את השם Family Care ואת תמונת החברה, ובלחיצה נפתח האתר.</p>
-          </div>
-          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-            <a className="btn sm" href={`https://wa.me/?text=${encodeURIComponent(shareHref('site'))}`} target="_blank" rel="noreferrer">שליחה בוואטסאפ</a>
-            <button type="button" className="btn secondary sm" onClick={() => void copyHref(shareHref('site'))}>העתקת קישור</button>
-          </div>
-        </div>
-      </Card>
-      <Card>
         <div className="card-title">חומרים</div>
         <p className="muted" style={{ marginTop: 4, lineHeight: 1.6 }}>
           קבצים מוכנים לשליחה ולפרסום. "העתקת קישור" מעתיקה כתובת שאפשר להדביק בוואטסאפ או במייל, והקובץ נפתח ממנה גם למי שאין לו חשבון. "שליחה בוואטסאפ" שולחת גלויה יפה עם תמונה וכותרת, ולחיצה עליה פותחת את הקובץ.
@@ -135,7 +123,7 @@ export default function Materials() {
               <div className="mat-grid">
                 {area.items.filter((m) => m.group === g).map((m) => (
                   <article key={m.id} className="mat-card">
-                    <a className="mat-thumb" href={url(m.file)} target="_blank" rel="noreferrer" aria-label={`פתיחת ${m.title}`}>
+                    <a className="mat-thumb" href={m.link ?? url(m.file)} target="_blank" rel="noreferrer" aria-label={`פתיחת ${m.title}`}>
                       <img src={url(`thumbs/${m.thumb}`)} alt="" loading="lazy" />
                       <span className="mat-kind">{m.kind}</span>
                     </a>
@@ -143,8 +131,8 @@ export default function Materials() {
                     <p>{m.text}</p>
                     <div className="mat-actions">
                       {m.web && <Link className="btn sm" to={m.web}>מילוי ברשת</Link>}
-                      <a className={`btn sm ${m.web ? 'secondary' : ''}`} href={url(m.file)} target="_blank" rel="noreferrer">{m.web ? 'להדפסה' : 'פתיחה'}</a>
-                      <a className="btn secondary sm" href={url(m.file)} download>הורדה</a>
+                      <a className={`btn sm ${m.web ? 'secondary' : ''}`} href={m.link ?? url(m.file)} target="_blank" rel="noreferrer">{m.link ? 'פתיחת האתר' : m.web ? 'להדפסה' : 'פתיחה'}</a>
+                      {!m.link && <a className="btn secondary sm" href={url(m.file)} download>הורדה</a>}
                       {!m.noShare ? (
                         <>
                           <a className="btn sm" href={`https://wa.me/?text=${encodeURIComponent(shareHref(m.share ?? m.id))}`} target="_blank" rel="noreferrer">שליחה בוואטסאפ</a>

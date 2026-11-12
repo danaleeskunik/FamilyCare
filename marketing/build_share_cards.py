@@ -33,7 +33,7 @@ COPY["families-brochure-en"] = dict(slug="families-en", en=True, title="Your par
       sub="A permanent personal companion, everything in one place, and the burden off your shoulders.", desc="Family Care is a private concierge club for older adults and their families.")
 COPY["seniors-brochure-en"] = dict(slug="seniors-en", en=True, title="More time for what you love. We'll take care of the rest.",
       sub="A permanent personal companion and one phone number for everything.", desc="Family Care is a personal service club for older adults. You decide, we take care of it.")
-SKIP = {"new-client-questionnaire"}  # internal document, not for sharing
+SKIP = {"new-client-questionnaire", "site-link"}  # internal document, not for sharing
 
 def headline(m):
     t = m["title"]
