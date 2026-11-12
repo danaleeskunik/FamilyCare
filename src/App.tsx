@@ -80,7 +80,7 @@ export default function App() {
         <Route path="clients" element={<RequireSection section="clients"><Clients /></RequireSection>} />
         <Route path="questionnaire" element={<RequireSection section="clients"><Questionnaire /></RequireSection>} />
         <Route path="staff" element={<RequireSection section="staff"><Staff /></RequireSection>} />
-        <Route path="staff/interviews/:id" element={<RequireSection section="staff"><InterviewForm /></RequireSection>} />
+        <Route path="staff/:id/interview" element={<RequireSection section="staff"><InterviewForm /></RequireSection>} />
         <Route path="staff/:id" element={<RequireSection section="staff"><StaffReport /></RequireSection>} />
         <Route path="schedule" element={<RequireSection section="schedule"><Schedule /></RequireSection>} />
         <Route path="planning" element={<RequireSection section="planning"><Planning /></RequireSection>} />
