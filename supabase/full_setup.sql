@@ -1829,3 +1829,14 @@ alter table public.staff_interviews enable row level security;
 revoke all on public.staff_interviews from anon;
 drop policy if exists "admin all" on public.staff_interviews;
 create policy "admin all" on public.staff_interviews for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- 0030: remember which staff member an interview was turned into. Safe to run more than once.
+alter table public.staff_interviews
+  add column if not exists staff_id uuid references public.staff_members (id) on delete set null;
+
+-- 0031: companion status: before_interview / suitable / unsuitable. Existing companions are "suitable".
+-- Only suitable companions are offered when assigning visits. Safe to run more than once.
+alter table public.staff_members
+  add column if not exists status text not null default 'suitable';
+alter table public.staff_members drop constraint if exists staff_members_status_check;
+alter table public.staff_members add constraint staff_members_status_check check (status in ('before_interview', 'suitable', 'unsuitable'));

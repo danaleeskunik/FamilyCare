@@ -164,6 +164,7 @@ export async function loadAll(): Promise<Loaded> {
     avail: inVisit.has(r.id) ? ['green', 'בביקור'] : availByStaff.get(r.id) ? ['neutral', availByStaff.get(r.id)!] : ['green', 'זמין/ה'],
     regionNames: ((r.staff_regions ?? []) as Row[]).map((x) => one<Row>(x.regions)?.name as string).filter(Boolean),
     email: one<Row>(r.profiles)?.email ?? null,
+    status: (r.status ?? 'suitable') as Staff['status'],
   }))
 
   const slots: Slot[] = slotsR.map((r) => ({

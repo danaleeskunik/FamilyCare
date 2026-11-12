@@ -12,7 +12,7 @@ export type ClientInput = {
   phone: string; address: string; buildingCode: string; dependency: string; mobilityNotes: string; cognitiveNotes: string; cap: string; cardLast4: string
 }
 export type VendorInput = { name: string; trade: string; regionIds: number[]; licenseExpiry: string; insuranceExpiry: string; contact: Record<string, string | null>; prices: { id?: string; label: string; amount: number }[] }
-export type StaffInput = { name: string; jobTitle: string; gender: string; phone: string; languages: string; regionIds: number[]; email: string; currentEmail: string | null }
+export type StaffInput = { status: string; name: string; jobTitle: string; gender: string; phone: string; languages: string; regionIds: number[]; email: string; currentEmail: string | null }
 
 export type ItemInput = { clientId: string; kind: string; title: string; eventDate: string; dueDate: string; assigneeId: string; vendorId: string; status: string; notes: string }
 export type FormKind = 'task' | 'client' | 'vendor' | 'staff' | 'slot' | 'item'
@@ -21,6 +21,8 @@ export type FormState = { kind: FormKind; preset?: Record<string, string> } | nu
 export type PendingDelete = { kind: FormKind; id: string; name: string; warning: string } | null
 
 type Store = {
+  /** Companions who can be given visits: only those marked suitable. */
+  assignable: Staff[]
   regions: Region[]; plans: Plan[]
   tasks: Task[]; clients: Client[]; vendors: Vendor[]; staff: Staff[]; invoices: InvoiceRow[]; slots: Slot[]
   decisions: Record<string, OvertimeDecision>; pricing: PricingSettings
@@ -232,7 +234,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const saveStaff = useCallback(async (id: string | null, s: StaffInput) => {
     const row = {
-      full_name: s.name, job_title: s.jobTitle, gender: s.gender || null, phone: nul(s.phone),
+      full_name: s.name, status: s.status, job_title: s.jobTitle, gender: s.gender || null, phone: nul(s.phone),
       languages: s.languages.split(/[,،]/).map((x) => x.trim()).filter(Boolean),
     }
     let sid = id
@@ -392,7 +394,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [pendingDelete, notify, refresh])
 
   const value = useMemo<Store>(() => ({
-    ...data, loading, loadError,
+    ...data, assignable: data.staff.filter((s) => s.status === 'suitable'), loading, loadError,
     reload: () => setNonce((n) => n + 1),
     regionFilter, setRegionFilter,
     saveTask, saveClient, saveVendor, saveStaff, saveSlot, assignSlot, assignCompanion, generateNow, saveItem, setItemStatus, setItemAssignee, decideOvertime, revertOvertime,

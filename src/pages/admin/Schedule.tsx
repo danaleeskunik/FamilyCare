@@ -10,7 +10,7 @@ const span = (start: string, end: string | null) => [toMin(start), end ? toMin(e
 const overlaps = (a: readonly [number, number], b: readonly [number, number]) => a[0] < b[1] && b[0] < a[1]
 
 export default function Schedule() {
-  const { tasks, staff, slots, clients, assignSlot, generateNow, openForm } = useStore()
+  const { tasks, assignable: staff, slots, clients, assignSlot, generateNow, openForm } = useStore()
   const [anchor, setAnchor] = useState(parseISO(TODAY))
   // Same week, two ways to read it: one row per companion, or one row per client.
   const [mode, setMode] = useState<'staff' | 'clients'>('staff')

@@ -5,7 +5,7 @@ import { CheckGroup, SelectField, TextAreaField, TextField } from './Fields'
 import { useStore } from '../store/AppStore'
 import { useAuth } from '../store/AuthStore'
 import { supabase } from '../lib/supabase'
-import { DEPENDENCY_LEVELS, ITEM_KINDS, ITEM_STATUSES, JOB_TITLES, TASK_STATUSES, TODAY } from '../data/model'
+import { DEPENDENCY_LEVELS, ITEM_KINDS, ITEM_STATUSES, JOB_TITLES, STAFF_STATUS, TASK_STATUSES, TODAY } from '../data/model'
 import { DAY_NAMES, addDays, formatDM, parseISO, toISO } from '../lib/dates'
 import IntakeFields from './IntakeFields'
 import { photoUrl } from '../lib/portal'
@@ -71,7 +71,7 @@ function EditLoader<T>({ title, load, children }: { title: string; load: () => P
 const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
 
 function TaskForm({ editId, preset }: { editId: string | null; preset: Record<string, string> }) {
-  const { tasks, clients, staff, vendors, regions, saveTask, closeForm, setRegionFilter, notify } = useStore()
+  const { tasks, clients, assignable, vendors, regions, saveTask, closeForm, setRegionFilter, notify } = useStore()
   const existing = editId ? tasks.find((t) => t.id === editId) : undefined
   const [v, setV] = useState({
     date: existing?.date ?? preset.date ?? TODAY, time: existing?.time ?? preset.time ?? nowHM(), clientId: existing?.clientId ?? preset.clientId ?? '',
@@ -117,7 +117,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
       <div className="full"><TextField label="איפה הפגישה" value={v.location} onChange={(e) => set('location')(e.target.value)} placeholder="בבית" hint="אם לא כותבים, הפגישה בבית הלקוח/ה" /></div>
       <div className="full"><SelectField label="לקוח/ה" value={v.clientId} onChange={pickClient} options={clients.map((c) => ({ value: c.id, label: c.name }))} placeholder="בחרי לקוח/ה" error={err.clientId} /></div>
       <div className="full"><TextField label="משימה" value={v.task} onChange={(e) => set('task')(e.target.value)} error={err.task} placeholder="למשל: ליווי לרופא + מרשמים" /></div>
-      <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={staff.map((s) => ({ value: s.id, label: s.name }))} placeholder="ללא מלווה/ת" />
+      <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={assignable.map((s) => ({ value: s.id, label: s.name }))} placeholder="ללא מלווה/ת" />
       <SelectField label="ספק" value={v.vendorId} onChange={set('vendorId')} options={vendorOptions} placeholder="ללא ספק" />
       <SelectField label="אזור" value={v.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} placeholder="בחרי אזור" error={err.regionId} />
       {editId && <SelectField label="סטטוס" value={v.status} onChange={set('status')} options={TASK_STATUSES} />}
@@ -131,7 +131,7 @@ function TaskForm({ editId, preset }: { editId: string | null; preset: Record<st
 // ---------------------------------------------------------------- Client
 type ClientRow = Record<string, string | number | null>
 function ClientForm({ editId, initial, ordererName, ordererPhone }: { editId: string | null; initial?: ClientRow; ordererName?: string; ordererPhone?: string }) {
-  const { clients, staff, regions, plans, saveClient, closeForm, notify } = useStore()
+  const { clients, assignable, regions, plans, saveClient, closeForm, notify } = useStore()
   const i = initial ?? {}
   const str = (k: string) => (i[k] == null ? '' : String(i[k]))
   const existingTrial = str('trial_ends_on')
@@ -229,7 +229,7 @@ function ClientForm({ editId, initial, ordererName, ordererPhone }: { editId: st
       <TextField label="תאריך לידה" type="date" value={v.birthDate} onChange={(e) => set('birthDate')(e.target.value)} error={err.birthDate} />
       <SelectField label="אזור" value={v.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} placeholder="בחרי אזור" error={err.regionId} />
       <SelectField label="מסלול" value={v.planId} onChange={set('planId')} options={plans.map((p) => ({ value: p.id, label: p.name }))} />
-      <SelectField label="מלווה קבוע/ה" value={v.companionId} onChange={set('companionId')} options={staff.map((s) => ({ value: s.id, label: s.name }))} placeholder="עדיין ללא" />
+      <SelectField label="מלווה קבוע/ה" value={v.companionId} onChange={set('companionId')} options={assignable.map((s) => ({ value: s.id, label: s.name }))} placeholder="עדיין ללא" />
       <label className="full row" style={{ gap: 10, font: '600 14px var(--font-ui)', minHeight: 44 }}>
         <input type="checkbox" checked={v.trial} onChange={(e) => set('trial')(e.target.checked)} style={{ width: 20, height: 20 }} />
         בתקופת היכרות (חודש ראשון ללא התחייבות)
@@ -442,7 +442,7 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
   const prof = s0.profiles as { email: string | null } | { email: string | null }[] | null | undefined
   const currentEmail = (Array.isArray(prof) ? prof[0]?.email : prof?.email) ?? null
   const [v, setV] = useState({
-    name: (s0.full_name as string) ?? '', jobTitle: (s0.job_title as string) ?? JOB_TITLES[0].value, gender: (s0.gender as string) ?? 'f',
+    status: (s0.status as string) ?? 'before_interview', name: (s0.full_name as string) ?? '', jobTitle: (s0.job_title as string) ?? JOB_TITLES[0].value, gender: (s0.gender as string) ?? 'f',
     phone: (s0.phone as string) ?? '', languages: ((s0.languages as string[]) ?? []).join(', '), regionIds: initial?.regionIds ?? ([] as number[]),
     email: currentEmail ?? '',
   })
@@ -465,7 +465,7 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
     if (v.email.trim() && !/^\S+@\S+\.\S+$/.test(v.email.trim())) e.email = 'כתובת אימייל לא תקינה'
     setErr(e)
     if (Object.keys(e).length) return
-    const ok = await saveStaff(editId, { name, jobTitle: v.jobTitle, gender: v.gender, phone: v.phone, languages: v.languages, regionIds: v.regionIds, email: v.email, currentEmail })
+    const ok = await saveStaff(editId, { status: v.status, name, jobTitle: v.jobTitle, gender: v.gender, phone: v.phone, languages: v.languages, regionIds: v.regionIds, email: v.email, currentEmail })
     if (!ok) return
     if (editId && notesLoaded) {
       const { error } = await supabase.from('staff_hr_notes').upsert({ staff_id: editId, meeting_notes: notes, updated_at: new Date().toISOString() })
@@ -478,6 +478,7 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
   return (
     <FormShell title={editId ? 'עריכת מלווה' : 'מלווה חדש/ה'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספת מלווה'}>
       <div className="full"><TextField label="שם מלא" value={v.name} onChange={(e) => set('name')(e.target.value)} error={err.name} /></div>
+      <div className="full"><SelectField label="סטטוס" value={v.status} onChange={set('status')} options={STAFF_STATUS.map((x) => ({ value: x.value, label: x.label }))} /></div>
       <SelectField label="תפקיד" value={v.jobTitle} onChange={set('jobTitle')} options={JOB_TITLES} />
       <SelectField label="מגדר" value={v.gender} onChange={set('gender')} options={[{ value: 'f', label: 'אישה' }, { value: 'm', label: 'גבר' }]} />
       <TextField label="טלפון" type="tel" dir="ltr" value={v.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="052-000-0000" />
@@ -496,7 +497,7 @@ function StaffForm({ editId, initial }: { editId: string | null; initial?: { sta
 const minutes = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 
 function SlotForm({ editId, preset }: { editId: string | null; preset: Record<string, string> }) {
-  const { slots, clients, staff, tasks, saveSlot, closeForm, notify } = useStore()
+  const { slots, clients, assignable, tasks, saveSlot, closeForm, notify } = useStore()
   const existing = editId ? slots.find((x) => x.id === editId) : undefined
   const initialClient = existing?.clientId ?? preset.clientId ?? ''
   const [v, setV] = useState({
@@ -537,7 +538,7 @@ function SlotForm({ editId, preset }: { editId: string | null; preset: Record<st
     <FormShell title={editId ? 'עריכת ביקור קבוע' : 'ביקור קבוע חדש'} onSubmit={submit} submitLabel={editId ? 'שמירה' : 'הוספה'}>
       <div className="full"><SelectField label="לקוח/ה" value={v.clientId} onChange={(id) => setV((s) => ({ ...s, clientId: id, staffId: s.staffId || (clients.find((c) => c.id === id)?.companionId ?? '') }))} options={clients.map((c) => ({ value: c.id, label: c.name }))} placeholder="בחרי לקוח/ה" error={err.clientId} /></div>
       <SelectField label="יום בשבוע" value={v.weekday} onChange={set('weekday')} options={DAY_NAMES.map((n, i) => ({ value: String(i), label: n }))} />
-      <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={staff.map((s) => ({ value: s.id, label: s.name }))} placeholder="עדיין ללא" />
+      <SelectField label="מלווה/ת" value={v.staffId} onChange={set('staffId')} options={assignable.map((s) => ({ value: s.id, label: s.name }))} placeholder="עדיין ללא" />
       <TextField label="שעת התחלה" type="time" value={v.start} onChange={(e) => set('start')(e.target.value)} error={err.start} />
       <TextField label="שעת סיום" type="time" value={v.end} onChange={(e) => set('end')(e.target.value)} error={err.end} hint="בלי שעת סיום לא ניתן לחשב תוספת זמן" />
       <div className="full"><TextField label="מטרת הביקור" value={v.purpose} onChange={(e) => set('purpose')(e.target.value)} error={err.purpose} placeholder="למשל: ליווי לרופא, קניות, הליכה" /></div>

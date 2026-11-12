@@ -375,7 +375,7 @@ type Companion = { id: string; full_name: string; job_title: string; phone: stri
 
 /** Pin the client's regular companion from the staff list and see who they are. */
 export function CompanionCard({ client }: { client: any }) {
-  const { staff, assignCompanion, openForm, notify } = useStore()
+  const { assignable, assignCompanion, openForm, notify } = useStore()
   const [info, setInfo] = useState<Companion | null>(null)
   const [busy, setBusy] = useState(false)
   const pinned: string = client.regular_companion_id ?? ''
@@ -420,7 +420,7 @@ export function CompanionCard({ client }: { client: any }) {
       )}
       {!pinned && <p className="muted" style={{ marginBottom: 10 }}>עוד לא הוצמד/ה מלווה/ת. בחרי מהרשימה.</p>}
       <SelectField label={pinned ? 'החלפת מלווה/ת' : 'הצמדת מלווה/ת'} value={pinned} onChange={(v) => void change(v)} placeholder="ללא מלווה/ת קבוע/ה"
-        options={staff.map((s) => ({ value: s.id, label: s.name }))} />
+        options={assignable.map((s) => ({ value: s.id, label: s.name }))} />
       {busy && <p className="card-meta" role="status" style={{ marginTop: 6 }}>שומרת…</p>}
     </Card>
   )

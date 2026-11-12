@@ -41,9 +41,16 @@ export type Client = {
   used: string; companion: string | null; companionId: string | null; orderer: string; next: string; region: string
 }
 
+export type StaffStatus = 'before_interview' | 'suitable' | 'unsuitable'
+export const STAFF_STATUS: { value: StaffStatus; label: string; tone: Tone }[] = [
+  { value: 'before_interview', label: 'לפני ראיון', tone: 'neutral' },
+  { value: 'suitable', label: 'מתאים', tone: 'green' },
+  { value: 'unsuitable', label: 'לא מתאים', tone: 'red' },
+]
 export type Staff = {
   id: string; name: string; role: string; areas: string; langs: string
   regulars: string; hours: string; avail: [Tone, string]
+  status: StaffStatus
   regionNames: string[]; email: string | null // email = the login linked to this companion, if any
 }
 

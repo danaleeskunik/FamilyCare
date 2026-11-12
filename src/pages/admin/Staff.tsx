@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Badge, Button, Card, CardHead, Icon, Ltr, RowActions, StatCard, money } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
+import { STAFF_STATUS } from '../../data/model'
 
 export default function Staff() {
   const { staff, openForm, askDelete } = useStore()
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="מלווים פעילים" figure={5 + staff.length} note={'2 עו"ס · 5 סטודנטים · 2 מלווים'} />
+        <StatCard label="מלווים פעילים" figure={5 + staff.filter((s) => s.status === 'suitable').length} note={'2 עו"ס · 5 סטודנטים · 2 מלווים'} />
         <StatCard label="שעות במשמרת היום" figure={<Ltr>21:40</Ltr>} note="6 מלווים בשטח" />
         <StatCard label="שכר מוערך לחודש" figure={money(38600)} note={`כולל מקדם 1.3 ונסיעות ${money(30)} ליום`} />
         <StatCard label="דירוג ממוצע מהמשפחות" figure="4.8" note="מתוך 63 משובים בספטמבר" />
@@ -18,12 +19,13 @@ export default function Staff() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>מלווה</th><th>תפקיד</th><th>אזורים</th><th>שפות</th><th>לקוחות קבועים</th><th>שעות החודש</th><th>זמינות היום</th><th><span className="sr-only">פעולות</span></th></tr>
+              <tr><th>מלווה</th><th>סטטוס</th><th>תפקיד</th><th>אזורים</th><th>שפות</th><th>לקוחות קבועים</th><th>שעות החודש</th><th>זמינות היום</th><th><span className="sr-only">פעולות</span></th></tr>
             </thead>
             <tbody>
               {staff.map((s) => (
                 <tr key={s.id}>
                   <td className="name"><Link to={`/admin/staff/${s.id}`} aria-label={`דוח חודשי של ${s.name}`}>{s.name}</Link>{s.email && <div className="card-meta">מחובר/ת לאפליקציה</div>}</td>
+                  <td>{(() => { const st = STAFF_STATUS.find((x) => x.value === s.status)!; return <Badge tone={st.tone}>{st.label}</Badge> })()}</td>
                   <td>{s.role}</td>
                   <td>{s.areas}</td>
                   <td>{s.langs}</td>
