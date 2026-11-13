@@ -5,10 +5,11 @@ import { STAFF_STATUS } from '../../data/model'
 
 export default function Staff() {
   const { staff, openForm, askDelete } = useStore()
+  const active = staff.filter((s) => s.status === 'suitable')
   return (
     <>
       <div className="grid cols-4">
-        <StatCard label="מלווים פעילים" figure={5 + staff.filter((s) => s.status === 'suitable').length} note={'2 עו"ס · 5 סטודנטים · 2 מלווים'} />
+        <StatCard label="מלווים פעילים" figure={active.length} note={`${active.filter((s) => s.role === 'עובדת סוציאלית').length} עו"ס · ${active.filter((s) => s.role.startsWith('סטודנט')).length} סטודנטים · ${active.filter((s) => s.role === 'מלווה אישית').length} מלווים`} />
         <StatCard label="שעות במשמרת היום" figure={<Ltr>21:40</Ltr>} note="6 מלווים בשטח" />
         <StatCard label="שכר מוערך לחודש" figure={money(38600)} note={`כולל מקדם 1.3 ונסיעות ${money(30)} ליום`} />
         <StatCard label="דירוג ממוצע מהמשפחות" figure="4.8" note="מתוך 63 משובים בספטמבר" />

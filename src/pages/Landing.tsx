@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import LeadForm from '../components/LeadForm'
-import { CONTACT, ROY, mailHref, telHref, waHref } from '../lib/contact'
+import { ACCESS, CONTACT, mailHref, telHref, waHref } from '../lib/contact'
 import { SERVICES } from '../data/services'
 import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, type IconName, useReveal } from '../components/LandingChrome'
 
@@ -308,7 +308,7 @@ export default function Landing() {
             <ContactBtn href={mailHref} icon="mail" variant="ghost">{CONTACT.email || 'שלחו לנו מייל'}</ContactBtn>
             {telHref && <ContactBtn href={telHref} icon="call" variant="ghost"><span dir="ltr">{CONTACT.phone}</span></ContactBtn>}
           </div>
-          <p className="lp-direct">או התקשרו ישירות ל{ROY.name}: <a href={ROY.tel} dir="ltr">{ROY.display}</a></p>
+          <p className="lp-direct">או התקשרו ישירות ל{ACCESS.name}: <a href={ACCESS.tel} dir="ltr">{ACCESS.phone}</a></p>
           <p className="lp-member">כבר חברים במועדון? <Link to="/login">כניסה לאזור האישי</Link></p>
         </div>
       </section>
