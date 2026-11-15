@@ -14,6 +14,7 @@ const TABS = [
   { id: 'todos', to: '/admin/todos', label: 'משימות לטיפול' },
   { id: 'leads', to: '/admin/leads', label: 'לידים' },
   { id: 'finance', to: '/admin/finance', label: 'כספים' },
+  { id: 'finance', to: '/admin/receipts', label: 'חשבוניות' },
   { id: 'materials', to: '/admin/materials', label: 'חומרים' },
   { id: 'team', to: '/admin/team', label: 'הרשאות' },
 ]

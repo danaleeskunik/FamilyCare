@@ -30,6 +30,7 @@ import Materials from './pages/admin/Materials'
 import Questionnaire from './pages/admin/Questionnaire'
 import VendorFile from './pages/admin/VendorFile'
 import Todos from './pages/admin/Todos'
+import Receipts from './pages/admin/Receipts'
 import ClientPreview from './pages/ClientPreview'
 import CompanionPreview from './pages/CompanionPreview'
 import AnalyticsConsent from './components/AnalyticsConsent'
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="leads" element={<RequireSection section="leads"><Leads /></RequireSection>} />
         <Route path="finance" element={<RequireSection section="finance"><Finance /></RequireSection>} />
         <Route path="calendar" element={<RequireSection section="board"><Calendar /></RequireSection>} />
+        <Route path="receipts" element={<RequireSection section="finance"><Receipts /></RequireSection>} />
         <Route path="materials" element={<RequireSection section="materials"><Materials /></RequireSection>} />
         <Route path="todos" element={<RequireSection section="todos"><Todos /></RequireSection>} />
         <Route path="team" element={<RequireSection section="team"><Team /></RequireSection>} />
