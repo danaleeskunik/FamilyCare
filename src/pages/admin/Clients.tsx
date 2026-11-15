@@ -1,20 +1,22 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge, Button, Callout, Card, CardHead, Ltr, RowActions, StatCard } from '../../components/ui'
+import { Badge, Button, Card, CardHead, Ltr, RowActions, StatCard } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
 export default function Clients() {
   const { clients, openForm, askDelete } = useStore()
   const trial = clients.filter((c) => c.plan[1] === 'תקופת היכרות').length
+  const usage = clients.map((c) => c.used.split('/').map((x) => parseFloat(x))).filter(([u, t]) => t > 0 && !Number.isNaN(u))
+  const quota = usage.length ? Math.round((usage.reduce((a, [u, t]) => a + u / t, 0) / usage.length) * 100) : null
   const [q, setQ] = useState('')
   const rows = clients.filter((c) => [c.name, c.area, c.plan[1]].some((s) => s.includes(q.trim())))
 
   return (
     <>
       <div className="grid cols-3">
-        <StatCard label="לקוחות פעילים" figure={9 + clients.length} note="יעד שנתיים: 100 משפחות" />
-        <StatCard label="בתקופת היכרות" figure={2 + trial} note="חודש ראשון ללא התחייבות" />
-        <StatCard label={`ניצול מכסה — ממוצע כל ${9 + clients.length} הלקוחות`} figure="71%" note="מהמפגשים שבמסלול נוצלו החודש" />
+        <StatCard label="לקוחות פעילים" figure={clients.length} note="יעד שנתיים: 100 משפחות" />
+        <StatCard label="בתקופת היכרות" figure={trial} note="חודש ראשון ללא התחייבות" />
+        <StatCard label="ניצול מכסה ממוצע" figure={quota === null ? '—' : `${quota}%`} note="מהמפגשים שבמסלול נוצלו החודש" />
       </div>
 
       <Card flush>
@@ -47,10 +49,6 @@ export default function Clients() {
           </table>
         </div>
       </Card>
-
-      <Callout tone="tip" title="לטיפול השבוע">
-        מרים אדלר עדיין ללא מלווה קבועה אחרי שישה מפגשים — כדאי לקבע התאמה. אריה גולן מסיים תקופת היכרות ב-30.9 וצריך שיחת המשך לבחירת מסלול.
-      </Callout>
     </>
   )
 }

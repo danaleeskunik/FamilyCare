@@ -18,8 +18,9 @@ function countBy(list: { region: string }[]) {
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 
 export default function Board() {
-  const { tasks, items, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete, decisions, pricing } = useStore()
+  const { tasks, items, regions, regionFilter: region, setRegionFilter: setRegion, openForm, askDelete, decisions, pricing, invoices } = useStore()
   const nav = useNavigate()
+  const monthName = new Date(`${TODAY.slice(0, 7)}-01T12:00:00`).toLocaleDateString('he-IL', { month: 'long' })
   const [view, setView] = useState<'today' | 'unassigned'>('today')
   const today = tasks.filter((t) => t.date === TODAY).sort((a, b) => a.time.localeCompare(b.time))
   // Upcoming visits nobody has been assigned to.
@@ -57,14 +58,16 @@ export default function Board() {
         <StatCard label="משימות היום" figure={today.length} note={`${completedToday} הושלמו · ${today.length - completedToday} בהמשך היום`} onClick={() => goTo('board-tasks', 'today')} />
         <StatCard label="ממתין לשיבוץ" figure={unassigned.length} note={unassignedNote} color="var(--danger)" onClick={() => goTo('board-tasks', 'unassigned')} />
         <StatCard label="חריגות פתוחות" figure={openOvertime} note="ממתינות להחלטת חיוב ושכר" color="var(--warning)" onClick={showOvertime} />
-        <StatCard label="הכנסות ספטמבר" figure={money(112400)} note="דמי חברות + העמסות" onClick={() => nav('/admin/finance')} />
+        <StatCard label={`הכנסות ${monthName}`} figure={money(invoices.reduce((a, i) => a + i.total, 0))} note="דמי חברות + העמסות" onClick={() => nav('/admin/finance')} />
       </div>
 
       <PortalInbox />
 
-      <Callout tone="warning" title="דורש החלטה עכשיו">
-        מרים אדלר — הדרכת WhatsApp ב-16:00 עדיין ללא מלווה. שני מלווים זמינים באזור הרצליה. דניאל כ. דיווח על ירידה בתיאבון אצל יעקב ברנע — ממתין לפתיחת תחקיר.
-      </Callout>
+      {unassignedToday.length > 0 && (
+        <Callout tone="warning" title="דורש החלטה עכשיו">
+          {unassignedToday.map((t) => `${t.client} ${t.time}`).join(' · ')} — עדיין ללא מלווה.
+        </Callout>
+      )}
 
       <Card flush>
         <CardHead title="להכנה לפני היום">

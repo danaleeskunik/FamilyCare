@@ -6,21 +6,24 @@ import { useStore } from '../../store/AppStore'
 export default function Vendors() {
   const { vendors, openForm, askDelete } = useStore()
   const frozen = vendors.filter((v) => v.licBad).length
+  const rated = vendors.map((v) => Number(v.rating)).filter((n) => !Number.isNaN(n))
+  const avg = rated.length ? (rated.reduce((a, b) => a + b, 0) / rated.length).toFixed(1) : '—'
   const [q, setQ] = useState('')
   const rows = vendors.filter((v) => [v.name, v.field, v.area].some((s) => s.includes(q.trim())))
 
   return (
     <>
-      <div className="grid cols-4">
-        <StatCard label="ספקים מאושרים" figure={22 + vendors.length} note="ב-11 תחומי מקצוע" />
+      <div className="grid cols-3">
+        <StatCard label="ספקים מאושרים" figure={vendors.length} note={`ב-${new Set(vendors.map((v) => v.field).filter(Boolean)).size} תחומי מקצוע`} />
         <StatCard label="רישיון או ביטוח שפג" figure={frozen} note="מוקפאים עד חידוש" color="var(--danger)" />
-        <StatCard label="דירוג ממוצע" figure="4.6" note="מ-146 משובי לקוחות ומלווים" />
-        <StatCard label="דמי ניהול שנצברו" figure={money(8940)} note="10% על עבודות קבלנים בספטמבר" />
+        <StatCard label="דירוג ממוצע" figure={avg} note={`מ-${rated.length} ספקים עם דירוג`} />
       </div>
 
-      <Callout tone="warning" title="בקרת רישיונות">
-        לטכנאי הגז יוסי בר־און פג תוקף הרישיון ב-31.8, ולמנעולן א. שחר פגה פוליסת צד ג׳. שניהם מוקפאים אוטומטית ולא ניתנים לשיבוץ עד העלאת מסמך מעודכן.
-      </Callout>
+      {frozen > 0 && (
+        <Callout tone="warning" title="בקרת רישיונות">
+          {vendors.filter((v) => v.licBad).map((v) => `${v.name} (${v.lic})`).join(' · ')} — מוקפאים ולא נשלחים ללקוחות עד חידוש.
+        </Callout>
+      )}
 
       <Card flush>
         <CardHead title="מאגר בעלי מקצוע מאושרים">
@@ -59,14 +62,6 @@ export default function Vendors() {
           <div className="kv faint"><span>דמי ניהול 10%</span><span className="v">{money(110)}</span></div>
           <div className="kv"><span>ליווי נציג — שעה ראשונה {money(300)} + נוספת {money(250)}</span><span className="v">{money(550)}</span></div>
           <div className="kv total"><span>סה"כ ללקוח</span><span className="v">{money(1760)}</span></div>
-        </Card>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 10 }}>משובי איכות אחרונים</div>
-          <div className="stack" style={{ gap: 10, marginBottom: 12 }}>
-            <div><div style={{ fontWeight: 700 }}>אבי מזרחי · תיקון נזילה אצל שרה לוי</div><div className="muted">5.0 — הגיע בזמן, ניקה אחריו. המלווה אישרה.</div></div>
-            <div><div style={{ fontWeight: 700 }}>קור־טק · תיקון מזגן אצל חנה פלד</div><div className="muted">3.8 — איחור של שעה. נשלחה הערה לספק.</div></div>
-          </div>
-          <Button variant="secondary" size="sm">כל דוחות התחקיר</Button>
         </Card>
       </div>
     </>

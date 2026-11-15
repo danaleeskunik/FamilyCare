@@ -1,18 +1,19 @@
 import { Link } from 'react-router-dom'
-import { Badge, Button, Card, CardHead, Icon, Ltr, RowActions, StatCard, money } from '../../components/ui'
+import { Badge, Button, Card, CardHead, Icon, Ltr, RowActions, StatCard } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 import { STAFF_STATUS } from '../../data/model'
 
 export default function Staff() {
   const { staff, openForm, askDelete } = useStore()
   const active = staff.filter((s) => s.status === 'suitable')
+  const mins = staff.reduce((a, s) => { const [h, m] = s.hours.split(':').map(Number); return a + (h || 0) * 60 + (m || 0) }, 0)
+  const totalHours = `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`
   return (
     <>
-      <div className="grid cols-4">
+      <div className="grid cols-3">
         <StatCard label="מלווים פעילים" figure={active.length} note={`${active.filter((s) => s.role === 'עובדת סוציאלית').length} עו"ס · ${active.filter((s) => s.role.startsWith('סטודנט')).length} סטודנטים · ${active.filter((s) => s.role === 'מלווה אישית').length} מלווים`} />
-        <StatCard label="שעות במשמרת היום" figure={<Ltr>21:40</Ltr>} note="6 מלווים בשטח" />
-        <StatCard label="שכר מוערך לחודש" figure={money(38600)} note={`כולל מקדם 1.3 ונסיעות ${money(30)} ליום`} />
-        <StatCard label="דירוג ממוצע מהמשפחות" figure="4.8" note="מתוך 63 משובים בספטמבר" />
+        <StatCard label="שעות החודש" figure={<Ltr>{totalHours}</Ltr>} note="לפי כניסה ויציאה בפועל" />
+        <StatCard label="לפני ראיון" figure={staff.filter((s) => s.status === 'before_interview').length} note="מועמדים שעוד לא רואיינו" />
       </div>
 
       <Card flush>
@@ -40,29 +41,6 @@ export default function Staff() {
           </table>
         </div>
       </Card>
-
-      <div className="grid cols-2" style={{ alignItems: 'start' }}>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 6 }}>חישוב שכר מלווה</div>
-          <div className="kv"><span>שכר שעתי (פי 2 ממינימום)</span><span className="v">{money(70)}</span></div>
-          <div className="kv faint"><span>מקדם 1.3 — סוציאליות וביטוח לאומי</span><span className="v">{money(91)}</span></div>
-          <div className="kv"><span>נסיעות ליום עבודה</span><span className="v">{money(30)}</span></div>
-          <div className="kv total"><span>עלות שעת ליווי לחברה</span><span className="v">{money(91)}</span></div>
-        </Card>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 6 }}>התאמת מלווה ללקוח</div>
-          <p className="muted" style={{ lineHeight: 1.55, marginBottom: 12 }}>
-            השיבוץ מחושב לפי קרבה גיאוגרפית, שפה, מגדר, סוג המשימה והעדפה אישית של הלקוח.
-          </p>
-          <div className="stack" style={{ gap: 8 }}>
-            {[['מרים אדלר · הדרכת WhatsApp 16:00', 'תמר ב. — 1.6 ק"מ'], ['אריה גולן · ביקור חמישי', 'נועה ש. — קבועה']].map(([a, b]) => (
-              <div key={a} className="item-box row" style={{ justifyContent: 'space-between', gap: 10 }}>
-                <span>{a}</span><span style={{ color: 'var(--brand-link)', fontWeight: 800 }}>{b}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
     </>
   )
 }
