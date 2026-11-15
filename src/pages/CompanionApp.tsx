@@ -100,51 +100,65 @@ function Week({ data, reload, flash, preview }: { data: Data; reload: () => Prom
         <strong aria-live="polite">{formatDM(days[0])} – {formatDM(days[6])}</strong>
         <button className="icon-btn" aria-label="שבוע הבא" onClick={() => setAnchor(addDays(anchor, 7))}><Icon name="chevron-left" /></button>
       </div>
+      {!days.some((d) => data.tasks.some((t) => t.scheduled_date === toISO(d) && t.status !== 'cancelled')) && <Empty text="אין ביקורים השבוע." />}
       {days.map((d, i) => {
         const iso = toISO(d)
         const list = data.tasks.filter((t) => t.scheduled_date === iso && t.status !== 'cancelled')
+        if (list.length === 0) return null
         return (
           <section key={iso} aria-label={`${DAY_NAMES[i]} ${formatDM(d)}`}>
-            <div className="row" style={{ gap: 8, margin: '6px 0' }}>
-              <strong style={{ color: iso === TODAY ? 'var(--brand-link)' : undefined }}>{DAY_NAMES[i]} <span className="num">{formatDM(d)}</span></strong>
-              {iso === TODAY && <Badge tone="green">היום</Badge>}
-            </div>
-            {list.length === 0 && <p className="card-meta" style={{ marginBottom: 6 }}>אין ביקורים</p>}
-            <div className="stack" style={{ gap: 8 }}>
+            <div className="stack" style={{ gap: 10 }}>
               {list.map((t) => {
                 const c = one(t.clients) as any
                 const info = clientInfo.get(t.client_id) ?? c
                 const [label, tone] = STATUS[t.status] ?? [t.status, 'neutral' as const]
                 const expanded = open === t.id
                 const notes = data.notes.filter((n) => n.client_id === t.client_id)
+                const highlights = notes.filter((n) => n.kind === 'highlight')
                 const allergies = data.allergies.filter((a) => a.client_id === t.client_id)
                 const slots = data.slots.filter((s) => s.client_id === t.client_id)
+                const orderer = data.contacts.find((x) => x.client_id === t.client_id && x.is_orderer)
+                const place = t.location || 'בית הלקוח/ה'
+                const address = info?.address || c?.address
+                const health = [info?.mobility_notes && { k: 'ניידות', v: info.mobility_notes }, info?.cognitive_notes && { k: 'קוגניטיבי', v: info.cognitive_notes }].filter(Boolean) as { k: string; v: string }[]
                 return (
                   <Card key={t.id} style={t.status === 'in_progress' ? { borderColor: 'var(--brand-action)' } : undefined}>
-                    <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-                      <Ltr style={{ font: '800 15px var(--font-num)', color: 'var(--brand-link)' }}>{hhmm(t.start_time)}{t.end_time ? `–${hhmm(t.end_time)}` : ''}</Ltr>
-                      <Badge tone={tone}>{label}</Badge>
+                    <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ font: '800 16px var(--font-ui)', color: 'var(--brand-link)' }}>{DAY_NAMES[i]} {formatDM(d)} · <Ltr>{hhmm(t.start_time)}{t.end_time ? `–${hhmm(t.end_time)}` : ''}</Ltr></span>
+                      <span className="row" style={{ gap: 6 }}>{iso === TODAY && <Badge tone="green">היום</Badge>}<Badge tone={tone}>{label}</Badge></span>
                     </div>
-                    <div style={{ font: '800 18px var(--font-ui)' }}>{c?.full_name}</div>
-                    <div style={{ font: '600 15px var(--font-ui)', margin: '2px 0' }}>{t.title}</div>
-                    <div className="card-meta">{[c?.address, one(t.regions)?.name].filter(Boolean).join(' · ')}</div>
-                    {notes.some((n) => n.kind === 'highlight') && <div className="alert-block" style={{ marginTop: 8 }}>{notes.filter((n) => n.kind === 'highlight').map((n) => n.body).join(' · ')}</div>}
+                    <div style={{ font: '800 20px var(--font-ui)' }}>{c?.full_name}</div>
+                    <div style={{ font: '600 15px var(--font-ui)', margin: '2px 0 10px' }}>{t.title}</div>
 
-                    <div className="row" style={{ gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                    <div className="inset stack" style={{ gap: 8 }}>
+                      <div className="kv"><span className="muted">מזמין/ת השירות</span><span style={{ fontWeight: 700 }}>{orderer ? <>{orderer.full_name}{orderer.relation ? ` (${orderer.relation})` : ''}</> : '—'}</span></div>
+                      {orderer?.phone && <div className="kv"><span className="muted">טלפון המזמין/ה</span><a href={`tel:${orderer.phone}`} style={{ fontWeight: 700 }}><Ltr>{orderer.phone}</Ltr></a></div>}
+                      <div className="kv"><span className="muted">טלפון הלקוח/ה</span><span style={{ fontWeight: 700 }}>{info?.phone ? <a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a> : '—'}</span></div>
+                      <div className="kv"><span className="muted">כתובת</span><span style={{ fontWeight: 700, textAlign: 'end' }}>{address || '—'}{one(t.regions)?.name ? ` · ${one(t.regions).name}` : ''}</span></div>
+                      <div className="kv"><span className="muted">קוד דלת / בניין</span><span style={{ fontWeight: 700 }}>{info?.building_code ? <Ltr>{info.building_code}</Ltr> : '—'}</span></div>
+                      <div className="kv"><span className="muted">מקום הפגישה</span><span style={{ fontWeight: 700 }}>{place}</span></div>
+                    </div>
+
+                    {(health.length > 0 || allergies.length > 0 || highlights.length > 0) && (
+                      <div className="alert-block stack" style={{ marginTop: 10, gap: 6 }}>
+                        <strong>מגבלות ודגשים</strong>
+                        {health.map((h) => <div key={h.k}><span className="muted">{h.k}: </span>{h.v}</div>)}
+                        {allergies.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><span className="muted">אלרגיות:</span>{allergies.map((a) => <Badge key={a.allergen} tone={a.severity === 'high' ? 'red' : 'orange'}>{a.allergen}</Badge>)}</div>}
+                        {highlights.map((n) => <div key={n.id}>{n.body}</div>)}
+                      </div>
+                    )}
+
+                    <div className="row" style={{ gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                       {!preview && iso === TODAY && t.status !== 'completed' && (t.checked_in_at
                         ? <Button size="sm" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</Button>
                         : <Button size="sm" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</Button>)}
-                      {c?.address && <a className="btn secondary sm" href={mapsUrl(c.address)} target="_blank" rel="noreferrer">ניווט</a>}
-                      <Button size="sm" variant="secondary" onClick={() => setOpen(expanded ? null : t.id)}>{expanded ? 'הסתרת פרטים' : 'פרטי הלקוח/ה'}</Button>
+                      {address && <a className="btn secondary sm" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
+                      {(notes.some((n) => n.kind === 'note') || slots.length > 0) && <Button size="sm" variant="secondary" onClick={() => setOpen(expanded ? null : t.id)}>{expanded ? 'הסתרת פרטים' : 'עוד פרטים'}</Button>}
                     </div>
                     {t.checked_in_at && <p className="card-meta" style={{ marginTop: 8 }}>נכנסת ב-<Ltr>{localHM(t.checked_in_at)}</Ltr>{t.checked_out_at && <> · יצאת ב-<Ltr>{localHM(t.checked_out_at)}</Ltr></>}</p>}
 
                     {expanded && (
                       <div className="inset stack" style={{ marginTop: 10, gap: 8 }}>
-                        <div className="kv"><span className="muted">טלפון</span><span style={{ fontWeight: 700 }}>{info?.phone ? <a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a> : '—'}</span></div>
-                        <div className="kv"><span className="muted">קוד לבניין</span><span style={{ fontWeight: 700 }}>{info?.building_code ? <Ltr>{info.building_code}</Ltr> : '—'}</span></div>
-                        {info?.mobility_notes && <div><div className="card-label">ניידות</div><div style={{ fontWeight: 600 }}>{info.mobility_notes}</div></div>}
-                        {allergies.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{allergies.map((a) => <Badge key={a.allergen} tone={a.severity === 'high' ? 'red' : 'orange'}>{a.allergen}</Badge>)}</div>}
                         {notes.filter((n) => n.kind === 'note').map((n) => <div key={n.id} style={{ fontWeight: 600 }}>{n.body}</div>)}
                         {slots.length > 0 && <div><div className="card-label">מה הלקוח/ה ביקש/ה</div>{slots.map((s) => <div key={s.id} style={{ fontWeight: 600 }}>{DAY_NAMES[s.weekday]} <Ltr>{hhmm(s.start_time)}{s.end_time ? `–${hhmm(s.end_time)}` : ''}</Ltr> · {s.purpose || 'ביקור'}</div>)}</div>}
                       </div>
