@@ -9,7 +9,7 @@ const TABS = [
   { id: 'board', to: '/admin', label: 'לוח היום', end: true },
   { id: 'clients', to: '/admin/clients', label: 'לקוחות' },
   { id: 'staff', to: '/admin/staff', label: 'מלווים' },
-  { id: 'vendors', to: '/admin/vendors', label: 'ספקים ובעלי מקצוע' },
+  { id: 'vendors', to: '/admin/vendors', label: 'ספקים' },
   { id: 'schedule', to: '/admin/schedule', label: 'תכנית שבועית' },
   { id: 'todos', to: '/admin/todos', label: 'משימות לטיפול' },
   { id: 'leads', to: '/admin/leads', label: 'לידים' },
