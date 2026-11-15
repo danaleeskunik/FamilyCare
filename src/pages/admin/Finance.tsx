@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Badge, Button, Callout, Card, CardHead, StatCard, money } from '../../components/ui'
+import { Badge, Button, Callout, Card, CardHead, StatCard, isNegative, money } from '../../components/ui'
 import { supabase } from '../../lib/supabase'
 import { TODAY } from '../../data/model'
 import Modal from '../../components/Modal'
@@ -16,7 +16,7 @@ type Pay = { kind: 'monthly' | 'extra'; amount: number; planId: string; clientId
 const shekel = (n: number) => money(Number.isInteger(n) ? n : Number(n.toFixed(2)))
 
 const Row = ({ label, value, faint, total }: { label: string; value: string; faint?: boolean; total?: boolean }) => (
-  <div className={`kv ${faint ? 'faint' : ''} ${total ? 'total' : ''}`}><span>{label}</span><span className="v">{value}</span></div>
+  <div className={`kv ${faint ? 'faint' : ''} ${total ? 'total' : ''}`}><span>{label}</span><span className="v" style={isNegative(value) ? { color: 'var(--danger)' } : undefined}>{value}</span></div>
 )
 const Note = ({ children }: { children: string }) => <p className="card-meta" style={{ marginTop: 12, lineHeight: 1.5 }}>{children}</p>
 

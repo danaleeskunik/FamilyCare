@@ -197,6 +197,33 @@ function Finance({ d }: { d: ClientDetail }) {
 }
 
 
+function Upcoming({ clientId }: { clientId: string }) {
+  const { tasks, openForm, askDelete } = useStore()
+  const mine = tasks.filter((t) => t.clientId === clientId && t.date >= TODAY && t.statusKey !== 'cancelled' && t.statusKey !== 'completed')
+    .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+  return (
+    <Card>
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+        <div className="card-title">מפגשים קרובים</div>
+        <Button variant="secondary" size="sm" icon="plus" onClick={() => openForm('task', { clientId })}>מפגש חד־פעמי</Button>
+      </div>
+      {mine.length === 0 ? <Empty text="אין מפגשים קרובים. אפשר לקבוע מפגש חד־פעמי, למשל היכרות." /> : (
+        <div className="stack" style={{ gap: 8 }}>
+          {mine.map((t) => (
+            <div key={t.id} className="item-box row" style={{ gap: 10, justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontWeight: 800 }}>{DAY_NAMES[parseISO(t.date).getDay()]} {formatDM(parseISO(t.date))} · <Ltr>{t.time}</Ltr></div>
+                <div className="card-meta">{t.task} · {t.who ? shortName(t.who) : 'עדיין ללא מלווה/ת'}</div>
+              </div>
+              <RowActions what={`המפגש ${t.task}`} onEdit={() => openForm('task', { id: t.id })} onDelete={() => askDelete('task', t.id)} />
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 function Slots({ clientId }: { clientId: string }) {
   const { slots, openForm, askDelete } = useStore()
   const mine = slots.filter((s) => s.clientId === clientId)
@@ -397,6 +424,7 @@ export default function ClientFile() {
             {tab === 'med' && (
               <>
                 <ServiceRequestsCard clientId={c.id} />
+                <Upcoming clientId={c.id} />
                 <Slots clientId={c.id} />
                 <Notes d={d} answers={answers} onChanged={refetch} />
                 <Medical d={d} answers={answers} onChanged={refetch} />

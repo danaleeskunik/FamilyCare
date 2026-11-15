@@ -72,7 +72,11 @@ export function Callout({ tone = 'info', title, children }: { tone?: 'info' | 'w
   )
 }
 
-export function StatCard({ label, figure, note, color, onClick }: { label: string; figure: ReactNode; note: string; color?: string; onClick?: () => void }) {
+/** A negative amount is always red, whatever colour the caller asked for. */
+export const isNegative = (v: ReactNode) => typeof v === 'string' && /-\d/.test(v)
+
+export function StatCard({ label, figure, note, color: wanted, onClick }: { label: string; figure: ReactNode; note: string; color?: string; onClick?: () => void }) {
+  const color = isNegative(figure) ? 'var(--danger)' : wanted
   const inner = (
     <>
       <div className="card-label">{label}</div>
@@ -95,7 +99,7 @@ export function Ltr({ children, className = '', style }: { children: ReactNode; 
 const LRM = '‎'
 /** Currency: leading LRM, shekel sign after the figure. */
 export function money(n: number) {
-  return `${LRM}${n.toLocaleString('en-US')} ₪`
+  return `${LRM}${n.toLocaleString('en-US', { maximumFractionDigits: 2 })} ₪`
 }
 
 export function Progress({ pct, color = 'var(--brand-action)', thick }: { pct: number; color?: string; thick?: boolean }) {
