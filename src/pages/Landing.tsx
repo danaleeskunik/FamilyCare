@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import LeadForm from '../components/LeadForm'
 import { ACCESS, CONTACT, mailHref, telHref, waHref } from '../lib/contact'
 import { SERVICES } from '../data/services'
-import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, type IconName, useReveal } from '../components/LandingChrome'
+import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, logo, type IconName, useReveal } from '../components/LandingChrome'
 
 
 const ABOUT: { icon: IconName; title: string; text: string }[] = [
@@ -165,6 +165,7 @@ export default function Landing() {
       <header id="top" className="lp-hero">
         <div className="lp-wrap lp-hero-in">
           <div className="lp-hero-text">
+            <img className="lp-hero-logo reveal" src={logo('logo-white.png')} alt="Family Care — always with you" width={300} height={98} />
             <span className="lp-eyebrow reveal">מועדון קונסיירז' לגיל השלישי ולמשפחות</span>
             <h1 className="reveal" style={delay(80)}>הורים בטוחים יותר,<br />משפחה רגועה יותר</h1>
             <p className="lp-sub reveal" style={delay(160)}>
