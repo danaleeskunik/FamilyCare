@@ -10,6 +10,7 @@ import { TODAY } from '../data/model'
 import { useAuth } from '../store/AuthStore'
 import { ACCESS } from '../lib/contact'
 import { PLAN_RATES } from '../data/pricing'
+import Modal from '../components/Modal'
 import { ClientProfile, ExternalRequestDialog, ReportDialog } from './CompanionParts'
 
 type Data = NonNullable<Awaited<ReturnType<typeof loadCompanion>>>
@@ -33,6 +34,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
   const [report, setReport] = useState<any | null>(null)
   const [req, setReq] = useState<string | null | undefined>(undefined)
   const [busy, setBusy] = useState<string | null>(null)
+  const [profile, setProfile] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -87,12 +89,16 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
         {failed && <p className="pt-note" role="alert">לא הצלחנו לטעון את הנתונים. בדקי את החיבור. <button type="button" className="pt-link" onClick={() => void load()}>ניסיון נוסף</button></p>}
         {data === undefined && !failed && <p className="pt-note" role="status">טוענת…</p>}
         {data === null && <p className="pt-note">החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד.</p>}
-        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(null))} />}
-        {data && tab === 'visits' && <Visits data={data} act={act} busy={busy} preview={preview} onReport={setReport} />}
+        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(null))} />}
+        {data && tab === 'visits' && <Visits data={data} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} />}
         {data && tab === 'clients' && <ByClient data={data} flash={flash} preview={preview} />}
         {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} />}
       </main>
 
+      {data && profile && (() => {
+        const c = data.clients.find((x) => x.id === profile)
+        return c ? <Modal title="תיק הלקוח/ה" onClose={() => setProfile(null)}><ClientProfile c={c} data={data} onRequest={() => { setProfile(null); if (preview) flash('בתצוגת מנהל אי אפשר לשלוח'); else setReq(c.id) }} /></Modal> : null
+      })()}
       {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הדיווח נשלח למשרד'); void load() }} />}
       {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} />}
     </div>
@@ -102,7 +108,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
 type Act = (fn: 'check_in' | 'check_out', taskId: string) => Promise<void>
 
 /** One visit with everything the companion needs on the way there. */
-function VisitDetails({ data, t, act, busy, preview, onReport }: { data: Data; t: any; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void }) {
+function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { data: Data; t: any; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void }) {
   const c = one(t.clients) as any
   const info = data.clients.find((x) => x.id === t.client_id) ?? c
   const orderer = data.contacts.find((x) => x.client_id === t.client_id && x.is_orderer)
@@ -119,7 +125,7 @@ function VisitDetails({ data, t, act, busy, preview, onReport }: { data: Data; t
     <>
       <div className="pt-visit big">
         <div className="pt-when"><b>{dayLabel(t.scheduled_date)}</b><span><Ltr>{hhmm(t.start_time)}{t.end_time ? `–${hhmm(t.end_time)}` : ''}</Ltr></span></div>
-        <div className="pt-what"><b style={{ fontSize: '1.2em' }}>{c?.full_name}</b><span>{t.title}</span></div>
+        <div className="pt-what"><button type="button" className="pt-link" style={{ font: 'inherit', fontWeight: 700, fontSize: '1.2em', padding: 0, textAlign: 'start', color: 'inherit', textDecoration: 'underline' }} onClick={() => onClient(t.client_id)}>{c?.full_name}</button><span>{t.title}</span></div>
         <span className={`pt-status ${STATUS_CLASS[t.status] ?? ''}`}>{STATUS[t.status] ?? t.status}</span>
       </div>
       <div style={{ marginTop: 10 }}>
@@ -151,7 +157,7 @@ function VisitDetails({ data, t, act, busy, preview, onReport }: { data: Data; t
 }
 
 // ---------------------------------------------------------------- Home
-function Home({ data, go, act, busy, preview, onReport, onRequest }: { data: Data; go: (t: Tab) => void; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onRequest: () => void }) {
+function Home({ data, go, act, busy, preview, onReport, onClient, onRequest }: { data: Data; go: (t: Tab) => void; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void; onRequest: () => void }) {
   const live = data.tasks.filter((t) => t.status !== 'cancelled')
   const upcoming = live.filter((t) => t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at).sort(cmp)
   const next = upcoming.find((t) => t.status === 'in_progress') ?? upcoming[0]
@@ -164,7 +170,7 @@ function Home({ data, go, act, busy, preview, onReport, onRequest }: { data: Dat
     <div className="pt-stack">
       <section className="pt-card pt-next" aria-labelledby="h-next">
         <h2 id="h-next">{next?.status === 'in_progress' ? 'הביקור שלך עכשיו' : 'הפגישה הקרובה'}</h2>
-        {next ? <div className="co-next"><VisitDetails data={data} t={next} act={act} busy={busy} preview={preview} onReport={onReport} /></div> : <p>אין פגישות קרובות. כשהמשרד ישבץ אותך הן יופיעו כאן.</p>}
+        {next ? <div className="co-next"><VisitDetails data={data} t={next} act={act} busy={busy} preview={preview} onReport={onReport} onClient={onClient} /></div> : <p>אין פגישות קרובות. כשהמשרד ישבץ אותך הן יופיעו כאן.</p>}
       </section>
 
       {missing.length > 0 && !preview && (
@@ -173,7 +179,7 @@ function Home({ data, go, act, busy, preview, onReport, onRequest }: { data: Dat
           <div className="pt-list">
             {missing.map((t) => (
               <div key={t.id} className="pt-row" style={{ padding: '10px 0' }}>
-                <span><b>{one(t.clients)?.full_name}</b><br /><span className="pt-sub">{dayLabel(t.scheduled_date)}</span></span>
+                <span><button type="button" className="pt-link" style={{ font: 'inherit', fontWeight: 700, padding: 0 }} onClick={() => onClient(t.client_id)}>{one(t.clients)?.full_name}</button><br /><span className="pt-sub">{dayLabel(t.scheduled_date)}</span></span>
                 <button type="button" className="pt-btn" onClick={() => onReport(t)}>למלא דיווח</button>
               </div>
             ))}
@@ -185,7 +191,7 @@ function Home({ data, go, act, busy, preview, onReport, onRequest }: { data: Dat
         <section className="pt-card" aria-labelledby="h-today">
           <h2 id="h-today">עוד להיום</h2>
           <div className="pt-list">{todayOthers.map((t) => (
-            <div key={t.id} className="pt-visit"><div className="pt-when"><b><Ltr>{hhmm(t.start_time)}</Ltr></b></div><div className="pt-what"><b>{one(t.clients)?.full_name}</b><span>{t.title}</span></div></div>
+            <div key={t.id} className="pt-visit"><div className="pt-when"><b><Ltr>{hhmm(t.start_time)}</Ltr></b></div><div className="pt-what"><button type="button" className="pt-link" style={{ font: 'inherit', fontWeight: 700, padding: 0, textAlign: 'start' }} onClick={() => onClient(t.client_id)}>{one(t.clients)?.full_name}</button><span>{t.title}</span></div></div>
           ))}</div>
         </section>
       )}
@@ -208,14 +214,14 @@ function Home({ data, go, act, busy, preview, onReport, onRequest }: { data: Dat
 }
 
 // ---------------------------------------------------------------- Visits
-function Visits({ data, act, busy, preview, onReport }: { data: Data; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void }) {
+function Visits({ data, act, busy, preview, onReport, onClient }: { data: Data; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void }) {
   const live = data.tasks.filter((t) => t.status !== 'cancelled')
   const upcoming = live.filter((t) => t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at).sort(cmp)
   const past = live.filter((t) => !(t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at)).sort(cmp).reverse()
   return (
     <div className="pt-stack">
       {upcoming.length === 0 && <section className="pt-card"><p>אין פגישות קרובות.</p></section>}
-      {upcoming.map((t) => <section key={t.id} className="pt-card"><VisitDetails data={data} t={t} act={act} busy={busy} preview={preview} onReport={onReport} /></section>)}
+      {upcoming.map((t) => <section key={t.id} className="pt-card"><VisitDetails data={data} t={t} act={act} busy={busy} preview={preview} onReport={onReport} onClient={onClient} /></section>)}
       {past.length > 0 && (
         <section className="pt-card" aria-labelledby="h-past">
           <h2 id="h-past">פגישות קודמות</h2>
@@ -223,7 +229,7 @@ function Visits({ data, act, busy, preview, onReport }: { data: Data; act: Act; 
             {past.map((t) => (
               <details key={t.id} className="pt-det">
                 <summary><div className="pt-visit"><div className="pt-when"><b>{dayLabel(t.scheduled_date)}</b></div><div className="pt-what"><b>{one(t.clients)?.full_name}</b><span>{t.title}</span></div></div></summary>
-                <div style={{ paddingBottom: 12 }}><VisitDetails data={data} t={t} act={act} busy={busy} preview={preview} onReport={onReport} /></div>
+                <div style={{ paddingBottom: 12 }}><VisitDetails data={data} t={t} act={act} busy={busy} preview={preview} onReport={onReport} onClient={onClient} /></div>
               </details>
             ))}
           </div>
