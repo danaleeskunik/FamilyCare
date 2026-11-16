@@ -4,10 +4,13 @@ import { Badge, Button, Card, Empty, Icon, Ltr, money } from '../components/ui'
 import { TextField, SelectField } from '../components/Fields'
 import { supabase } from '../lib/supabase'
 import { loadCompanion, loadStaffMonth, localHM, shortName } from '../lib/queries'
-import { buildMonthReport, fmtHours, type MonthReport } from '../lib/report'
+import { buildMonthReport, fmtHours, payroll, type MonthReport } from '../lib/report'
 import { DAY_NAMES, addDays, formatDM, monthLabel, parseISO, startOfWeek, toISO } from '../lib/dates'
 import { TODAY } from '../data/model'
 import { useAuth } from '../store/AuthStore'
+import { ACCESS } from '../lib/contact'
+import { PLAN_RATES } from '../data/pricing'
+import { ClientProfile, ExternalRequestDialog, ReportDialog } from './CompanionParts'
 
 type Data = NonNullable<Awaited<ReturnType<typeof loadCompanion>>>
 type Tab = 'week' | 'clients' | 'hours'
@@ -59,7 +62,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
       </div>
 
       <div className="seg" role="group" aria-label="תצוגה" style={{ alignSelf: 'stretch' }}>
-        {([['week', 'הלו"ז שלי'], ['clients', 'לפי לקוח'], ['hours', 'השעות שלי']] as [Tab, string][]).map(([k, label]) => (
+        {([['week', 'הלו"ז שלי'], ['clients', 'הלקוחות שלי'], ['hours', 'האזור האישי']] as [Tab, string][]).map(([k, label]) => (
           <button key={k} aria-pressed={tab === k} style={{ flex: 1 }} onClick={() => setTab(k)}>{label}</button>
         ))}
       </div>
@@ -69,7 +72,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
       {data === undefined && !failed && <p className="muted" role="status">טוענת…</p>}
       {data === null && <Empty text="החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד." />}
       {data && tab === 'week' && <Week data={data} reload={load} flash={flash} preview={preview} />}
-      {data && tab === 'clients' && <ByClient data={data} />}
+      {data && tab === 'clients' && <ByClient data={data} flash={flash} preview={preview} />}
       {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} />}
     </div>
   )
@@ -80,6 +83,7 @@ function Week({ data, reload, flash, preview }: { data: Data; reload: () => Prom
   const [anchor, setAnchor] = useState(parseISO(TODAY))
   const [open, setOpen] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [report, setReport] = useState<any | null>(null)
   const start = startOfWeek(anchor)
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
   const clientInfo = useMemo(() => new Map(data.clients.map((c) => [c.id as string, c])), [data.clients])
@@ -89,8 +93,9 @@ function Week({ data, reload, flash, preview }: { data: Data; reload: () => Prom
     const { error } = await supabase.rpc(fn, { p_task: taskId })
     setBusy(null)
     if (error) { console.error(fn, error); flash('לא הצלחנו לעדכן. נסי שוב.'); return }
-    flash(fn === 'check_in' ? 'הביקור התחיל' : 'הביקור הסתיים. תודה!')
+    flash(fn === 'check_in' ? 'הביקור התחיל' : 'הביקור הסתיים. נשאר למלא את דיווח הסיום')
     await reload()
+    if (fn === 'check_out') setReport(data.tasks.find((t) => t.id === taskId) ?? null)
   }
 
   return (
@@ -119,13 +124,15 @@ function Week({ data, reload, flash, preview }: { data: Data; reload: () => Prom
                 const slots = data.slots.filter((s) => s.client_id === t.client_id)
                 const orderer = data.contacts.find((x) => x.client_id === t.client_id && x.is_orderer)
                 const place = t.location || 'בית הלקוח/ה'
+                const summary = data.summaries.find((x) => x.task_id === t.id)
+                const needsReport = (t.status === 'completed' || !!t.checked_out_at) && !summary
                 const address = info?.address || c?.address
                 const health = [info?.mobility_notes && { k: 'ניידות', v: info.mobility_notes }, info?.cognitive_notes && { k: 'קוגניטיבי', v: info.cognitive_notes }].filter(Boolean) as { k: string; v: string }[]
                 return (
                   <Card key={t.id} style={t.status === 'in_progress' ? { borderColor: 'var(--brand-action)' } : undefined}>
                     <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
                       <span style={{ font: '800 16px var(--font-ui)', color: 'var(--brand-link)' }}>{DAY_NAMES[i]} {formatDM(d)} · <Ltr>{hhmm(t.start_time)}{t.end_time ? `–${hhmm(t.end_time)}` : ''}</Ltr></span>
-                      <span className="row" style={{ gap: 6 }}>{iso === TODAY && <Badge tone="green">היום</Badge>}<Badge tone={tone}>{label}</Badge></span>
+                      <span className="row" style={{ gap: 6 }}>{iso === TODAY && <Badge tone="green">היום</Badge>}{needsReport && <Badge tone="red">חסר דיווח</Badge>}<Badge tone={tone}>{label}</Badge></span>
                     </div>
                     <div style={{ font: '800 20px var(--font-ui)' }}>{c?.full_name}</div>
                     <div style={{ font: '600 15px var(--font-ui)', margin: '2px 0 10px' }}>{t.title}</div>
@@ -152,6 +159,7 @@ function Week({ data, reload, flash, preview }: { data: Data; reload: () => Prom
                       {!preview && iso === TODAY && t.status !== 'completed' && (t.checked_in_at
                         ? <Button size="sm" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</Button>
                         : <Button size="sm" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</Button>)}
+                      {!preview && (t.status === 'completed' || t.checked_out_at) && <Button size="sm" variant={needsReport ? 'primary' : 'secondary'} onClick={() => setReport(t)}>{summary ? 'עריכת דיווח' : 'דיווח סיום ביקור'}</Button>}
                       {address && <a className="btn secondary sm" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
                       {(notes.some((n) => n.kind === 'note') || slots.length > 0) && <Button size="sm" variant="secondary" onClick={() => setOpen(expanded ? null : t.id)}>{expanded ? 'הסתרת פרטים' : 'עוד פרטים'}</Button>}
                     </div>
@@ -170,40 +178,34 @@ function Week({ data, reload, flash, preview }: { data: Data; reload: () => Prom
           </section>
         )
       })}
+      {report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הדיווח נשלח למשרד'); void reload() }} />}
     </>
   )
 }
 
 // ---------------------------------------------------------------- By client
-function ByClient({ data }: { data: Data }) {
+function ByClient({ data, flash, preview }: { data: Data; flash: (m: string) => void; preview: boolean }) {
   const upcoming = data.tasks.filter((t) => t.scheduled_date >= TODAY && t.status !== 'cancelled')
   const myClients = data.clients.filter((c) => data.slots.some((s) => s.client_id === c.id) || data.tasks.some((t) => t.client_id === c.id))
+  const [req, setReq] = useState<string | null>(null)
   if (myClients.length === 0) return <Empty text="עוד אין לקוחות משויכים אליך. כשהמשרד ישבץ אותך, הם יופיעו כאן." />
   return (
     <>
       {myClients.map((c) => {
-        const slots = data.slots.filter((s) => s.client_id === c.id)
-        const notes = data.notes.filter((n) => n.client_id === c.id)
         const next = upcoming.filter((t) => t.client_id === c.id).slice(0, 3)
         return (
-          <Card key={c.id}>
-            <div style={{ font: '800 18px var(--font-ui)' }}>{c.full_name}</div>
-            <div className="card-meta" style={{ marginBottom: 8 }}>{[c.address, one(c.regions)?.name].filter(Boolean).join(' · ')}</div>
-            {notes.filter((n) => n.kind === 'highlight').map((n) => <div key={n.id} className="alert-block" style={{ marginBottom: 6 }}>{n.body}</div>)}
-            <div className="card-label" style={{ margin: '8px 0 4px' }}>מה הלקוח/ה ביקש/ה (ביקורים קבועים)</div>
-            {slots.length === 0 ? <p className="muted">עוד לא הוגדרו ביקורים קבועים.</p> : slots.map((s) => (
-              <div key={s.id} className="kv" style={{ fontSize: 14 }}>
-                <span style={{ fontWeight: 700 }}>{DAY_NAMES[s.weekday]} <Ltr>{hhmm(s.start_time)}{s.end_time ? `–${hhmm(s.end_time)}` : ''}</Ltr></span>
-                <span className="muted">{s.purpose || 'ביקור'}</span>
-              </div>
-            ))}
-            <div className="card-label" style={{ margin: '10px 0 4px' }}>הביקורים הבאים שלך</div>
-            {next.length === 0 ? <p className="muted">אין ביקורים קרובים.</p> : next.map((t) => (
-              <div key={t.id} className="kv" style={{ fontSize: 14 }}><span>{DAY_NAMES[parseISO(t.scheduled_date).getDay()]} {formatDM(parseISO(t.scheduled_date))}</span><span className="num">{hhmm(t.start_time)}</span></div>
-            ))}
-          </Card>
+          <div key={c.id} className="stack" style={{ gap: 8 }}>
+            <ClientProfile c={c} data={data} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(c.id))} />
+            <Card>
+              <div className="card-label" style={{ marginBottom: 4 }}>הביקורים הבאים שלך</div>
+              {next.length === 0 ? <p className="muted">אין ביקורים קרובים.</p> : next.map((t) => (
+                <div key={t.id} className="kv" style={{ fontSize: 14 }}><span>{DAY_NAMES[parseISO(t.scheduled_date).getDay()]} {formatDM(parseISO(t.scheduled_date))}</span><span className="num">{hhmm(t.start_time)}</span></div>
+              ))}
+            </Card>
+          </div>
         )
       })}
+      {req && <ExternalRequestDialog clients={myClients} clientId={req} onClose={() => setReq(null)} flash={flash} />}
     </>
   )
 }
@@ -219,6 +221,14 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
   const [taskId, setTaskId] = useState('')
   const [err, setErr] = useState('')
   const ym = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-01`
+  const pay = report && data.rates ? payroll(report, data.rates.wage, { wage: data.rates.wage, socialFactor: 1, travelPerDay: data.rates.travel, graceMinutes: 0, firstHour: 0, additionalHour: 0 }) : null
+  const quota = (report?.perClient ?? []).map((pc) => {
+    const cl = data.clients.find((c) => c.id === pc.clientId)
+    const mp = Array.isArray(cl?.membership_plans) ? cl?.membership_plans[0] : cl?.membership_plans
+    const rate = PLAN_RATES.find((r) => r.id === mp?.id)
+    const total = mp ? Math.round(Number(mp.monthly_sessions) * Number(mp.hours_per_session ?? rate?.hours ?? 0) * 10) / 10 : 0
+    return { id: pc.clientId, name: pc.client, plan: mp?.name ?? '', done: Math.round((pc.minutes / 60) * 10) / 10, total }
+  }).filter((q) => q.total > 0)
 
   useEffect(() => {
     let cancelled = false
@@ -265,6 +275,42 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
             </div>
             <p className="card-meta">{report.daysWorked} ימי עבודה · ממוצע <Ltr>{fmtHours(report.avgMinutes)}</Ltr> לביקור</p>
             {report.missingTimes > 0 && <p className="notice" style={{ marginTop: 8 }}>ב-{report.missingTimes} ביקורים חסרה שעת כניסה או יציאה, ולכן הם לא נספרו בשעות. אפשר לפנות למשרד להשלמה.</p>}
+          </Card>
+
+          <Card>
+            <div className="card-title" style={{ marginBottom: 6 }}>סיכום חודשי</div>
+            <div className="kv"><span>ביקורים שבוצעו</span><span className="v">{report.visitCount}</span></div>
+            <div className="kv"><span>שעות עבודה</span><span className="v"><Ltr>{fmtHours(report.totalMinutes)}</Ltr></span></div>
+            {pay ? (
+              <>
+                <div className="kv"><span>שכר שעות <span className="card-meta">({money(pay.wage)} לשעה)</span></span><span className="v">{money(pay.gross)}</span></div>
+                <div className="kv"><span>החזר נסיעות <span className="card-meta">({report.daysWorked} ימי עבודה)</span></span><span className="v">{money(pay.travel)}</span></div>
+                {pay.expenses > 0 && <div className="kv"><span>הוצאות שאושרו</span><span className="v">{money(pay.expenses)}</span></div>}
+                <div className="kv total"><span>סה&quot;כ עד כה</span><span className="v">{money(pay.total)}</span></div>
+                <p className="card-meta" style={{ marginTop: 8 }}>הסכום מתאפס בתחילת כל חודש. ניתן לעבור בין חודשים בחצים למעלה.</p>
+              </>
+            ) : <p className="card-meta">פרטי השכר יוצגו כאן אחרי שהמשרד יעדכן את ההגדרות.</p>}
+          </Card>
+
+          {quota.length > 0 && (
+            <Card>
+              <div className="card-title" style={{ marginBottom: 6 }}>שעות לפי מסלול הלקוח</div>
+              {quota.map((q) => (
+                <div key={q.id} className="stack" style={{ gap: 4, marginBottom: 10 }}>
+                  <div className="kv"><span><strong>{q.name}</strong><div className="card-meta">{q.plan}</div></span><span className="v">{q.done} מתוך {q.total} שעות</span></div>
+                  <div style={{ height: 8, borderRadius: 8, background: 'var(--surface-2, #eef1f5)', overflow: 'hidden' }}><div style={{ width: `${Math.min(100, q.total ? (q.done / q.total) * 100 : 0)}%`, height: '100%', background: q.done > q.total ? 'var(--danger)' : 'var(--brand-action)' }} /></div>
+                </div>
+              ))}
+            </Card>
+          )}
+
+          <Card>
+            <div className="card-title" style={{ marginBottom: 6 }}>התייעצות עם מנהל הצוות</div>
+            <p className="muted" style={{ marginBottom: 10 }}>שאלה, בקשה או משהו דחוף? {ACCESS.name} זמין/ה.</p>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              <a className="btn sm" href={ACCESS.tel}>התקשרות · <Ltr>{ACCESS.phone}</Ltr></a>
+              <a className="btn secondary sm" href={`https://wa.me/972${ACCESS.phone.replace(/\D/g, '').slice(1)}`} target="_blank" rel="noreferrer">וואטסאפ</a>
+            </div>
           </Card>
 
           <Card>

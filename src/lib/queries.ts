@@ -284,6 +284,20 @@ export async function loadStaffMonth(staffId: string, monthISO: string) {
   return { tasks: (t.data ?? []) as Row[], expenses: (e.data ?? []) as Row[], decisions: (d.data ?? []) as Row[] }
 }
 
+/** The companion's hourly wage and travel allowance. An admin previewing reads the tables directly. */
+async function payRates(asStaffId: string | undefined, staffId: string): Promise<{ wage: number; travel: number } | null> {
+  try {
+    if (asStaffId) {
+      const [ps, st] = await Promise.all([supabase.from('pricing_settings').select('*').maybeSingle(), supabase.from('staff_members').select('hourly_wage').eq('id', staffId).maybeSingle()])
+      if (!ps.data) return null
+      return { wage: Number(st.data?.hourly_wage ?? ps.data.companion_hourly_wage ?? 70), travel: Number(ps.data.travel_per_workday ?? 30) }
+    }
+    const r = await supabase.rpc('my_pay_rates')
+    if (r.error || !r.data) return null
+    return { wage: Number(r.data.wage), travel: Number(r.data.travel) }
+  } catch { return null }
+}
+
 // ---- Companion's own app ----
 /** The companion's own view. A signed-in companion gets only their rows from the database (RLS). With `asStaffId` an admin previews
  *  one companion: the same filter the database applies (clients where they are the regular companion or have a visit) is applied here. */
@@ -306,18 +320,21 @@ export async function loadCompanion(fromISO: string, toISO: string, asStaffId?: 
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const only = (q: any, col: string): any => (ids ? q.in(col, ids) : q)
-  const [tasks, slots, notes, clients, allergies, contacts] = await Promise.all([
+  const [tasks, slots, notes, clients, allergies, contacts, prefs, sums, rates] = await Promise.all([
     supabase.from('tasks').select('*, regions(name), clients(id, full_name, address, phone, building_code, mobility_notes)').eq('staff_id', me.data.id).gte('scheduled_date', fromISO).lte('scheduled_date', toISO).order('scheduled_date').order('start_time'),
     only(supabase.from('client_visit_slots').select('*, clients(full_name)').eq('is_active', true), 'client_id').order('weekday').order('start_time'),
     only(supabase.from('client_notes').select('*'), 'client_id').order('created_at'),
-    only(supabase.from('clients').select('id, full_name, address, phone, building_code, mobility_notes, cognitive_notes, regions(name)'), 'id').order('full_name'),
+    only(supabase.from('clients').select('id, full_name, birth_date, address, phone, building_code, mobility_notes, cognitive_notes, regions(name), membership_plans(id, name, monthly_sessions, hours_per_session)'), 'id').order('full_name'),
     only(supabase.from('client_allergies').select('client_id, allergen, severity'), 'client_id'),
-    only(supabase.from('family_contacts').select('client_id, full_name, relation, phone, is_orderer, contact_type'), 'client_id'),
+    only(supabase.from('family_contacts').select('client_id, full_name, relation, phone, is_orderer, contact_type, note'), 'client_id'),
+    Promise.resolve(only(supabase.from('client_preferences').select('client_id, category, title, details'), 'client_id')).then((r: any) => optional(r, 'client_preferences')),
+    Promise.resolve(supabase.from('visit_summaries').select('task_id, status, body, details').eq('author_id', me.data.id)).then((r: any) => optional(r, 'visit_summaries')),
+    payRates(asStaffId, me.data.id),
   ])
   const err = tasks.error ?? slots.error ?? notes.error ?? clients.error ?? allergies.error ?? contacts.error
   if (err) throw err
   return {
-    contacts: (contacts.data ?? []) as Row[],
+    contacts: (contacts.data ?? []) as Row[], prefs: (prefs.data ?? []) as Row[], summaries: (sums.data ?? []) as Row[], rates,
     me: me.data as { id: string; full_name: string },
     tasks: (tasks.data ?? []) as Row[], slots: (slots.data ?? []) as Row[], notes: (notes.data ?? []) as Row[],
     clients: (clients.data ?? []) as Row[], allergies: (allergies.data ?? []) as Row[],

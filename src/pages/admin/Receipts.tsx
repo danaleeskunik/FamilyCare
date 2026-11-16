@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Badge, Button, Callout, Card, CardHead, Empty, Icon, Ltr, RowActions, money } from '../../components/ui'
 import { SelectField, TextAreaField, TextField } from '../../components/Fields'
 import { supabase } from '../../lib/supabase'
+import { shrink } from '../../lib/image'
 import { missingTable } from '../../lib/intake'
 import { useStore } from '../../store/AppStore'
 import { RECEIPT_CATEGORIES, RECEIPT_UNSORTED, VAT_RATE } from '../../data/receipts'
@@ -26,20 +27,6 @@ const dayLabel = (iso: string) => { const d = new Date(iso); return `${d.getDate
 const num = (s: string) => { const n = Number(s.replace(',', '.')); return s.trim() && Number.isFinite(n) ? Math.round(n * 100) / 100 : null }
 const toDraft = (d: Doc): Draft => ({ vendor: d.vendor, doc_date: d.doc_date ?? '', category: d.category, amount: d.amount == null ? '' : String(d.amount), vat: d.vat == null ? '' : String(d.vat), note: d.note })
 const sum = (ds: Doc[], k: 'amount' | 'vat') => ds.reduce((n, d) => n + (Number(d[k]) || 0), 0)
-
-/** Phone photos are large: shrink them (max 2200px, JPEG) before upload. Falls back to the original file. */
-async function shrink(file: File): Promise<File | Blob> {
-  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
-  try {
-    const bmp = await createImageBitmap(file)
-    const scale = Math.min(1, 2200 / Math.max(bmp.width, bmp.height))
-    const c = document.createElement('canvas')
-    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale)
-    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
-    const blob = await new Promise<Blob | null>((res) => c.toBlob(res, 'image/jpeg', 0.85))
-    return blob && blob.size < file.size ? blob : file
-  } catch { return file }
-}
 
 function csvCell(v: string | number | null) { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
 

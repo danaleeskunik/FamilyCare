@@ -8,6 +8,7 @@ import { useStore } from '../../store/AppStore'
 import RegionFilter from '../../components/RegionFilter'
 import DaySummary from './DaySummary'
 import PortalInbox from './PortalInbox'
+import SummaryInbox from './SummaryInbox'
 
 function countBy(list: { region: string }[]) {
   const m: Record<string, number> = {}
@@ -62,6 +63,7 @@ export default function Board() {
       </div>
 
       <PortalInbox />
+      <SummaryInbox />
 
       {unassignedToday.length > 0 && (
         <Callout tone="warning" title="דורש החלטה עכשיו">
