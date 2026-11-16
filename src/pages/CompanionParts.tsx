@@ -161,16 +161,16 @@ export function ClientProfile({ c, data, onRequest }: { c: any; data: any; onReq
     <Card>
       <div style={{ font: '800 20px var(--font-ui)' }}>{c.full_name}</div>
       <div className="inset stack" style={{ gap: 8, marginTop: 10 }}>
-        <div className="kv"><span className="muted">טלפון</span><span style={{ fontWeight: 700 }}>{c.phone ? <a href={`tel:${c.phone}`}><Ltr>{c.phone}</Ltr></a> : '—'}</span></div>
-        <div className="kv"><span className="muted">כתובת</span><span style={{ fontWeight: 700, textAlign: 'end' }}>{[c.address, region].filter(Boolean).join(' · ') || '—'}</span></div>
-        <div className="kv"><span className="muted">קוד דלת / בניין</span><span style={{ fontWeight: 700 }}>{c.building_code ? <Ltr>{c.building_code}</Ltr> : '—'}</span></div>
+        {c.phone && <div className="kv"><span className="muted">טלפון</span><span style={{ fontWeight: 700 }}><a href={`tel:${c.phone}`}><Ltr>{c.phone}</Ltr></a></span></div>}
+        {(c.address || region) && <div className="kv"><span className="muted">כתובת</span><span style={{ fontWeight: 700, textAlign: 'end' }}>{[c.address, region].filter(Boolean).join(' · ')}</span></div>}
+        {c.building_code && <div className="kv"><span className="muted">קוד דלת / בניין</span><span style={{ fontWeight: 700 }}><Ltr>{c.building_code}</Ltr></span></div>}
       </div>
 
       <div className="card-label" style={{ margin: '14px 0 4px' }}>מזמין/ת השירות</div>
       {orderer ? (
         <div className="inset stack" style={{ gap: 6 }}>
           <div className="kv"><span className="muted">שם וקרבה</span><span style={{ fontWeight: 700 }}>{orderer.full_name}{orderer.relation ? ` · ${orderer.relation}` : ''}</span></div>
-          <div className="kv"><span className="muted">טלפון</span><span style={{ fontWeight: 700 }}>{orderer.phone ? <a href={`tel:${orderer.phone}`}><Ltr>{orderer.phone}</Ltr></a> : '—'}</span></div>
+          {orderer.phone && <div className="kv"><span className="muted">טלפון</span><span style={{ fontWeight: 700 }}><a href={`tel:${orderer.phone}`}><Ltr>{orderer.phone}</Ltr></a></span></div>}
           {orderer.note && <div><span className="muted">דגשים: </span>{orderer.note}</div>}
         </div>
       ) : <p className="muted">לא הוגדר/ה מזמין/ת שירות.</p>}

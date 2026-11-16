@@ -130,11 +130,11 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
         <span className={`pt-status ${STATUS_CLASS[t.status] ?? ''}`}>{STATUS[t.status] ?? t.status}</span>
       </div>
       <div style={{ marginTop: 10 }}>
-        <Row k="מזמין/ת השירות">{orderer ? `${orderer.full_name}${orderer.relation ? ` (${orderer.relation})` : ''}` : '—'}</Row>
+        {orderer && <Row k="מזמין/ת השירות">{`${orderer.full_name}${orderer.relation ? ` (${orderer.relation})` : ''}`}</Row>}
         {orderer?.phone && <Row k="טלפון המזמין/ה"><a href={`tel:${orderer.phone}`}><Ltr>{orderer.phone}</Ltr></a></Row>}
-        <Row k="טלפון הלקוח/ה">{info?.phone ? <a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a> : '—'}</Row>
-        <Row k="כתובת">{[address, region].filter(Boolean).join(' · ') || '—'}</Row>
-        <Row k="קוד דלת / בניין">{info?.building_code ? <Ltr>{info.building_code}</Ltr> : '—'}</Row>
+        {info?.phone && <Row k="טלפון הלקוח/ה"><a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a></Row>}
+        {(address || region) && <Row k="כתובת">{[address, region].filter(Boolean).join(' · ')}</Row>}
+        {info?.building_code && <Row k="קוד דלת / בניין"><Ltr>{info.building_code}</Ltr></Row>}
         <Row k="מקום הפגישה">{t.location || 'בית הלקוח/ה'}</Row>
       </div>
       {(health.length > 0 || allergies.length > 0 || highlights.length > 0) && (
