@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Badge, Button, Card, Empty, Icon, Ltr, money } from '../components/ui'
 import { TextField, SelectField } from '../components/Fields'
 import { supabase } from '../lib/supabase'
 import { loadCompanion, loadStaffMonth, localHM, shortName } from '../lib/queries'
 import { buildMonthReport, fmtHours, payroll, type MonthReport } from '../lib/report'
-import { DAY_NAMES, addDays, formatDM, monthLabel, parseISO, startOfWeek, toISO } from '../lib/dates'
+import { DAY_NAMES, addDays, formatDM, monthLabel, parseISO, toISO } from '../lib/dates'
 import { TODAY } from '../data/model'
 import { useAuth } from '../store/AuthStore'
 import { ACCESS } from '../lib/contact'
@@ -13,22 +13,26 @@ import { PLAN_RATES } from '../data/pricing'
 import { ClientProfile, ExternalRequestDialog, ReportDialog } from './CompanionParts'
 
 type Data = NonNullable<Awaited<ReturnType<typeof loadCompanion>>>
-type Tab = 'week' | 'clients' | 'hours'
+type Tab = 'home' | 'visits' | 'clients' | 'hours'
 const one = (v: any) => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null))
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : '')
 const mapsUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-const STATUS: Record<string, [string, 'neutral' | 'green' | 'blue' | 'orange' | 'red']> = {
-  planned: ['מתוכנן', 'neutral'], confirmed: ['מאושר', 'blue'], in_progress: ['בביקור', 'green'], completed: ['הושלם', 'green'], cancelled: ['בוטל', 'red'],
-}
+const dayLabel = (iso: string) => { const d = parseISO(iso); return `יום ${DAY_NAMES[d.getDay()]}, ${formatDM(d)}` }
+const STATUS: Record<string, string> = { planned: 'מתוכנן', confirmed: 'מאושר', in_progress: 'בביקור', completed: 'הושלם', cancelled: 'בוטל' }
+const STATUS_CLASS: Record<string, string> = { completed: 'completed', in_progress: 'in_progress', confirmed: 'ok' }
+const cmp = (a: any, b: any) => `${a.scheduled_date} ${a.start_time}`.localeCompare(`${b.scheduled_date} ${b.start_time}`)
 
 /** previewId = an admin looking at one companion's app exactly as that companion sees it (read only). */
 export default function CompanionApp({ previewId }: { previewId?: string } = {}) {
   const { signOut, fullName } = useAuth()
   const preview = !!previewId
-  const [tab, setTab] = useState<Tab>('week')
+  const [tab, setTab] = useState<Tab>('home')
   const [data, setData] = useState<Data | null | undefined>(undefined)
   const [failed, setFailed] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [report, setReport] = useState<any | null>(null)
+  const [req, setReq] = useState<string | null | undefined>(undefined)
+  const [busy, setBusy] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -39,147 +43,193 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
   useEffect(() => { void load() }, [load])
 
   const flash = (m: string) => { setNote(m); window.setTimeout(() => setNote(null), 4000) }
-
-  return (
-    <div className="mobile companion" style={{ maxWidth: 520 }}>
-      {preview && (
-        <div role="status" style={{ background: '#FFF4E5', color: '#7A4A00', padding: '10px 16px', textAlign: 'center', fontWeight: 600, borderRadius: 12, marginBottom: 8 }}>
-          תצוגת מנהל בקריאה בלבד: כך המלווה/ת רואה את האפליקציה. {' '}
-          <a href="/admin/staff" style={{ color: 'inherit', textDecoration: 'underline' }}>חזרה למלווים</a>
-        </div>
-      )}
-      <div className="hero">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ font: '800 17px var(--font-ui)' }}>שלום {data ? shortName(data.me.full_name).split(' ')[0] : fullName.split(' ')[0]}</div>
-            <div style={{ font: '500 13px var(--font-ui)', color: 'var(--on-brand-2)' }}>{DAY_NAMES[parseISO(TODAY).getDay()]} {formatDM(parseISO(TODAY))}</div>
-          </div>
-          <div className="row" style={{ gap: 8 }}>
-            <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={30} alt="Family Care — always with you" />
-            {!preview && <Button variant="on-navy" size="sm" onClick={signOut}>יציאה</Button>}
-          </div>
-        </div>
-      </div>
-
-      <div className="seg" role="group" aria-label="תצוגה" style={{ alignSelf: 'stretch' }}>
-        {([['week', 'הלו"ז שלי'], ['clients', 'הלקוחות שלי'], ['hours', 'האזור האישי']] as [Tab, string][]).map(([k, label]) => (
-          <button key={k} aria-pressed={tab === k} style={{ flex: 1 }} onClick={() => setTab(k)}>{label}</button>
-        ))}
-      </div>
-      {note && <div className="notice" role="status">{note}</div>}
-
-      {failed && <Card><p style={{ fontWeight: 700 }}>לא הצלחנו לטעון את הנתונים.</p><p className="muted" style={{ margin: '6px 0 10px' }}>בדקי את החיבור לאינטרנט.</p><Button size="sm" onClick={() => void load()}>ניסיון חוזר</Button></Card>}
-      {data === undefined && !failed && <p className="muted" role="status">טוענת…</p>}
-      {data === null && <Empty text="החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד." />}
-      {data && tab === 'week' && <Week data={data} reload={load} flash={flash} preview={preview} />}
-      {data && tab === 'clients' && <ByClient data={data} flash={flash} preview={preview} />}
-      {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} />}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------- Week
-function Week({ data, reload, flash, preview }: { data: Data; reload: () => Promise<void>; flash: (m: string) => void; preview: boolean }) {
-  const [anchor, setAnchor] = useState(parseISO(TODAY))
-  const [open, setOpen] = useState<string | null>(null)
-  const [busy, setBusy] = useState<string | null>(null)
-  const [report, setReport] = useState<any | null>(null)
-  const start = startOfWeek(anchor)
-  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
-  const clientInfo = useMemo(() => new Map(data.clients.map((c) => [c.id as string, c])), [data.clients])
-
   const act = async (fn: 'check_in' | 'check_out', taskId: string) => {
     setBusy(taskId)
     const { error } = await supabase.rpc(fn, { p_task: taskId })
     setBusy(null)
     if (error) { console.error(fn, error); flash('לא הצלחנו לעדכן. נסי שוב.'); return }
     flash(fn === 'check_in' ? 'הביקור התחיל' : 'הביקור הסתיים. נשאר למלא את דיווח הסיום')
-    await reload()
-    if (fn === 'check_out') setReport(data.tasks.find((t) => t.id === taskId) ?? null)
+    const task = data?.tasks.find((t) => t.id === taskId)
+    await load()
+    if (fn === 'check_out' && task) setReport(task)
   }
 
+  const tabs: [Tab, string][] = [['home', 'ראשי'], ['visits', 'פגישות'], ['clients', 'לקוחות'], ['hours', 'האזור שלי']]
+  const first = (data ? shortName(data.me.full_name) : fullName).split(' ')[0]
+  const myClients = data ? data.clients.filter((c) => data.slots.some((s) => s.client_id === c.id) || data.tasks.some((t) => t.client_id === c.id)) : []
+
+  return (
+    <div className="portal companion-app">
+      {preview && (
+        <div role="status" style={{ background: '#FFF4E5', color: '#7A4A00', padding: '10px 16px', textAlign: 'center', fontWeight: 600, position: 'sticky', top: 0, zIndex: 50 }}>
+          תצוגת מנהל בקריאה בלבד: כך המלווה/ת רואה את האפליקציה. {' '}
+          <a href="/admin/staff" style={{ color: 'inherit', textDecoration: 'underline' }}>חזרה למלווים</a>
+        </div>
+      )}
+      <header className="pt-head">
+        <div className="pt-head-in">
+          <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={40} alt="Family Care — always with you" />
+          <div className="pt-tools">{!preview && <button type="button" onClick={() => void signOut()} className="pt-out">יציאה</button>}</div>
+        </div>
+      </header>
+
+      <main className="pt-main">
+        <section className="pt-hello">
+          <h1>שלום {first}</h1>
+          <p>{DAY_NAMES[parseISO(TODAY).getDay()]} {formatDM(parseISO(TODAY))}</p>
+        </section>
+
+        <nav className="pt-tabs" role="tablist" aria-label="האזור שלי">
+          {tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{label}</button>)}
+        </nav>
+        {note && <p className="pt-note" role="status" style={{ marginTop: 0, marginBottom: 12 }}>{note}</p>}
+
+        {failed && <p className="pt-note" role="alert">לא הצלחנו לטעון את הנתונים. בדקי את החיבור. <button type="button" className="pt-link" onClick={() => void load()}>ניסיון נוסף</button></p>}
+        {data === undefined && !failed && <p className="pt-note" role="status">טוענת…</p>}
+        {data === null && <p className="pt-note">החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד.</p>}
+        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(null))} />}
+        {data && tab === 'visits' && <Visits data={data} act={act} busy={busy} preview={preview} onReport={setReport} />}
+        {data && tab === 'clients' && <ByClient data={data} flash={flash} preview={preview} />}
+        {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} />}
+      </main>
+
+      {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הדיווח נשלח למשרד'); void load() }} />}
+      {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} />}
+    </div>
+  )
+}
+
+type Act = (fn: 'check_in' | 'check_out', taskId: string) => Promise<void>
+
+/** One visit with everything the companion needs on the way there. */
+function VisitDetails({ data, t, act, busy, preview, onReport }: { data: Data; t: any; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void }) {
+  const c = one(t.clients) as any
+  const info = data.clients.find((x) => x.id === t.client_id) ?? c
+  const orderer = data.contacts.find((x) => x.client_id === t.client_id && x.is_orderer)
+  const address = info?.address || c?.address
+  const region = one(t.regions)?.name
+  const allergies = data.allergies.filter((a) => a.client_id === t.client_id)
+  const highlights = data.notes.filter((n) => n.client_id === t.client_id && n.kind === 'highlight')
+  const health = [info?.mobility_notes && { k: 'ניידות', v: info.mobility_notes }, info?.cognitive_notes && { k: 'קוגניטיבי', v: info.cognitive_notes }].filter(Boolean) as { k: string; v: string }[]
+  const summary = data.summaries.find((x) => x.task_id === t.id)
+  const done = t.status === 'completed' || !!t.checked_out_at
+  const isToday = t.scheduled_date === TODAY
+  const Row = ({ k, children }: { k: string; children: React.ReactNode }) => <div className="pt-row" style={{ padding: '6px 0', alignItems: 'baseline' }}><span className="pt-sub">{k}</span><b style={{ fontWeight: 600, textAlign: 'end' }}>{children}</b></div>
   return (
     <>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <button className="icon-btn" aria-label="שבוע קודם" onClick={() => setAnchor(addDays(anchor, -7))}><Icon name="chevron-right" /></button>
-        <strong aria-live="polite">{formatDM(days[0])} – {formatDM(days[6])}</strong>
-        <button className="icon-btn" aria-label="שבוע הבא" onClick={() => setAnchor(addDays(anchor, 7))}><Icon name="chevron-left" /></button>
+      <div className="pt-visit big">
+        <div className="pt-when"><b>{dayLabel(t.scheduled_date)}</b><span><Ltr>{hhmm(t.start_time)}{t.end_time ? `–${hhmm(t.end_time)}` : ''}</Ltr></span></div>
+        <div className="pt-what"><b style={{ fontSize: '1.2em' }}>{c?.full_name}</b><span>{t.title}</span></div>
+        <span className={`pt-status ${STATUS_CLASS[t.status] ?? ''}`}>{STATUS[t.status] ?? t.status}</span>
       </div>
-      {!days.some((d) => data.tasks.some((t) => t.scheduled_date === toISO(d) && t.status !== 'cancelled')) && <Empty text="אין ביקורים השבוע." />}
-      {days.map((d, i) => {
-        const iso = toISO(d)
-        const list = data.tasks.filter((t) => t.scheduled_date === iso && t.status !== 'cancelled')
-        if (list.length === 0) return null
-        return (
-          <section key={iso} aria-label={`${DAY_NAMES[i]} ${formatDM(d)}`}>
-            <div className="stack" style={{ gap: 10 }}>
-              {list.map((t) => {
-                const c = one(t.clients) as any
-                const info = clientInfo.get(t.client_id) ?? c
-                const [label, tone] = STATUS[t.status] ?? [t.status, 'neutral' as const]
-                const expanded = open === t.id
-                const notes = data.notes.filter((n) => n.client_id === t.client_id)
-                const highlights = notes.filter((n) => n.kind === 'highlight')
-                const allergies = data.allergies.filter((a) => a.client_id === t.client_id)
-                const slots = data.slots.filter((s) => s.client_id === t.client_id)
-                const orderer = data.contacts.find((x) => x.client_id === t.client_id && x.is_orderer)
-                const place = t.location || 'בית הלקוח/ה'
-                const summary = data.summaries.find((x) => x.task_id === t.id)
-                const needsReport = (t.status === 'completed' || !!t.checked_out_at) && !summary
-                const address = info?.address || c?.address
-                const health = [info?.mobility_notes && { k: 'ניידות', v: info.mobility_notes }, info?.cognitive_notes && { k: 'קוגניטיבי', v: info.cognitive_notes }].filter(Boolean) as { k: string; v: string }[]
-                return (
-                  <Card key={t.id} style={t.status === 'in_progress' ? { borderColor: 'var(--brand-action)' } : undefined}>
-                    <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ font: '800 16px var(--font-ui)', color: 'var(--brand-link)' }}>{DAY_NAMES[i]} {formatDM(d)} · <Ltr>{hhmm(t.start_time)}{t.end_time ? `–${hhmm(t.end_time)}` : ''}</Ltr></span>
-                      <span className="row" style={{ gap: 6 }}>{iso === TODAY && <Badge tone="green">היום</Badge>}{needsReport && <Badge tone="red">חסר דיווח</Badge>}<Badge tone={tone}>{label}</Badge></span>
-                    </div>
-                    <div style={{ font: '800 20px var(--font-ui)' }}>{c?.full_name}</div>
-                    <div style={{ font: '600 15px var(--font-ui)', margin: '2px 0 10px' }}>{t.title}</div>
-
-                    <div className="inset stack" style={{ gap: 8 }}>
-                      <div className="kv"><span className="muted">מזמין/ת השירות</span><span style={{ fontWeight: 700 }}>{orderer ? <>{orderer.full_name}{orderer.relation ? ` (${orderer.relation})` : ''}</> : '—'}</span></div>
-                      {orderer?.phone && <div className="kv"><span className="muted">טלפון המזמין/ה</span><a href={`tel:${orderer.phone}`} style={{ fontWeight: 700 }}><Ltr>{orderer.phone}</Ltr></a></div>}
-                      <div className="kv"><span className="muted">טלפון הלקוח/ה</span><span style={{ fontWeight: 700 }}>{info?.phone ? <a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a> : '—'}</span></div>
-                      <div className="kv"><span className="muted">כתובת</span><span style={{ fontWeight: 700, textAlign: 'end' }}>{address || '—'}{one(t.regions)?.name ? ` · ${one(t.regions).name}` : ''}</span></div>
-                      <div className="kv"><span className="muted">קוד דלת / בניין</span><span style={{ fontWeight: 700 }}>{info?.building_code ? <Ltr>{info.building_code}</Ltr> : '—'}</span></div>
-                      <div className="kv"><span className="muted">מקום הפגישה</span><span style={{ fontWeight: 700 }}>{place}</span></div>
-                    </div>
-
-                    {(health.length > 0 || allergies.length > 0 || highlights.length > 0) && (
-                      <div className="alert-block stack" style={{ marginTop: 10, gap: 6 }}>
-                        <strong>מגבלות ודגשים</strong>
-                        {health.map((h) => <div key={h.k}><span className="muted">{h.k}: </span>{h.v}</div>)}
-                        {allergies.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><span className="muted">אלרגיות:</span>{allergies.map((a) => <Badge key={a.allergen} tone={a.severity === 'high' ? 'red' : 'orange'}>{a.allergen}</Badge>)}</div>}
-                        {highlights.map((n) => <div key={n.id}>{n.body}</div>)}
-                      </div>
-                    )}
-
-                    <div className="row" style={{ gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                      {!preview && iso === TODAY && t.status !== 'completed' && (t.checked_in_at
-                        ? <Button size="sm" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</Button>
-                        : <Button size="sm" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</Button>)}
-                      {!preview && (t.status === 'completed' || t.checked_out_at) && <Button size="sm" variant={needsReport ? 'primary' : 'secondary'} onClick={() => setReport(t)}>{summary ? 'עריכת דיווח' : 'דיווח סיום ביקור'}</Button>}
-                      {address && <a className="btn secondary sm" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
-                      {(notes.some((n) => n.kind === 'note') || slots.length > 0) && <Button size="sm" variant="secondary" onClick={() => setOpen(expanded ? null : t.id)}>{expanded ? 'הסתרת פרטים' : 'עוד פרטים'}</Button>}
-                    </div>
-                    {t.checked_in_at && <p className="card-meta" style={{ marginTop: 8 }}>נכנסת ב-<Ltr>{localHM(t.checked_in_at)}</Ltr>{t.checked_out_at && <> · יצאת ב-<Ltr>{localHM(t.checked_out_at)}</Ltr></>}</p>}
-
-                    {expanded && (
-                      <div className="inset stack" style={{ marginTop: 10, gap: 8 }}>
-                        {notes.filter((n) => n.kind === 'note').map((n) => <div key={n.id} style={{ fontWeight: 600 }}>{n.body}</div>)}
-                        {slots.length > 0 && <div><div className="card-label">מה הלקוח/ה ביקש/ה</div>{slots.map((s) => <div key={s.id} style={{ fontWeight: 600 }}>{DAY_NAMES[s.weekday]} <Ltr>{hhmm(s.start_time)}{s.end_time ? `–${hhmm(s.end_time)}` : ''}</Ltr> · {s.purpose || 'ביקור'}</div>)}</div>}
-                      </div>
-                    )}
-                  </Card>
-                )
-              })}
-            </div>
-          </section>
-        )
-      })}
-      {report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הדיווח נשלח למשרד'); void reload() }} />}
+      <div style={{ marginTop: 10 }}>
+        <Row k="מזמין/ת השירות">{orderer ? `${orderer.full_name}${orderer.relation ? ` (${orderer.relation})` : ''}` : '—'}</Row>
+        {orderer?.phone && <Row k="טלפון המזמין/ה"><a href={`tel:${orderer.phone}`}><Ltr>{orderer.phone}</Ltr></a></Row>}
+        <Row k="טלפון הלקוח/ה">{info?.phone ? <a href={`tel:${info.phone}`}><Ltr>{info.phone}</Ltr></a> : '—'}</Row>
+        <Row k="כתובת">{[address, region].filter(Boolean).join(' · ') || '—'}</Row>
+        <Row k="קוד דלת / בניין">{info?.building_code ? <Ltr>{info.building_code}</Ltr> : '—'}</Row>
+        <Row k="מקום הפגישה">{t.location || 'בית הלקוח/ה'}</Row>
+      </div>
+      {(health.length > 0 || allergies.length > 0 || highlights.length > 0) && (
+        <div className="alert-block stack" style={{ marginTop: 10, gap: 6, color: 'var(--ink-1)' }}>
+          <strong>מגבלות בריאותיות ודגשים</strong>
+          {health.map((h) => <div key={h.k}><span className="muted">{h.k}: </span>{h.v}</div>)}
+          {allergies.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><span className="muted">אלרגיות:</span>{allergies.map((a) => <Badge key={a.allergen} tone={a.severity === 'high' ? 'red' : 'orange'}>{a.allergen}</Badge>)}</div>}
+          {highlights.map((n) => <div key={n.id}>{n.body}</div>)}
+        </div>
+      )}
+      <div className="pt-row" style={{ gap: 8, marginTop: 14, justifyContent: 'flex-start' }}>
+        {!preview && isToday && !done && (t.checked_in_at
+          ? <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</button>
+          : <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</button>)}
+        {!preview && done && <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת דיווח' : 'דיווח סיום ביקור'}</button>}
+        {address && <a className="pt-btn ghost" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
+      </div>
+      {t.checked_in_at && <p className="pt-sub" style={{ marginTop: 8 }}>נכנסת ב-<Ltr>{localHM(t.checked_in_at)}</Ltr>{t.checked_out_at && <> · יצאת ב-<Ltr>{localHM(t.checked_out_at)}</Ltr></>}</p>}
     </>
+  )
+}
+
+// ---------------------------------------------------------------- Home
+function Home({ data, go, act, busy, preview, onReport, onRequest }: { data: Data; go: (t: Tab) => void; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onRequest: () => void }) {
+  const live = data.tasks.filter((t) => t.status !== 'cancelled')
+  const upcoming = live.filter((t) => t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at).sort(cmp)
+  const next = upcoming.find((t) => t.status === 'in_progress') ?? upcoming[0]
+  const todayOthers = upcoming.filter((t) => t.scheduled_date === TODAY && t.id !== next?.id)
+  const missing = live.filter((t) => (t.status === 'completed' || t.checked_out_at) && !data.summaries.some((x) => x.task_id === t.id)).sort(cmp)
+  const month = TODAY.slice(0, 7)
+  const done = live.filter((t) => t.scheduled_date.startsWith(month) && t.status === 'completed')
+  const mins = done.reduce((a, t) => a + (t.checked_in_at && t.checked_out_at ? Math.round((+new Date(t.checked_out_at) - +new Date(t.checked_in_at)) / 60000) : 0), 0)
+  return (
+    <div className="pt-stack">
+      <section className="pt-card pt-next" aria-labelledby="h-next">
+        <h2 id="h-next">{next?.status === 'in_progress' ? 'הביקור שלך עכשיו' : 'הפגישה הקרובה'}</h2>
+        {next ? <div className="co-next"><VisitDetails data={data} t={next} act={act} busy={busy} preview={preview} onReport={onReport} /></div> : <p>אין פגישות קרובות. כשהמשרד ישבץ אותך הן יופיעו כאן.</p>}
+      </section>
+
+      {missing.length > 0 && !preview && (
+        <section className="pt-card" aria-labelledby="h-miss" style={{ borderColor: 'var(--danger)' }}>
+          <h2 id="h-miss">דיווחי סיום שחסרים</h2>
+          <div className="pt-list">
+            {missing.map((t) => (
+              <div key={t.id} className="pt-row" style={{ padding: '10px 0' }}>
+                <span><b>{one(t.clients)?.full_name}</b><br /><span className="pt-sub">{dayLabel(t.scheduled_date)}</span></span>
+                <button type="button" className="pt-btn" onClick={() => onReport(t)}>למלא דיווח</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {todayOthers.length > 0 && (
+        <section className="pt-card" aria-labelledby="h-today">
+          <h2 id="h-today">עוד להיום</h2>
+          <div className="pt-list">{todayOthers.map((t) => (
+            <div key={t.id} className="pt-visit"><div className="pt-when"><b><Ltr>{hhmm(t.start_time)}</Ltr></b></div><div className="pt-what"><b>{one(t.clients)?.full_name}</b><span>{t.title}</span></div></div>
+          ))}</div>
+        </section>
+      )}
+
+      <div className="pt-actions">
+        <button type="button" className="pt-action main" onClick={onRequest}><b>הזמנת שירות חיצוני</b><span>טכנאי, רופא, קניות, הסעה</span></button>
+        <button type="button" className="pt-action" onClick={() => go('clients')}><b>הלקוחות שלי</b><span>תיק, טלפונים והעדפות</span></button>
+        <button type="button" className="pt-action" onClick={() => go('hours')}><b>האזור שלי</b><span>שעות, שכר והוצאות</span></button>
+        <a className="pt-action" href={ACCESS.tel}><b>התייעצות עם {ACCESS.name}</b><span><Ltr>{ACCESS.phone}</Ltr></span></a>
+      </div>
+
+      <section className="pt-card" aria-labelledby="h-month">
+        <h2 id="h-month">החודש שלי</h2>
+        <div className="pt-row"><span>ביקורים שבוצעו</span><b>{done.length}</b></div>
+        <div className="pt-row"><span>שעות עבודה</span><b><Ltr>{fmtHours(mins)}</Ltr></b></div>
+        <button type="button" className="pt-link" onClick={() => go('hours')}>לפירוט, שכר ונסיעות</button>
+      </section>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- Visits
+function Visits({ data, act, busy, preview, onReport }: { data: Data; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void }) {
+  const live = data.tasks.filter((t) => t.status !== 'cancelled')
+  const upcoming = live.filter((t) => t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at).sort(cmp)
+  const past = live.filter((t) => !(t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at)).sort(cmp).reverse()
+  return (
+    <div className="pt-stack">
+      {upcoming.length === 0 && <section className="pt-card"><p>אין פגישות קרובות.</p></section>}
+      {upcoming.map((t) => <section key={t.id} className="pt-card"><VisitDetails data={data} t={t} act={act} busy={busy} preview={preview} onReport={onReport} /></section>)}
+      {past.length > 0 && (
+        <section className="pt-card" aria-labelledby="h-past">
+          <h2 id="h-past">פגישות קודמות</h2>
+          <div className="pt-list">
+            {past.map((t) => (
+              <details key={t.id} className="pt-det">
+                <summary><div className="pt-visit"><div className="pt-when"><b>{dayLabel(t.scheduled_date)}</b></div><div className="pt-what"><b>{one(t.clients)?.full_name}</b><span>{t.title}</span></div></div></summary>
+                <div style={{ paddingBottom: 12 }}><VisitDetails data={data} t={t} act={act} busy={busy} preview={preview} onReport={onReport} /></div>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   )
 }
 

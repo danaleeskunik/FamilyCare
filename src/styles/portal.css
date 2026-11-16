@@ -119,3 +119,11 @@
 
 @media (min-width: 620px) { .pt-actions { grid-template-columns: repeat(4, 1fr); } .pt-visit { grid-template-columns: 190px 1fr auto; } .pt-visit .pt-status { grid-column: auto; } }
 @media (prefers-reduced-motion: no-preference) { .pt-action, .pt-btn, .pt-pill { transition: transform 120ms ease; } .pt-action:active, .pt-btn:active { transform: scale(.98); } }
+
+/* Companion app: the dark "next visit" card holds links and buttons too. */
+.pt-next a:not(.pt-btn) { color: #fff; text-decoration: underline; }
+.pt-next .pt-btn.ghost { color: #fff; border-color: rgba(255, 255, 255, .55); background: transparent; }
+.pt-next .pt-btn:not(.ghost) { background: #fff; color: var(--brand-deep); border-color: #fff; }
+.pt-next .pt-row { border: 0; }
+.pt-det > summary { cursor: pointer; list-style: none; }
+.pt-det > summary::-webkit-details-marker { display: none; }
