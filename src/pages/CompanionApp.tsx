@@ -155,7 +155,7 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
         {!preview && isToday && !done && (t.checked_in_at
           ? <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</button>
           : <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</button>)}
-        {!preview && t.scheduled_date <= TODAY && <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת הסיכום ושליחה מחדש' : 'סיכום פגישה ושליחה'}</button>}
+        {!preview && <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת שעות וסיכום' : 'דיווח שעות וסיכום פגישה'}</button>}
         {address && <a className="pt-btn ghost" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
       </div>
       {t.checked_in_at && <p className="pt-sub" style={{ marginTop: 8 }}>נכנסת ב-<Ltr>{localHM(t.checked_in_at)}</Ltr>{t.checked_out_at && <> · יצאת ב-<Ltr>{localHM(t.checked_out_at)}</Ltr></>}</p>}
