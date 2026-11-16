@@ -6,7 +6,7 @@ import { SERVICES } from '../data/services'
 import { PLAN_RATES } from '../data/pricing'
 import { CONTACT, ROY } from '../lib/contact'
 import { TODAY } from '../data/model'
-import { loadMessages, loadPortal, loadPortalPreview, photoUrl, sendMessage, sendRequest, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
+import { decideQuote, loadMessages, loadPortal, loadPortalPreview, photoUrl, sendHint, sendMessage, sendRequest, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
 import { useAuth } from '../store/AuthStore'
 import '../styles/portal.css'
 
@@ -14,6 +14,10 @@ type Tab = 'home' | 'visits' | 'orders' | 'messages' | 'info'
 const TABS: [Tab, string][] = [['home', 'ראשי'], ['visits', 'פגישות'], ['orders', 'הזמנות'], ['messages', 'הודעות'], ['info', 'פרטים']]
 const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const ROLE: Record<string, string> = { personal_companion: 'מלווה אישית', social_worker: 'עובדת סוציאלית', student: 'סטודנט/ית' }
+const hmin = (m: number) => `${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`
+const visitMinutes = (v: PortalVisit) => (v.in_at && v.out_at ? Math.round((+new Date(v.out_at) - +new Date(v.in_at)) / 60000) : 0)
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 const ALON = { name: 'אלון', display: '054-9995858', tel: '0549995858' }
 const dayLabel = (iso: string) => { const d = new Date(`${iso}T00:00:00`); return `יום ${WEEKDAYS[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}` }
 const hm = (t: string | null) => (t ? t.slice(0, 5) : '')
@@ -126,7 +130,7 @@ export default function ClientApp({ previewId }: { previewId?: string } = {}) {
             </nav>
 
             <div id="pt-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-              {tab === 'home' && <Home c={c} go={setTab} pay={() => setPayOpen(true)} unread={unread} />}
+              {tab === 'home' && <Home c={c} go={setTab} pay={() => setPayOpen(true)} unread={unread} reload={reload} preview={!!previewId} />}
               {tab === 'visits' && <Visits c={c} />}
               {tab === 'orders' && <Orders c={c} reload={reload} go={setTab} preview={!!previewId} />}
               {tab === 'messages' && <Messages c={c} preview={!!previewId} messages={messages} failed={msgFailed} onSent={async () => { const m = await loadMessages(c.id); if (m) setMessages(m) }} />}
@@ -142,7 +146,7 @@ export default function ClientApp({ previewId }: { previewId?: string } = {}) {
 }
 
 // ---------------------------------------------------------------- Home
-function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; pay: () => void; unread: number }) {
+function Home({ c, go, pay, unread, reload, preview }: { c: PortalClient; go: (t: Tab) => void; pay: () => void; unread: number; reload: () => Promise<void>; preview: boolean }) {
   const upcoming = c.visits.filter((v) => v.date >= TODAY && v.status !== 'completed').sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))
   const next = upcoming[0]
   const lastDone = c.visits.find((v) => v.summary)
@@ -151,6 +155,10 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
   const plan = PLAN_RATES.find((p) => p.id === c.plan_id)
   const total = c.plan_sessions ?? plan?.meetings ?? 0
   const trial = c.trial_ends_on && c.trial_ends_on >= TODAY
+  const doneMin = c.visits.filter((v) => v.date.startsWith(month) && v.status === 'completed').reduce((a, v) => a + visitMinutes(v), 0)
+  const contractMin = Math.round((c.plan_sessions ?? plan?.meetings ?? 0) * Number(c.plan_hours ?? plan?.hours ?? 0) * 60)
+  const extraMin = Math.max(0, doneMin - contractMin)
+  const pending = (c.quotes ?? []).filter((q) => q.status === 'pending')
   return (
     <div className="pt-stack">
       <section className="pt-card pt-next" aria-labelledby="h-next">
@@ -164,6 +172,7 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
           <div>
             <h2 id="h-comp">המלווה שלכם</h2>
             <p className="pt-big">{c.companion.name}</p>
+            {c.companion.role && <p className="pt-sub">{ROLE[c.companion.role] ?? c.companion.role}</p>}
             {c.companion.phone && <p className="pt-sub"><Ltr>{c.companion.phone}</Ltr></p>}
           </div>
           {c.companion.phone && (
@@ -174,6 +183,8 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
           )}
         </section>
       )}
+
+      {pending.length > 0 && <QuotesCard c={c} quotes={pending} reload={reload} preview={preview} title="הצעות מחיר לאישור" />}
 
       <div className="pt-actions">
         <button type="button" className="pt-action main" onClick={() => go('orders')}><b>הזמנת שירות</b><span>תיקון, רופא, קניות, בילוי ועוד</span></button>
@@ -202,6 +213,8 @@ function Home({ c, go, pay, unread }: { c: PortalClient; go: (t: Tab) => void; p
         {total > 0 && (
           <>
             <div className="pt-row"><span>פגישות החודש</span><b><Ltr>{used} / {total}</Ltr></b></div>
+            {contractMin > 0 && <div className="pt-row"><span>שעות החודש לפי החוזה</span><b><Ltr>{hmin(Math.min(doneMin, contractMin))} / {hmin(contractMin)}</Ltr></b></div>}
+            {extraMin > 0 && <div className="pt-row"><span>שעות נוספות (לפי דיווח המלווה)</span><b><Ltr>{hmin(extraMin)}</Ltr></b></div>}
             <div className="pt-bar" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={Math.min(used, total)} aria-label="פגישות שנוצלו החודש"><i style={{ width: `${Math.min(100, (used / total) * 100)}%` }} /></div>
           </>
         )}
@@ -225,7 +238,44 @@ function VisitLine({ v, big }: { v: PortalVisit; big?: boolean }) {
       <div className="pt-when"><b>{dayLabel(v.date)}</b><span><Ltr>{hm(v.start)}{v.end ? `–${hm(v.end)}` : ''}</Ltr></span></div>
       <div className="pt-what"><b>{v.title}</b>{v.who && <span>עם {v.who}</span>}<span>מקום: {v.location?.trim() || 'בבית'}</span></div>
       <span className={`pt-status ${v.status}`}>{VISIT_STATUS[v.status] ?? v.status}</span>
+      {v.in_at && <span className="pt-sub" style={{ gridColumn: '1 / -1' }}>{v.out_at ? `המלווה הגיע ב-${clock(v.in_at)} וסיים ב-${clock(v.out_at)}` : `המלווה הגיע ב-${clock(v.in_at)} ונמצא כעת בביקור`}</span>}
     </div>
+  )
+}
+
+function QuotesCard({ c, quotes, reload, preview, title }: { c: PortalClient; quotes: NonNullable<PortalClient['quotes']>; reload: () => Promise<void>; preview: boolean; title: string }) {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [err, setErr] = useState('')
+  const decide = async (id: string, ok: boolean) => {
+    setBusy(id); setErr('')
+    const done = await decideQuote(id, ok)
+    setBusy(null)
+    if (!done) { setErr('לא הצלחנו לעדכן. אפשר לנסות שוב או להתקשר אלינו.'); return }
+    await reload()
+  }
+  const STATUS: Record<string, [string, string]> = { pending: ['ממתינה לאישור', 'wait'], approved: ['אושרה', 'ok'], declined: ['נדחתה', 'no'] }
+  return (
+    <section className="pt-card" aria-labelledby={`h-q-${title}`}>
+      <h2 id={`h-q-${title}`}>{title}</h2>
+      <div className="pt-list">
+        {quotes.map((q) => (
+          <div key={q.id} className="pt-req" style={{ padding: '12px 0' }}>
+            <div className="pt-row"><b>{q.title}</b><b>{money(q.amount)}</b></div>
+            {q.vendor && <p className="pt-sub">{q.vendor}</p>}
+            {q.note && <p className="pt-pre">{q.note}</p>}
+            {q.status === 'pending' ? (
+              c.can_request && !preview ? (
+                <div className="pt-row" style={{ gap: 8, justifyContent: 'flex-start', marginTop: 8 }}>
+                  <button type="button" className="pt-btn" disabled={busy === q.id} onClick={() => decide(q.id, true)}>אישור</button>
+                  <button type="button" className="pt-btn ghost" disabled={busy === q.id} onClick={() => decide(q.id, false)}>דחייה</button>
+                </div>
+              ) : <span className="pt-status wait">ממתינה לאישור</span>
+            ) : <span className={`pt-status ${STATUS[q.status][1]}`}>{STATUS[q.status][0]}</span>}
+          </div>
+        ))}
+      </div>
+      {err && <p className="pt-msg err" role="alert">{err}</p>}
+    </section>
   )
 }
 
@@ -322,6 +372,10 @@ function Orders({ c, reload, go, preview }: { c: PortalClient; reload: () => Pro
         <p className={`pt-msg ${msg?.ok ? 'ok' : 'err'}`} role="status" aria-live="polite">{msg?.text}</p>
       </section>
 
+      <HintsCard c={c} reload={reload} preview={!!preview} />
+
+      {(c.quotes ?? []).some((q) => q.status !== 'pending') && <QuotesCard c={c} quotes={(c.quotes ?? []).filter((q) => q.status !== 'pending')} reload={reload} preview={!!preview} title="הצעות מחיר קודמות" />}
+
       <section className="pt-card" aria-labelledby="h-reqs">
         <h2 id="h-reqs">היסטוריית הזמנות</h2>
         {c.requests.length === 0 ? <p>עוד לא נשלחו הזמנות.</p> : (
@@ -341,6 +395,50 @@ function Orders({ c, reload, go, preview }: { c: PortalClient; reload: () => Pro
         )}
       </section>
     </div>
+  )
+}
+
+function HintsCard({ c, reload, preview }: { c: PortalClient; reload: () => Promise<void>; preview: boolean }) {
+  const [text, setText] = useState('')
+  const [taskId, setTaskId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const upcoming = c.visits.filter((v) => v.date >= TODAY && v.status !== 'completed').sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))
+  const send = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!text.trim()) { setMsg({ ok: false, text: 'כתבו את הדגש' }); return }
+    setBusy(true); setMsg(null)
+    const ok = await sendHint(c.id, text, taskId || null)
+    setBusy(false)
+    if (!ok) { setMsg({ ok: false, text: 'לא הצלחנו לשלוח. אפשר לנסות שוב.' }); return }
+    setText(''); setTaskId(''); setMsg({ ok: true, text: 'הדגש נשלח למלווה.' })
+    await reload()
+  }
+  return (
+    <section className="pt-card" aria-labelledby="h-hint">
+      <h2 id="h-hint">דגשים למלווה</h2>
+      <p className="pt-sub">הערה שהמלווה תראה לפני הביקור: לביקור מסוים או באופן כללי.</p>
+      {c.can_request && !preview && (
+        <form onSubmit={send} className="pt-form" noValidate>
+          <label>הדגש
+            <textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="למשל: אמא מעדיפה תה בלי סוכר, וחשוב לשאול אותה על התור לרופא" />
+          </label>
+          <label>עבור
+            <select value={taskId} onChange={(e) => setTaskId(e.target.value)}>
+              <option value="">כל הביקורים (כללי)</option>
+              {upcoming.map((v) => <option key={v.id} value={v.id}>{dayLabel(v.date)} · {hm(v.start)}</option>)}
+            </select>
+          </label>
+          <button type="submit" className="pt-btn" disabled={busy}>{busy ? 'שולחים…' : 'שליחה למלווה'}</button>
+        </form>
+      )}
+      <p className={`pt-msg ${msg?.ok ? 'ok' : 'err'}`} role="status" aria-live="polite">{msg?.text}</p>
+      {(c.hints ?? []).length > 0 && (
+        <div className="pt-list">{(c.hints ?? []).slice(0, 5).map((h) => (
+          <div key={h.id} style={{ padding: '10px 0' }}><p className="pt-pre">{h.body}</p><p className="pt-sub">{dayLabel(h.created_at.slice(0, 10))}{h.task_id ? ' · לביקור מסוים' : ' · כללי'}</p></div>
+        ))}</div>
+      )}
+    </section>
   )
 }
 

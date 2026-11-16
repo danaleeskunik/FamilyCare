@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Header } from '../layouts/AdminLayout'
 import { Badge, Button, Callout, Card, Empty, Icon, Ltr, Progress, RowActions, money } from '../components/ui'
-import { TextAreaField, SelectField } from '../components/Fields'
+import { TextAreaField, SelectField, TextField } from '../components/Fields'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/AppStore'
 import { loadClientDetail, shortName, type ClientDetail } from '../lib/queries'
@@ -141,6 +141,61 @@ function History({ d }: { d: ClientDetail }) {
 }
 
 const PLATINUM_BENEFITS = ['מפגשי בוקר — קפה ומאפה', 'ביקור שישי חודשי — חלה, עיתון, פרחים', 'רכב יוקרה או מונית VIP לבילויים', 'ליווי נציג בכל ביקור טכנאי', 'תיאום מראש — 3 ימים', 'אחזקת הבית — עד יום אחד']
+
+function QuotesAdmin({ clientId }: { clientId: string }) {
+  const { notify } = useStore()
+  const [rows, setRows] = useState<any[] | null>(null)
+  const [title, setTitle] = useState('')
+  const [vendor, setVendor] = useState('')
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.from('quotes').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
+    if (error) { console.warn('quotes unavailable', error); setRows([]); return }
+    setRows(data ?? [])
+  }, [clientId])
+  useEffect(() => { void load() }, [load])
+  const add = async () => {
+    if (!title.trim() || !(Number(amount) >= 0) || amount === '') { notify('כתבי כותרת וסכום'); return }
+    setBusy(true)
+    const { error } = await supabase.from('quotes').insert({ client_id: clientId, title: title.trim(), vendor_name: vendor.trim() || null, amount: Number(amount), note: note.trim() || null })
+    setBusy(false)
+    if (error) { console.error('quote failed', error); notify('לא הצלחנו לשמור את ההצעה'); return }
+    setTitle(''); setVendor(''); setAmount(''); setNote('')
+    notify('ההצעה נשלחה לאישור המשפחה')
+    await load()
+  }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('quotes').delete().eq('id', id)
+    if (error) { notify('לא הצלחנו למחוק'); return }
+    await load()
+  }
+  const ST: Record<string, [string, 'orange' | 'green' | 'red']> = { pending: ['ממתינה לאישור', 'orange'], approved: ['אושרה', 'green'], declined: ['נדחתה', 'red'] }
+  return (
+    <Card>
+      <div className="card-title" style={{ marginBottom: 6 }}>הצעות מחיר לאישור המשפחה</div>
+      <p className="card-meta" style={{ marginBottom: 10 }}>עלויות חריגות, כמו הצעת מחיר של אינסטלטור. המזמין/ה מאשר/ת בלחיצה באזור האישי שלו/ה.</p>
+      {rows && rows.length > 0 && (
+        <div className="stack" style={{ gap: 8, marginBottom: 12 }}>
+          {rows.map((q) => (
+            <div key={q.id} className="item-box row" style={{ gap: 10, justifyContent: 'space-between' }}>
+              <div><div style={{ fontWeight: 800 }}>{q.title} · {money(Number(q.amount))}</div><div className="card-meta">{[q.vendor_name, q.note].filter(Boolean).join(' · ')}</div></div>
+              <span className="row" style={{ gap: 6 }}><Badge tone={ST[q.status][1]}>{ST[q.status][0]}</Badge>{q.status === 'pending' && <button type="button" className="icon-btn danger" aria-label="מחיקת ההצעה" onClick={() => remove(q.id)}><Icon name="trash" size={16} /></button>}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="stack" style={{ gap: 10 }}>
+        <TextField label="על מה ההצעה" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="למשל: תיקון נזילה במטבח" />
+        <TextField label="ספק (אופציונלי)" value={vendor} onChange={(e) => setVendor(e.target.value)} />
+        <TextField label="סכום (₪)" type="number" inputMode="decimal" min="0" dir="ltr" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <TextAreaField label="פירוט (אופציונלי)" value={note} onChange={setNote} rows={2} />
+        <div><Button size="sm" disabled={busy} onClick={add}>שליחה לאישור</Button></div>
+      </div>
+    </Card>
+  )
+}
 
 function Finance({ d }: { d: ClientDetail }) {
   const c = d.client
@@ -434,7 +489,7 @@ export default function ClientFile() {
             {tab === 'intake' && <IntakeTab clientId={c.id} name={c.full_name} />}
             {tab === 'msgs' && <ClientMessages clientId={c.id} name={c.full_name} />}
             {tab === 'hist' && <History d={d} />}
-            {tab === 'fin' && <Finance d={d} />}
+            {tab === 'fin' && <><QuotesAdmin clientId={c.id} /><Finance d={d} /></>}
             {tab === 'med' && <AccessLogCard clientId={c.id} />}
           </div>
         </div>

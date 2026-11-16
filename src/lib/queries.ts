@@ -320,7 +320,7 @@ export async function loadCompanion(fromISO: string, toISO: string, asStaffId?: 
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const only = (q: any, col: string): any => (ids ? q.in(col, ids) : q)
-  const [tasks, slots, notes, clients, allergies, contacts, prefs, sums, rates] = await Promise.all([
+  const [tasks, slots, notes, clients, allergies, contacts, prefs, sums, rates, hints] = await Promise.all([
     supabase.from('tasks').select('*, regions(name), clients(id, full_name, address, phone, building_code, mobility_notes)').eq('staff_id', me.data.id).gte('scheduled_date', fromISO).lte('scheduled_date', toISO).order('scheduled_date').order('start_time'),
     only(supabase.from('client_visit_slots').select('*, clients(full_name)').eq('is_active', true), 'client_id').order('weekday').order('start_time'),
     only(supabase.from('client_notes').select('*'), 'client_id').order('created_at'),
@@ -330,11 +330,12 @@ export async function loadCompanion(fromISO: string, toISO: string, asStaffId?: 
     Promise.resolve(only(supabase.from('client_preferences').select('client_id, category, title, details'), 'client_id')).then((r: any) => optional(r, 'client_preferences')),
     Promise.resolve(supabase.from('visit_summaries').select('task_id, status, body, details').eq('author_id', me.data.id)).then((r: any) => optional(r, 'visit_summaries')),
     payRates(asStaffId, me.data.id),
+    Promise.resolve(only(supabase.from('family_hints').select('client_id, task_id, body, created_at'), 'client_id').order('created_at', { ascending: false })).then((r: any) => optional(r, 'family_hints')),
   ])
   const err = tasks.error ?? slots.error ?? notes.error ?? clients.error ?? allergies.error ?? contacts.error
   if (err) throw err
   return {
-    contacts: (contacts.data ?? []) as Row[], prefs: (prefs.data ?? []) as Row[], summaries: (sums.data ?? []) as Row[], rates,
+    contacts: (contacts.data ?? []) as Row[], prefs: (prefs.data ?? []) as Row[], summaries: (sums.data ?? []) as Row[], rates, hints: (hints.data ?? []) as Row[],
     me: me.data as { id: string; full_name: string },
     tasks: (tasks.data ?? []) as Row[], slots: (slots.data ?? []) as Row[], notes: (notes.data ?? []) as Row[],
     clients: (clients.data ?? []) as Row[], allergies: (allergies.data ?? []) as Row[],

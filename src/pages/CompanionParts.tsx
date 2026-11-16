@@ -182,6 +182,13 @@ export function ClientProfile({ c, data, onRequest }: { c: any; data: any; onReq
         </div>
       )}
 
+      {(data.hints ?? []).filter((h: any) => h.client_id === c.id).length > 0 && (
+        <div className="alert-block stack" style={{ marginTop: 10, gap: 6 }}>
+          <strong>דגשים מהמשפחה</strong>
+          {(data.hints ?? []).filter((h: any) => h.client_id === c.id).slice(0, 6).map((h: any, i: number) => <div key={i}>{h.body}</div>)}
+        </div>
+      )}
+
       {notes.filter((n: any) => n.kind === 'highlight').map((n: any) => <div key={n.id} className="alert-block" style={{ marginTop: 10 }}>{n.body}</div>)}
 
       {prefs.length > 0 && <>

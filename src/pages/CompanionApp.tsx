@@ -117,6 +117,7 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
   const allergies = data.allergies.filter((a) => a.client_id === t.client_id)
   const highlights = data.notes.filter((n) => n.client_id === t.client_id && n.kind === 'highlight')
   const health = [info?.mobility_notes && { k: 'ניידות', v: info.mobility_notes }, info?.cognitive_notes && { k: 'קוגניטיבי', v: info.cognitive_notes }].filter(Boolean) as { k: string; v: string }[]
+  const hints = data.hints.filter((h) => h.client_id === t.client_id && (!h.task_id || h.task_id === t.id))
   const summary = data.summaries.find((x) => x.task_id === t.id)
   const done = t.status === 'completed' || !!t.checked_out_at
   const isToday = t.scheduled_date === TODAY
@@ -142,6 +143,12 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
           {health.map((h) => <div key={h.k}><span className="muted">{h.k}: </span>{h.v}</div>)}
           {allergies.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}><span className="muted">אלרגיות:</span>{allergies.map((a) => <Badge key={a.allergen} tone={a.severity === 'high' ? 'red' : 'orange'}>{a.allergen}</Badge>)}</div>}
           {highlights.map((n) => <div key={n.id}>{n.body}</div>)}
+        </div>
+      )}
+      {hints.length > 0 && (
+        <div className="alert-block stack" style={{ marginTop: 10, gap: 6, color: 'var(--ink-1)' }}>
+          <strong>דגשים מהמשפחה</strong>
+          {hints.map((h, i) => <div key={i}>{h.body}{h.task_id ? '' : <span className="muted"> (כללי)</span>}</div>)}
         </div>
       )}
       <div className="pt-row" style={{ gap: 8, marginTop: 14, justifyContent: 'flex-start' }}>
