@@ -115,22 +115,6 @@ export default function Board() {
       </div>
 
       <div id="day-summary" className="anchor"><DaySummary day={summaryDay} onDayChange={setSummaryDay} /></div>
-
-      <div className="grid cols-2" style={{ alignItems: 'start' }}>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 8 }}>סיכומי ביקור לאישור</div>
-          <p className="muted" style={{ lineHeight: 1.55, marginBottom: 12 }}>
-            כל שירות נסגר במשוב ותחקיר. 3 סיכומים ממתינים לאישור מנהלת לפני שליחה למשפחה.
-          </p>
-          <Button variant="secondary" size="sm">מעבר לתור האישורים</Button>
-        </Card>
-        <Card>
-          <div className="card-title" style={{ marginBottom: 8 }}>מסלולים פעילים</div>
-          {[['בסיסי · ', 1600, 5], ['פלטינום · ', 3500, 7], ['טופ פלטינום · ', 10000, 2]].map(([n, p, c]) => (
-            <div key={n as string} className="kv"><span style={{ fontWeight: 600 }}>{n}{money(p as number)}</span><span className="num" style={{ fontWeight: 700 }}>{c}</span></div>
-          ))}
-        </Card>
-      </div>
     </>
   )
 }

@@ -5,6 +5,7 @@ import Modal from '../components/Modal'
 import { SelectField, TextAreaField, TextField } from '../components/Fields'
 import { supabase } from '../lib/supabase'
 import { shrink } from '../lib/image'
+import { localHM } from '../lib/queries'
 import { TODAY } from '../data/model'
 import { DAY_NAMES } from '../lib/dates'
 
@@ -24,6 +25,8 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
 }) {
   const d = (existing?.details ?? {}) as Partial<Report>
   const [r, setR] = useState<Report>({ body: d.body ?? existing?.body ?? '', service: d.service ?? '', closure: d.closure ?? '', quality: d.quality ?? '', newNeeds: d.newNeeds ?? '', lessons: d.lessons ?? '', done: d.done ?? [] })
+  const [start, setStart] = useState(() => (task.checked_in_at ? localHM(task.checked_in_at) : String(task.start_time ?? '').slice(0, 5)))
+  const [end, setEnd] = useState(() => (task.checked_out_at ? localHM(task.checked_out_at) : String(task.end_time ?? '').slice(0, 5)))
   const [cat, setCat] = useState('')
   const [amount, setAmount] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -34,14 +37,16 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
   const client = (Array.isArray(task.clients) ? task.clients[0] : task.clients)?.full_name ?? ''
 
   const save = async () => {
+    if (!start || !end) { setErr('הזיני שעת התחלה ושעת סיום של הביקור'); return }
+    if (end <= start) { setErr('שעת הסיום חייבת להיות אחרי שעת ההתחלה'); return }
     if (!r.body.trim() || !r.service.trim()) { setErr('כתבי את סיכום הביקור ומה בוצע בפועל'); return }
     if ((amount || file) && !(Number(amount) > 0)) { setErr('הזיני את סכום ההוצאה'); return }
     setBusy(true); setErr('')
     try {
       // What the family reads: summary, service, closure, quality and new needs. The lessons stay internal.
-      const family = [['סיכום הביקור', r.body], ['מה בוצע', r.service], ['סגירת הבקשה', r.closure], ['איך התנהל המפגש', r.quality], ['צרכים חדשים שזוהו', r.newNeeds]]
+      const family = [['שעות הביקור', `${start}–${end}`], ['סיכום הביקור', r.body], ['מה בוצע', r.service], ['סגירת הבקשה', r.closure], ['איך התנהל המפגש', r.quality], ['צרכים חדשים שזוהו', r.newNeeds]]
         .filter(([, v]) => v.trim()).map(([k, v]) => `${k}: ${v.trim()}`).join('\n')
-      const { data: ok, error } = await supabase.rpc('submit_visit_report', { p_task: task.id, p_body: family, p_details: { ...r } })
+      const { data: ok, error } = await supabase.rpc('submit_visit_report', { p_task: task.id, p_body: family, p_details: { ...r }, p_start: start, p_end: end })
       if (error || ok !== true) throw error ?? new Error('report rejected')
       if (Number(amount) > 0) {
         let path: string | null = null
@@ -69,6 +74,13 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
     <Modal title={`סיכום פגישה · ${client}`} onClose={onClose}
       footer={<><Button variant="secondary" onClick={onClose}>אחר כך</Button><Button disabled={busy} onClick={save}>{busy ? 'שולחת…' : 'שליחה למשפחה ולמשרד'}</Button></>}>
       <div className="stack" style={{ gap: 14 }}>
+        <div className="inset stack" style={{ gap: 10 }}>
+          <div className="card-label">שעות הביקור (נכנסות לסיכום ולצבירת השעות החודשית)</div>
+          <div className="grid cols-2" style={{ gap: 10 }}>
+            <TextField label="התחלת ביקור" type="time" dir="ltr" value={start} onChange={(e) => setStart(e.target.value)} />
+            <TextField label="סיום ביקור" type="time" dir="ltr" value={end} onChange={(e) => setEnd(e.target.value)} />
+          </div>
+        </div>
         <div>
           <div className="card-label" style={{ marginBottom: 6 }}>מה הושלם</div>
           <div className="stack" style={{ gap: 6 }}>
