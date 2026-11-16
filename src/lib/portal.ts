@@ -1,14 +1,14 @@
 import { supabase } from './supabase'
 
 export type PortalContact = { id: string; name: string; relation: string | null; phone: string | null; type: 'family' | 'physician'; orderer: boolean }
-export type PortalVisit = { id: string; date: string; start: string; end: string | null; title: string; status: string; who: string | null; summary: string | null; location?: string | null; in_at?: string | null; out_at?: string | null }
+export type PortalVisit = { id: string; date: string; start: string; end: string | null; title: string; status: string; who: string | null; summary: string | null; location?: string | null; in_at?: string | null; out_at?: string | null; rating?: number | null }
 export type PortalRequest = { id: string; description: string; category: string | null; status: 'new' | 'converted' | 'declined'; preferred_date: string | null; created_at: string }
 export type PortalInvoice = { id: string; month: string; status: string; total: number }
 export type PortalQuote = { id: string; title: string; vendor: string | null; amount: number; note: string | null; status: 'pending' | 'approved' | 'declined'; created_at: string; decided_at: string | null }
 export type PortalHint = { id: string; body: string; task_id: string | null; created_at: string }
 export type PortalClient = {
   id: string; name: string; plan_id: string | null; plan_name: string | null; plan_fee: number | null; plan_sessions: number | null; plan_hours: number | null
-  trial_ends_on: string | null; my_contact_id: string; my_name: string; can_request: boolean
+  trial_ends_on: string | null; my_contact_id: string; my_name: string; can_request: boolean; is_self?: boolean
   companion: { name: string; phone: string | null; photo: string | null; role?: string | null } | null
   contacts: PortalContact[]; visits: PortalVisit[]; requests: PortalRequest[]; invoices: PortalInvoice[]
   quotes?: PortalQuote[]; hints?: PortalHint[]
@@ -69,5 +69,11 @@ export async function decideQuote(id: string, approve: boolean): Promise<boolean
 export async function sendHint(clientId: string, body: string, taskId: string | null): Promise<boolean> {
   const { error } = await supabase.from('family_hints').insert({ client_id: clientId, body: body.trim(), task_id: taskId })
   if (error) console.error('hint send failed', error)
+  return !error
+}
+
+export async function sendFeedback(taskId: string, contactId: string, rating: number): Promise<boolean> {
+  const { error } = await supabase.from('task_feedback').insert({ task_id: taskId, given_by: contactId, rating })
+  if (error) console.error('feedback failed', error)
   return !error
 }

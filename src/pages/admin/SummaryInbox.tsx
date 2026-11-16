@@ -13,8 +13,8 @@ export default function SummaryInbox() {
   const [rows, setRows] = useState<any[] | null>(null)
   const load = useCallback(async () => {
     const { data, error } = await supabase.from('visit_summaries')
-      .select('id, body, details, created_at, staff_members(full_name), tasks(scheduled_date, title, clients(full_name))')
-      .eq('status', 'pending_approval').order('created_at')
+      .select('id, status, body, details, created_at, staff_members(full_name), tasks(scheduled_date, title, clients(full_name))')
+      .in('status', ['pending_approval', 'sent']).gte('updated_at', new Date(Date.now() - 14 * 86400000).toISOString()).order('updated_at', { ascending: false })
     if (error) { console.warn('summaries unavailable', error); setRows([]); return }
     setRows(data ?? [])
   }, [])
@@ -31,7 +31,7 @@ export default function SummaryInbox() {
   if (!rows || rows.length === 0) return null
   return (
     <Card flush>
-      <CardHead title="דיווחי ביקור לאישור"><span className="card-meta">{rows.length} ממתינים · אחרי האישור הם מופיעים אצל המשפחה</span></CardHead>
+      <CardHead title="סיכומי פגישה מהמלווים"><span className="card-meta">{rows.length} ב-14 הימים האחרונים · נשלחו למשפחה ולמשרד</span></CardHead>
       <div className="stack" style={{ gap: 10, padding: '0 18px 18px' }}>
         {rows.map((r) => {
           const t = one(r.tasks), who = one(r.staff_members)?.full_name, d = r.details ?? {}
@@ -41,7 +41,7 @@ export default function SummaryInbox() {
               <div className="card-meta">דווח על ידי {who}</div>
               <div style={{ whiteSpace: 'pre-wrap' }}>{r.body}</div>
               {d.lessons && <div className="card-meta">לקחים (פנימי): {d.lessons}</div>}
-              <div><Button size="sm" onClick={() => approve(r.id)}>אישור ושליחה למשפחה</Button></div>
+              {r.status === 'pending_approval' && <div><Button size="sm" onClick={() => approve(r.id)}>אישור ושליחה למשפחה</Button></div>}
             </div>
           )
         })}

@@ -50,7 +50,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
     const { error } = await supabase.rpc(fn, { p_task: taskId })
     setBusy(null)
     if (error) { console.error(fn, error); flash('לא הצלחנו לעדכן. נסי שוב.'); return }
-    flash(fn === 'check_in' ? 'הביקור התחיל' : 'הביקור הסתיים. נשאר למלא את דיווח הסיום')
+    flash(fn === 'check_in' ? 'הביקור התחיל' : 'הביקור הסתיים. נשאר לכתוב את סיכום הפגישה ולשלוח')
     const task = data?.tasks.find((t) => t.id === taskId)
     await load()
     if (fn === 'check_out' && task) setReport(task)
@@ -99,7 +99,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
         const c = data.clients.find((x) => x.id === profile)
         return c ? <Modal title="תיק הלקוח/ה" onClose={() => setProfile(null)}><ClientProfile c={c} data={data} onRequest={() => { setProfile(null); if (preview) flash('בתצוגת מנהל אי אפשר לשלוח'); else setReq(c.id) }} /></Modal> : null
       })()}
-      {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הדיווח נשלח למשרד'); void load() }} />}
+      {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הסיכום נשלח למשפחה ולמשרד'); void load() }} />}
       {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} />}
     </div>
   )
@@ -155,7 +155,7 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
         {!preview && isToday && !done && (t.checked_in_at
           ? <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</button>
           : <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</button>)}
-        {!preview && done && <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת דיווח' : 'דיווח סיום ביקור'}</button>}
+        {!preview && t.scheduled_date <= TODAY && <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת הסיכום ושליחה מחדש' : 'סיכום פגישה ושליחה'}</button>}
         {address && <a className="pt-btn ghost" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
       </div>
       {t.checked_in_at && <p className="pt-sub" style={{ marginTop: 8 }}>נכנסת ב-<Ltr>{localHM(t.checked_in_at)}</Ltr>{t.checked_out_at && <> · יצאת ב-<Ltr>{localHM(t.checked_out_at)}</Ltr></>}</p>}
@@ -169,7 +169,7 @@ function Home({ data, go, act, busy, preview, onReport, onClient, onRequest }: {
   const upcoming = live.filter((t) => t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at).sort(cmp)
   const next = upcoming.find((t) => t.status === 'in_progress') ?? upcoming[0]
   const todayOthers = upcoming.filter((t) => t.scheduled_date === TODAY && t.id !== next?.id)
-  const missing = live.filter((t) => (t.status === 'completed' || t.checked_out_at) && !data.summaries.some((x) => x.task_id === t.id)).sort(cmp)
+  const missing = live.filter((t) => (t.status === 'completed' || t.checked_out_at || t.scheduled_date < TODAY) && !data.summaries.some((x) => x.task_id === t.id)).sort(cmp)
   const month = TODAY.slice(0, 7)
   const done = live.filter((t) => t.scheduled_date.startsWith(month) && t.status === 'completed')
   const mins = done.reduce((a, t) => a + (t.checked_in_at && t.checked_out_at ? Math.round((+new Date(t.checked_out_at) - +new Date(t.checked_in_at)) / 60000) : 0), 0)
@@ -182,12 +182,12 @@ function Home({ data, go, act, busy, preview, onReport, onClient, onRequest }: {
 
       {missing.length > 0 && !preview && (
         <section className="pt-card" aria-labelledby="h-miss" style={{ borderColor: 'var(--danger)' }}>
-          <h2 id="h-miss">דיווחי סיום שחסרים</h2>
+          <h2 id="h-miss">סיכומי פגישה שעוד לא נשלחו</h2>
           <div className="pt-list">
             {missing.map((t) => (
               <div key={t.id} className="pt-row" style={{ padding: '10px 0' }}>
                 <span><button type="button" className="pt-link" style={{ font: 'inherit', fontWeight: 700, padding: 0 }} onClick={() => onClient(t.client_id)}>{one(t.clients)?.full_name}</button><br /><span className="pt-sub">{dayLabel(t.scheduled_date)}</span></span>
-                <button type="button" className="pt-btn" onClick={() => onReport(t)}>למלא דיווח</button>
+                <button type="button" className="pt-btn" onClick={() => onReport(t)}>לכתוב סיכום</button>
               </div>
             ))}
           </div>

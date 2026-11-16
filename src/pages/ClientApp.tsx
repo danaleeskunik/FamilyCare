@@ -8,6 +8,7 @@ import { CONTACT, ROY } from '../lib/contact'
 import { TODAY } from '../data/model'
 import { decideQuote, loadMessages, loadPortal, loadPortalPreview, photoUrl, sendHint, sendMessage, sendRequest, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
 import { useAuth } from '../store/AuthStore'
+import SeniorApp from './SeniorApp'
 import '../styles/portal.css'
 
 type Tab = 'home' | 'visits' | 'orders' | 'messages' | 'info'
@@ -80,6 +81,9 @@ export default function ClientApp({ previewId }: { previewId?: string } = {}) {
 
   const setSize = (v: string) => { setTs(v); safe('fc-ts', v) }
   const toggleHc = () => { setHc((x) => { safe('fc-hc', x ? '0' : '1'); return !x }) }
+
+  const seniorPreview = !!previewId && new URLSearchParams(window.location.search).get('senior') === '1'
+  if (c && (c.is_self || seniorPreview)) return <SeniorApp c={c} reload={reload} preview={!!previewId} signOut={() => void signOut()} />
 
   return (
     <div className="portal" data-hc={hc ? '1' : '0'} style={{ ['--ts' as string]: ts }}>

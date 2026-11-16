@@ -41,11 +41,8 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
       // What the family reads: summary, service, closure, quality and new needs. The lessons stay internal.
       const family = [['סיכום הביקור', r.body], ['מה בוצע', r.service], ['סגירת הבקשה', r.closure], ['איך התנהל המפגש', r.quality], ['צרכים חדשים שזוהו', r.newNeeds]]
         .filter(([, v]) => v.trim()).map(([k, v]) => `${k}: ${v.trim()}`).join('\n')
-      const row = { task_id: task.id, author_id: staffId, body: family, status: 'pending_approval', details: { ...r } }
-      const { error } = existing
-        ? await supabase.from('visit_summaries').update({ body: row.body, status: row.status, details: row.details }).eq('task_id', task.id)
-        : await supabase.from('visit_summaries').insert(row)
-      if (error) throw error
+      const { data: ok, error } = await supabase.rpc('submit_visit_report', { p_task: task.id, p_body: family, p_details: { ...r } })
+      if (error || ok !== true) throw error ?? new Error('report rejected')
       if (Number(amount) > 0) {
         let path: string | null = null
         if (file) {
@@ -69,8 +66,8 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
   }
 
   return (
-    <Modal title={`דיווח סיום ביקור · ${client}`} onClose={onClose}
-      footer={<><Button variant="secondary" onClick={onClose}>אחר כך</Button><Button disabled={busy} onClick={save}>{busy ? 'שומרת…' : 'שליחת הדיווח'}</Button></>}>
+    <Modal title={`סיכום פגישה · ${client}`} onClose={onClose}
+      footer={<><Button variant="secondary" onClick={onClose}>אחר כך</Button><Button disabled={busy} onClick={save}>{busy ? 'שולחת…' : 'שליחה למשפחה ולמשרד'}</Button></>}>
       <div className="stack" style={{ gap: 14 }}>
         <div>
           <div className="card-label" style={{ marginBottom: 6 }}>מה הושלם</div>
@@ -80,7 +77,7 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
             ))}
           </div>
         </div>
-        <TextAreaField label="סיכום הביקור (יועבר למזמין/ת השירות)" value={r.body} onChange={set('body')} placeholder="מה היה בפגישה" />
+        <TextAreaField label="סיכום הפגישה (נשלח למזמין/ת השירות ולמשרד)" value={r.body} onChange={set('body')} placeholder="מה היה בפגישה" />
         <TextAreaField label="שירות: מה בוצע" value={r.service} onChange={set('service')} placeholder="למשל: אכלנו ארוחת בוקר ברולדין. הטכנאי תיקן את המיזוג" />
         <TextAreaField label="סגירת הבקשה" value={r.closure} onChange={set('closure')} rows={2} placeholder="למשל: תוקן המזגן, 450 ₪, אחריות לשנה, הבית נקי" />
         <TextAreaField label="דיווח איכותי" value={r.quality} onChange={set('quality')} rows={2} hint="איך התנהל המפגש, מצבו הפיזי והמוראלי" />

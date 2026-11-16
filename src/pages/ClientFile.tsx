@@ -458,6 +458,7 @@ export default function ClientFile() {
           <>
             <span className="plan-pill">{trial ? 'תקופת היכרות' : `מסלול ${plan?.name ?? '—'}`}</span>
             <Link className="btn on-navy sm" to={`/admin/clients/${c.id}/view-as`}><Icon name="eye" size={16} />תצוגה כלקוח</Link>
+            <Link className="btn on-navy sm" to={`/admin/clients/${c.id}/view-as?senior=1`}><Icon name="eye" size={16} />תצוגה כמקבל/ת שירות</Link>
             <Button variant="on-navy" size="sm" icon="edit" onClick={() => openForm('client', { id: c.id })}>עריכת פרטים</Button>
             <Button variant="on-navy" size="sm" icon="message" onClick={() => setTab('msgs')}>הודעה למשפחה</Button>
             <Button variant="on-navy" size="sm" icon="document" disabled={exporting} onClick={() => void exportData()}>{exporting ? 'מכינה…' : 'ייצוא מידע'}</Button>

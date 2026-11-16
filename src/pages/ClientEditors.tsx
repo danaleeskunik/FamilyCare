@@ -246,7 +246,12 @@ export function ContactsEditor({ d, answers, onChanged, renderAccess }: { d: any
     <Card>
       <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
         <div className="card-title">אנשי קשר</div>
-        {!editing && <Button variant="secondary" size="sm" icon="plus" onClick={() => { setErr(''); setEditing(blank) }}>הוספה</Button>}
+        <div className="row" style={{ gap: 6 }}>
+          {!editing && !d.contacts.some((x: any) => x.is_self) && (
+            <Button variant="secondary" size="sm" onClick={() => void save(supabase.from('family_contacts').insert({ client_id: d.client.id, contact_type: 'family', full_name: d.client.full_name, relation: 'מקבל/ת השירות', phone: d.client.phone ?? null, permission: 'full', is_self: true }), 'לא הצלחנו להוסיף. אולי צריך להריץ את upgrade_0037.')}>כניסה למקבל/ת השירות</Button>
+          )}
+          {!editing && <Button variant="secondary" size="sm" icon="plus" onClick={() => { setErr(''); setEditing(blank) }}>הוספה</Button>}
+        </div>
       </div>
       {d.contacts.length === 0 ? <Empty text="עוד לא הוזנו אנשי קשר." /> : (
         <div className="stack" style={{ gap: 12 }}>
@@ -258,7 +263,7 @@ export function ContactsEditor({ d, answers, onChanged, renderAccess }: { d: any
                 <div className="card-meta">
                   {p.contact_type === 'physician'
                     ? [p.relation ?? 'רופא/ה', p.note].filter(Boolean).join(' · ')
-                    : [p.relation, p.is_orderer ? 'מזמין/ת השירות' : null, p.permission === 'full' ? 'הרשאה מלאה' : 'צפייה בלבד'].filter(Boolean).join(' · ')}
+                    : [p.relation, p.is_self ? 'מסך אישי למקבל/ת השירות' : null, p.is_orderer ? 'מזמין/ת השירות' : null, p.permission === 'full' ? 'הרשאה מלאה' : 'צפייה בלבד'].filter(Boolean).join(' · ')}
                 </div>
                 <div className="card-meta">
                   טלפון: {p.phone ? <a href={`tel:${p.phone}`}><Ltr>{p.phone}</Ltr></a>
