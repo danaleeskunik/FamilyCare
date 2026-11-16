@@ -133,7 +133,7 @@
 .sr *, .sr *::before, .sr *::after { box-sizing: border-box; }
 .sr a, .sr button, .sr textarea { font: inherit; }
 .sr :focus-visible { outline: 4px solid var(--focus-ring); outline-offset: 3px; }
-.sr-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(170deg, var(--brand-header), var(--brand-deep)); }
+.sr-head { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(170deg, var(--brand-header), var(--brand-deep)); }
 .sr-out { min-height: 52px; padding: 0 22px; border-radius: 14px; border: 2px solid rgba(255, 255, 255, .5); background: transparent; color: #fff; cursor: pointer; }
 .sr-main { max-width: 640px; margin: 0 auto; padding: 22px 18px 60px; display: flex; flex-direction: column; gap: 18px; }
 .sr-main h1 { font: 600 38px / 1.2 var(--font-ui); }

@@ -4,6 +4,7 @@ import { Ltr } from '../components/ui'
 import { TODAY } from '../data/model'
 import { addDays, parseISO, toISO } from '../lib/dates'
 import { photoUrl, sendFeedback, sendRequest, type PortalClient, type PortalVisit } from '../lib/portal'
+import { ACCESS } from '../lib/contact'
 import { ROLE_LABEL } from './portalShared'
 
 const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
@@ -46,11 +47,11 @@ export default function SeniorApp({ c, reload, preview, signOut }: { c: PortalCl
   return (
     <div className="sr">
       <header className="sr-head">
-        <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={40} alt="Family Care" />
+        <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={52} alt="Family Care — always with you" />
         {!preview && <button type="button" className="sr-out" onClick={signOut}>יציאה</button>}
       </header>
       <main className="sr-main">
-        <h1>שלום {first(c.my_name)}</h1>
+        <h1>שלום {first(c.name)}</h1>
         {c.plan_name && <p className="sr-plan">{c.plan_name}</p>}
 
         <section className="sr-card sr-who" aria-labelledby="sr-w">
@@ -85,7 +86,7 @@ export default function SeniorApp({ c, reload, preview, signOut }: { c: PortalCl
           <h2 id="sr-p">התוכנית שלי לשבוע</h2>
           {week.length === 0 ? <p className="sr-empty">אין כרגע פגישות השבוע.</p> : (
             <ul className="sr-list">{week.map((v) => (
-              <li key={v.id}><b>{dayName(v.date)}, <Ltr>{hm(v.start)}</Ltr></b><span>{v.title}{v.who ? ` · ${first(v.who)}` : ''}</span></li>
+              <li key={v.id}><b>{dayName(v.date)}, <Ltr>{hm(v.start)}</Ltr></b><span>{v.title}{v.who ? ` · ${first(v.who)}` : ''}</span><span>📍 {v.location?.trim() || 'בבית'}</span></li>
             ))}</ul>
           )}
         </section>
@@ -99,15 +100,20 @@ export default function SeniorApp({ c, reload, preview, signOut }: { c: PortalCl
           </section>
         )}
 
-        <button type="button" className="sr-btn big" onClick={() => (preview ? undefined : setWish(true))} disabled={preview && false}>בא לי משהו</button>
+        <button type="button" className="sr-btn big" onClick={() => setWish(true)}>בקשה חדשה</button>
         {done && <p className="sr-thanks" role="status">הבקשה נשלחה. נחזור אליך בהקדם.</p>}
+
+        <section className="sr-card" aria-labelledby="sr-m">
+          <h2 id="sr-m">צריכים את {ACCESS.name}, {ACCESS.role}?</h2>
+          <a className="sr-btn" href={ACCESS.tel}>להתקשר ל{ACCESS.name}</a>
+        </section>
       </main>
-      {wish && <WishDialog c={c} onClose={() => setWish(false)} onSent={async () => { setWish(false); setDone(true); await reload() }} />}
+      {wish && <WishDialog c={c} preview={preview} onClose={() => setWish(false)} onSent={async () => { setWish(false); setDone(true); await reload() }} />}
     </div>
   )
 }
 
-function WishDialog({ c, onClose, onSent }: { c: PortalClient; onClose: () => void; onSent: () => Promise<void> }) {
+function WishDialog({ c, preview, onClose, onSent }: { c: PortalClient; preview: boolean; onClose: () => void; onSent: () => Promise<void> }) {
   const [pick, setPick] = useState('')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -115,6 +121,7 @@ function WishDialog({ c, onClose, onSent }: { c: PortalClient; onClose: () => vo
   const send = async (e: FormEvent) => {
     e.preventDefault()
     if (!pick) { setErr('בחרו מה בא לכם'); return }
+    if (preview) { setErr('זו תצוגה מקדימה, הבקשה לא נשלחת.'); return }
     setBusy(true); setErr('')
     const ok = await sendRequest(c.id, c.my_contact_id, pick, text.trim() || pick, '')
     setBusy(false)
@@ -122,7 +129,7 @@ function WishDialog({ c, onClose, onSent }: { c: PortalClient; onClose: () => vo
     await onSent()
   }
   return (
-    <Modal title="מה בא לך?" onClose={onClose}>
+    <Modal title="בקשה חדשה" onClose={onClose}>
       <form onSubmit={send} className="sr-wish">
         <div className="sr-tiles" role="group" aria-label="בחירת נושא">
           {WANTS.map((w) => <button key={w} type="button" className={pick === w ? 'on' : ''} aria-pressed={pick === w} onClick={() => setPick(w)}>{w}</button>)}
