@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import LeadForm from '../components/LeadForm'
 import { ACCESS, CONTACT, mailHref, telHref, waHref } from '../lib/contact'
 import { SERVICES } from '../data/services'
+import { PLAN_RATES, usePrices } from '../data/pricing'
 import { ContactBtn, FloatingContact, Ico, LpFooter, LpNav, delay, logo, type IconName, useReveal } from '../components/LandingChrome'
 
 
@@ -37,11 +38,11 @@ const FAMILY: { icon: IconName; text: string }[] = [
   { icon: 'chat', text: 'חשבונית חודשית אחת, במקום תשלום לכל ספק בנפרד' },
 ]
 
-const PLANS = [
-  { name: 'Business', price: '2,950', extra: 368, meetings: 4, hours: 2, premium: false, featured: false, calendar: '' },
-  { name: 'Platinum', price: '8,350', extra: 347, meetings: 8, hours: 3, premium: true, featured: true, calendar: 'ניהול יומן משפחה חלקי (בפגישות)' },
-  { name: 'Top Platinum', price: '15,950', extra: 332, meetings: 12, hours: 4, premium: true, featured: false, calendar: 'ניהול יומן משפחה ברמה יומית' },
-]
+const PLAN_META: Record<string, { premium: boolean; featured: boolean; calendar: string }> = {
+  basic: { premium: false, featured: false, calendar: '' },
+  platinum: { premium: true, featured: true, calendar: 'ניהול יומן משפחה חלקי (בפגישות)' },
+  top_platinum: { premium: true, featured: false, calendar: 'ניהול יומן משפחה ברמה יומית' },
+}
 const PLAN_SHARED = ['מלווה אישית קבועה', 'תיק אישי עם כל הדגשים והצרכים', 'סיכום כתוב אחרי כל שירות', 'מוקד שירות אחד לכל בקשה']
 
 const REGIONS = ['רמת השרון', 'הרצליה', 'צפון תל אביב', 'רעננה והסביבה']
@@ -155,6 +156,7 @@ function Section({ id, tone, title, lead, children }: { id: string; tone?: 'whit
 
 export default function Landing() {
   useReveal()
+  usePrices()
   const [plansOpen, setPlansOpen] = useState(false)
 
   return (
@@ -266,7 +268,7 @@ export default function Landing() {
           </button>
         </div>
         <div id="plans-grid" className="lp-grid three plans" style={plansOpen ? undefined : { display: 'none' }}>
-          {PLANS.map((p, i) => (
+          {PLAN_RATES.map((r, i) => { const p = { ...PLAN_META[r.id], name: r.name, price: r.fee.toLocaleString('en-US'), extra: r.rate, meetings: r.meetings, hours: r.hours }; return (
             <article key={p.name} className={`lp-plan reveal ${p.featured ? 'featured' : ''}`} style={delay(i * 80)}>
               <h3>{p.name}</h3>
               <div className="lp-price"><span className="amt">{p.price}</span><span className="cur">₪</span><span className="per">לחודש</span></div>
@@ -281,7 +283,7 @@ export default function Landing() {
               <p className="lp-plan-extra">שעה נוספת: <span dir="ltr">{p.extra} ₪</span></p>
               <a className={`lp-btn sm lp-plan-cta ${p.featured ? 'primary' : 'solid'}`} href="#contact">להצטרפות ופרטים</a>
             </article>
-          ))}
+          )})}
         </div>
         <p className="lp-fine reveal">עלות בעלי מקצוע, רכישות, כרטיסים והסעות נוספת בהתאם להזמנה. פגישה או שעה נוספת בתיאום. <Link to="/policy">למדיניות החברה ולתנאי השירות</Link></p>
         <p className="lp-regions reveal"><Ico name="pin" size={18} /> פעילים ב{REGIONS.join(' · ')}</p>

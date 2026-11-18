@@ -9,7 +9,7 @@ import { DAY_NAMES, addDays, formatDM, monthLabel, parseISO, toISO } from '../li
 import { TODAY } from '../data/model'
 import { useAuth } from '../store/AuthStore'
 import { ACCESS } from '../lib/contact'
-import { PLAN_RATES } from '../data/pricing'
+import { PLAN_RATES, usePrices } from '../data/pricing'
 import Modal from '../components/Modal'
 import { ClientProfile, ExternalRequestDialog, ReportDialog } from './CompanionParts'
 
@@ -25,6 +25,7 @@ const cmp = (a: any, b: any) => `${a.scheduled_date} ${a.start_time}`.localeComp
 
 /** previewId = an admin looking at one companion's app exactly as that companion sees it (read only). */
 export default function CompanionApp({ previewId }: { previewId?: string } = {}) {
+  usePrices()
   const { signOut, fullName } = useAuth()
   const preview = !!previewId
   const [tab, setTab] = useState<Tab>('home')
@@ -347,7 +348,7 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
             {pay ? (
               <>
                 <div className="kv"><span>שכר שעות <span className="card-meta">({money(pay.wage)} לשעה)</span></span><span className="v">{money(pay.gross)}</span></div>
-                <div className="kv"><span>החזר נסיעות <span className="card-meta">({report.daysWorked} ימי עבודה)</span></span><span className="v">{money(pay.travel)}</span></div>
+                <div className="kv"><span>החזר נסיעות <span className="card-meta">({report.visitCount} ביקורים)</span></span><span className="v">{money(pay.travel)}</span></div>
                 {pay.expenses > 0 && <div className="kv"><span>הוצאות שאושרו</span><span className="v">{money(pay.expenses)}</span></div>}
                 <div className="kv total"><span>סה&quot;כ עד כה</span><span className="v">{money(pay.total)}</span></div>
                 <p className="card-meta" style={{ marginTop: 8 }}>הסכום מתאפס בתחילת כל חודש. ניתן לעבור בין חודשים בחצים למעלה.</p>

@@ -1,4 +1,9 @@
-/** Price sheet: membership fee and extra-hour rate per plan. Extra hours cost more in the evening and at night. */
+import { useEffect, useSyncExternalStore } from 'react'
+import { supabase } from '../lib/supabase'
+
+/** Price sheet: membership fee and extra-hour rate per plan. Extra hours cost more in the evening and at night.
+ *  The values below are only the starting point: the live sheet is read from the database (price_sheet) and edited in Finance,
+ *  so the public site, the client portal and the admin screens always show the same numbers. */
 export type PlanRate = { id: 'basic' | 'platinum' | 'top_platinum'; name: string; fee: number; meetings: number; hours: number; rate: number }
 
 export const PLAN_RATES: PlanRate[] = [
@@ -8,11 +13,43 @@ export const PLAN_RATES: PlanRate[] = [
 ]
 
 /** Multiplier of the plan's hourly rate by time of day (minutes from midnight, end exclusive). */
-export const RATE_BANDS = [
+export const RATE_BANDS: { from: number; to: number; mult: number; label: string }[] = [
   { from: 7 * 60, to: 19 * 60, mult: 1, label: '07:00–19:00' },
   { from: 19 * 60, to: 23 * 60, mult: 1.3, label: '19:00–23:00' },
   { from: 23 * 60, to: 31 * 60, mult: 1.8, label: '23:00–07:00' },
-] as const
+]
+
+export type PriceSheet = { plans: PlanRate[]; evening_pct: number; night_pct: number }
+export const pctOf = (mult: number) => Math.round(mult * 1000) / 10
+
+// Shared, in-memory copy of the live sheet. Arrays are updated in place so every importer sees the new numbers;
+// usePrices() re-renders the component that calls it.
+let version = 0
+const subs = new Set<() => void>()
+export function applyPriceSheet(d: PriceSheet) {
+  for (const p of d.plans) {
+    const cur = PLAN_RATES.find((x) => x.id === p.id)
+    if (cur) Object.assign(cur, { name: p.name ?? cur.name, fee: Number(p.fee), meetings: Number(p.meetings), hours: Number(p.hours), rate: Number(p.rate) })
+  }
+  RATE_BANDS[1].mult = Number(d.evening_pct) / 100
+  RATE_BANDS[2].mult = Number(d.night_pct) / 100
+  version += 1
+  subs.forEach((f) => f())
+}
+let loading: Promise<void> | null = null
+export function loadPrices(force = false): Promise<void> {
+  if (!loading || force) {
+    loading = Promise.resolve(supabase.rpc('public_prices')).then(({ data, error }) => {
+      if (!error && data && Array.isArray((data as PriceSheet).plans)) applyPriceSheet(data as PriceSheet)
+    }).catch(() => undefined)
+  }
+  return loading
+}
+/** Call at the top of any component that shows prices. */
+export function usePrices() {
+  useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f) } }, () => version)
+  useEffect(() => { void loadPrices() }, [])
+}
 
 export type ExtraLine = { label: string; minutes: number; mult: number; amount: number }
 

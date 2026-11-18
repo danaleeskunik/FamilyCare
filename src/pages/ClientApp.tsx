@@ -3,16 +3,16 @@ import Modal from '../components/Modal'
 import PaymentOptions from '../components/PaymentOptions'
 import { Ltr, money } from '../components/ui'
 import { SERVICES } from '../data/services'
-import { PLAN_RATES } from '../data/pricing'
+import { PLAN_RATES, RATE_BANDS, pctOf, usePrices } from '../data/pricing'
 import { CONTACT, ROY } from '../lib/contact'
 import { TODAY } from '../data/model'
-import { decideQuote, loadMessages, loadPortal, loadPortalPreview, photoUrl, sendHint, sendMessage, sendRequest, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
+import { decideQuote, loadMessages, loadMonthExtras, loadPortal, loadPortalPreview, photoUrl, sendHint, sendMessage, sendRequest, type MonthExtras, type PortalClient, type PortalMessage, type PortalVisit } from '../lib/portal'
 import { useAuth } from '../store/AuthStore'
 import SeniorApp from './SeniorApp'
 import '../styles/portal.css'
 
-type Tab = 'home' | 'visits' | 'orders' | 'messages' | 'info'
-const TABS: [Tab, string][] = [['home', 'ראשי'], ['visits', 'פגישות'], ['orders', 'הזמנות'], ['messages', 'הודעות'], ['info', 'פרטים']]
+type Tab = 'home' | 'visits' | 'orders' | 'messages' | 'pay'
+const TABS: [Tab, string][] = [['home', 'ראשי'], ['visits', 'פגישות'], ['orders', 'הזמנות'], ['messages', 'הודעות'], ['pay', 'תשלום']]
 const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
 const ROLE: Record<string, string> = { personal_companion: 'מלווה אישית', social_worker: 'עובדת סוציאלית', student: 'סטודנט/ית' }
@@ -45,11 +45,11 @@ function CallBtn({ phone, label, name }: { phone: string; label?: string; name: 
 
 /** previewId = an admin looking at this client's portal exactly as the family sees it (read only). */
 export default function ClientApp({ previewId }: { previewId?: string } = {}) {
+  usePrices()
   const { signOut } = useAuth()
   const [data, setData] = useState<{ clients: PortalClient[]; setup: boolean; failed: boolean } | null>(null)
   const [idx, setIdx] = useState(0)
   const [tab, setTab] = useState<Tab>('home')
-  const [payOpen, setPayOpen] = useState(false)
   const [ts, setTs] = useState(() => safe('fc-ts') ?? '1')
   const [hc, setHc] = useState(() => safe('fc-hc') === '1')
   const [messages, setMessages] = useState<PortalMessage[] | null>(null)
@@ -134,23 +134,30 @@ export default function ClientApp({ previewId }: { previewId?: string } = {}) {
             </nav>
 
             <div id="pt-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-              {tab === 'home' && <Home c={c} go={setTab} pay={() => setPayOpen(true)} unread={unread} reload={reload} preview={!!previewId} />}
+              {tab === 'home' && <Home c={c} go={setTab} unread={unread} reload={reload} preview={!!previewId} />}
               {tab === 'visits' && <Visits c={c} />}
               {tab === 'orders' && <Orders c={c} reload={reload} go={setTab} preview={!!previewId} />}
               {tab === 'messages' && <Messages c={c} preview={!!previewId} messages={messages} failed={msgFailed} onSent={async () => { const m = await loadMessages(c.id); if (m) setMessages(m) }} />}
-              {tab === 'info' && <Info c={c} pay={() => setPayOpen(true)} />}
+              {tab === 'pay' && <Payment c={c} />}
             </div>
           </>
         )}
       </main>
 
-      {payOpen && c && <PayDialog c={c} onClose={() => setPayOpen(false)} />}
     </div>
   )
 }
 
 // ---------------------------------------------------------------- Home
-function Home({ c, go, pay, unread, reload, preview }: { c: PortalClient; go: (t: Tab) => void; pay: () => void; unread: number; reload: () => Promise<void>; preview: boolean }) {
+const monthHours = (c: PortalClient) => {
+  const month = TODAY.slice(0, 7)
+  const plan = PLAN_RATES.find((p) => p.id === c.plan_id)
+  const doneMin = c.visits.filter((v) => v.date.startsWith(month) && v.status === 'completed').reduce((a, v) => a + visitMinutes(v), 0)
+  const contractMin = Math.round((c.plan_sessions ?? plan?.meetings ?? 0) * Number(c.plan_hours ?? plan?.hours ?? 0) * 60)
+  return { doneMin, contractMin, extraMin: Math.max(0, doneMin - contractMin) }
+}
+
+function Home({ c, go, unread, reload, preview }: { c: PortalClient; go: (t: Tab) => void; unread: number; reload: () => Promise<void>; preview: boolean }) {
   const upcoming = c.visits.filter((v) => v.date >= TODAY && v.status !== 'completed').sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))
   const next = upcoming[0]
   const lastDone = c.visits.find((v) => v.summary)
@@ -193,7 +200,7 @@ function Home({ c, go, pay, unread, reload, preview }: { c: PortalClient; go: (t
       <div className="pt-actions">
         <button type="button" className="pt-action main" onClick={() => go('orders')}><b>הזמנת שירות</b><span>תיקון, רופא, קניות, בילוי ועוד</span></button>
         <button type="button" className="pt-action" onClick={() => go('messages')}><b>הודעה לחברה</b><span>{unread ? `${unread} הודעות חדשות` : 'כתיבה חופשית'}</span></button>
-        <button type="button" className="pt-action" onClick={pay}><b>תשלומים</b><span>העברה, Bit או PayBox</span></button>
+        <button type="button" className="pt-action" onClick={() => go('pay')}><b>תשלום</b><span>סיכום חודשי, העברה, Bit או PayBox</span></button>
         <a className="pt-action" href={tel(ALON.tel)}><b>להתקשר לאלון</b><span><Ltr>{ALON.display}</Ltr></span></a>
       </div>
 
@@ -232,6 +239,8 @@ function Home({ c, go, pay, unread, reload, preview }: { c: PortalClient; go: (t
           <button type="button" className="pt-link" onClick={() => go('visits')}>כל הסיכומים בלשונית "פגישות"</button>
         </section>
       )}
+
+      <Contacts c={c} />
     </div>
   )
 }
@@ -486,11 +495,9 @@ function Messages({ c, messages, failed, onSent, preview }: { c: PortalClient; m
 }
 
 // ---------------------------------------------------------------- Info
-function Info({ c, pay }: { c: PortalClient; pay: () => void }) {
-  const plan = PLAN_RATES.find((p) => p.id === c.plan_id)
-  const invoices = c.invoices
+function Contacts({ c }: { c: PortalClient }) {
   return (
-    <div className="pt-stack">
+    <>
       <section className="pt-card" aria-labelledby="h-phones">
         <h2 id="h-phones">טלפונים חשובים</h2>
         <div className="pt-list">
@@ -515,54 +522,95 @@ function Info({ c, pay }: { c: PortalClient; pay: () => void }) {
           </div>
         )}
       </section>
+    </>
+  )
+}
 
+/** The payment tab: plan in one line, the month split into membership (standing order) and extras, and the invoices. */
+function Payment({ c }: { c: PortalClient }) {
+  const plan = PLAN_RATES.find((p) => p.id === c.plan_id)
+  const fee = c.plan_fee ?? plan?.fee ?? 0
+  const month = TODAY.slice(0, 7)
+  const monthName = `${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`
+  const [extras, setExtras] = useState<MonthExtras | null>(null)
+  const [prices, setPrices] = useState(false)
+  const [pay, setPay] = useState(false)
+  useEffect(() => { let off = false; void loadMonthExtras(c.id, `${month}-01`).then((x) => { if (!off) setExtras(x) }); return () => { off = true } }, [c.id, month])
+  const { extraMin } = monthHours(c)
+  const hoursCharge = (extras?.hours ?? []).reduce((a, h) => a + h.charge, 0)
+  const expenses = extras?.expenses ?? []
+  const expensesSum = expenses.reduce((a, e) => a + e.amount, 0)
+  const extrasTotal = hoursCharge + expensesSum
+  return (
+    <div className="pt-stack">
       <section className="pt-card" aria-labelledby="h-plan2">
-        <div className="pt-row"><h2 id="h-plan2">המסלול שלנו</h2><span className="pt-chip">{c.plan_name ?? plan?.name ?? 'לא הוגדר'}</span></div>
-        {plan && (
-          <dl className="pt-dl">
-            <div><dt>מנוי חודשי</dt><dd>{money(plan.fee)}</dd></div>
-            <div><dt>פגישות בחודש</dt><dd>{plan.meetings}</dd></div>
-            <div><dt>שעות בפגישה</dt><dd>{plan.hours}</dd></div>
-            <div><dt>שעה נוספת</dt><dd>{money(plan.rate)}</dd></div>
-          </dl>
-        )}
-        <p className="pt-sub">שעה נוספת בין 19:00 ל-23:00 בתוספת 30%, ובין 23:00 ל-07:00 בתוספת 80%.</p>
+        <div className="pt-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+          <h2 id="h-plan2" style={{ margin: 0 }}>המסלול שלנו</h2>
+          <span className="pt-chip">{c.plan_name ?? plan?.name ?? 'לא הוגדר'}</span>
+          {plan && <span className="pt-sub" style={{ margin: 0 }}>{money(fee)} לחודש · {c.plan_sessions ?? plan.meetings} פגישות · {c.plan_hours ?? plan.hours} שעות בפגישה</span>}
+        </div>
+        <button type="button" className="pt-btn ghost" style={{ marginTop: 10 }} onClick={() => setPrices(true)}>מחיר שעות נוספות</button>
       </section>
 
-      <section className="pt-card" aria-labelledby="h-pay">
-        <div className="pt-row"><h2 id="h-pay">תשלומים</h2><button type="button" className="pt-btn" onClick={pay}>לתשלום</button></div>
-        {invoices.length === 0 ? <p className="pt-sub">עוד אין חשבוניות.</p> : (
+      <section className="pt-card" aria-labelledby="h-sum">
+        <h2 id="h-sum">סיכום {monthName}</h2>
+        <h3 className="pt-sub" style={{ marginTop: 12 }}>1. דמי מנוי</h3>
+        <div className="pt-row"><span>מנוי חודשי <span className="pt-sub">(משולם בהוראת קבע)</span></span><b>{money(fee)}</b></div>
+
+        <h3 className="pt-sub" style={{ marginTop: 16 }}>2. הוצאות נוספות</h3>
+        {(extraMin > 0 || (extras?.hours.length ?? 0) > 0) && (
+          <div className="pt-row"><span>שעות נוספות: <Ltr>{hmin(extraMin || extras!.hours.reduce((a, h) => a + h.minutes, 0))}</Ltr></span><b>{hoursCharge > 0 ? money(hoursCharge) : 'ממתין לחישוב'}</b></div>
+        )}
+        {expenses.map((e) => <div key={e.id} className="pt-row"><span>{e.text} <span className="pt-sub">{dayLabel(e.date)}</span></span><b>{money(e.amount)}</b></div>)}
+        {extraMin === 0 && !extras?.hours.length && expenses.length === 0 && <p className="pt-sub">אין עדיין הוצאות נוספות החודש.</p>}
+        <div className="pt-row" style={{ marginTop: 8, fontWeight: 700 }}><span>סה"כ הוצאות נוספות</span><b>{money(extrasTotal)}</b></div>
+        <button type="button" className="pt-btn" style={{ marginTop: 14 }} onClick={() => setPay(true)} disabled={extrasTotal <= 0}>תשלום {extrasTotal > 0 ? money(extrasTotal) : ''}</button>
+      </section>
+
+      <section className="pt-card" aria-labelledby="h-inv">
+        <h2 id="h-inv">חשבוניות</h2>
+        {c.invoices.length === 0 ? <p className="pt-sub">עוד אין חשבוניות.</p> : (
           <div className="pt-list">
-            {invoices.map((i) => (
+            {c.invoices.map((i) => (
               <div key={i.id} className="pt-contact"><div><b>{MONTHS[Number(i.month.slice(5, 7)) - 1]} {i.month.slice(0, 4)}</b><span>{i.status === 'paid' ? 'שולם' : i.status === 'card_declined' ? 'כרטיס נדחה' : 'ממתין לתשלום'}</span></div><b>{money(i.total)}</b></div>
             ))}
           </div>
         )}
       </section>
+      {prices && <PriceListDialog onClose={() => setPrices(false)} />}
+      {pay && <PayDialog c={c} amount={extrasTotal} onClose={() => setPay(false)} />}
     </div>
   )
 }
 
+/** Read-only price list, the same numbers the company edits in Finance and shows on the site. */
+function PriceListDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="מחיר שעות נוספות" onClose={onClose}>
+      <div className="portal pt-modal" style={{ ['--ts' as string]: 1 }}>
+        <div className="pt-list">
+          {PLAN_RATES.map((p) => (
+            <div key={p.id} className="pt-contact" style={{ alignItems: 'flex-start' }}>
+              <div><b>{p.name}</b><span>מנוי {money(p.fee)} · {p.meetings} פגישות · {p.hours} שעות בפגישה</span></div>
+              <b><Ltr>{money(p.rate)}</Ltr></b>
+            </div>
+          ))}
+        </div>
+        <p className="pt-sub" style={{ marginTop: 12 }}>המחיר הוא לשעה נוספת בין 07:00 ל-19:00. בין 19:00 ל-23:00 המחיר הוא {pctOf(RATE_BANDS[1].mult)}%, ובין 23:00 ל-07:00 הוא {pctOf(RATE_BANDS[2].mult)}%. החישוב יחסי לדקות.</p>
+        <button type="button" className="pt-btn" style={{ marginTop: 14 }} onClick={onClose}>חזרה לתשלום</button>
+      </div>
+    </Modal>
+  )
+}
+
 // ---------------------------------------------------------------- Payments
-function PayDialog({ c, onClose }: { c: PortalClient; onClose: () => void }) {
-  const plan = PLAN_RATES.find((p) => p.id === c.plan_id)
-  const [kind, setKind] = useState<'monthly' | 'extra'>('monthly')
-  const [extra, setExtra] = useState('')
-  const amount = kind === 'monthly' ? (plan?.fee ?? null) : Number(extra) > 0 ? Number(extra) : null
+function PayDialog({ c, amount, onClose }: { c: PortalClient; amount: number; onClose: () => void }) {
   return (
     <Modal title="תשלום" onClose={onClose}>
       <div className="portal pt-modal" style={{ ['--ts' as string]: 1 }}>
-        <div className="pt-pills" role="group" aria-label="סוג התשלום">
-          <button type="button" className={`pt-pill ${kind === 'monthly' ? 'on' : ''}`} aria-pressed={kind === 'monthly'} onClick={() => setKind('monthly')}>מנוי חודשי</button>
-          <button type="button" className={`pt-pill ${kind === 'extra' ? 'on' : ''}`} aria-pressed={kind === 'extra'} onClick={() => setKind('extra')}>תשלום נוסף</button>
-        </div>
-        {kind === 'extra' && (
-          <label className="pt-form" style={{ marginTop: 14 }}>סכום לתשלום (₪)
-            <input type="number" inputMode="decimal" min="0" dir="ltr" value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="הסכום שסוכם איתנו" />
-          </label>
-        )}
+        <p className="pt-sub">הוצאות נוספות לחודש. דמי המנוי משולמים בהוראת קבע.</p>
         <div style={{ marginTop: 16 }}>
-          <PaymentOptions amount={amount} reason={`${kind === 'monthly' ? 'מנוי חודשי' : 'תשלום נוסף'} · ${c.name}`} />
+          <PaymentOptions amount={amount > 0 ? amount : null} reason={`הוצאות נוספות · ${c.name}`} />
         </div>
         <p className="pt-sub" style={{ marginTop: 12 }}>אחרי ההעברה אפשר לשלוח לנו הודעה, ואנחנו נאשר את קבלת התשלום.</p>
       </div>

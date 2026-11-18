@@ -150,7 +150,7 @@ export default function StaffReport() {
           <Card>
             <div className="card-title" style={{ marginBottom: 6 }}>חישוב שכר — {monthLabel(month)}</div>
             <div className="kv"><span>שעות בפועל <Ltr>{fmtHours(report.totalMinutes)}</Ltr> × {money(rate)} לשעה{wage === null ? ' (ברירת מחדל)' : ''}</span><span className="v">{money(pay.gross)}</span></div>
-            <div className="kv"><span>נסיעות: {report.daysWorked} ימי עבודה × {money(pricing.travelPerDay)}</span><span className="v">{money(pay.travel)}</span></div>
+            <div className="kv"><span>נסיעות: {report.visitCount} ביקורים × {money(pricing.travelPerDay)}</span><span className="v">{money(pay.travel)}</span></div>
             <div className="kv"><span>החזר הוצאות שאושרו</span><span className="v">{money(pay.expenses)}</span></div>
             <div className="kv total"><span>סה&quot;כ לתשלום</span><span className="v">{money(pay.total)}</span></div>
             <div className="kv faint"><span>עלות לחברה (מקדם {pricing.socialFactor} על השכר)</span><span className="v">{money(pay.companyCost)}</span></div>

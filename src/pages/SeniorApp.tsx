@@ -18,6 +18,7 @@ const when = (iso: string) => {
 }
 const dayName = (iso: string) => (iso === TODAY ? 'היום' : iso === toISO(addDays(parseISO(TODAY), 1)) ? 'מחר' : `יום ${WEEKDAYS[parseISO(iso).getDay()]}`)
 const FACES: [number, string, string][] = [[1, '😞', 'ממש לא טוב'], [2, '🙁', 'לא כל כך'], [3, '😐', 'בסדר'], [4, '🙂', 'טוב'], [5, '😍', 'מצוין']]
+const greeting = (h = new Date().getHours()) => (h >= 5 && h < 12 ? 'בוקר טוב' : h >= 12 && h < 17 ? 'צהריים טובים' : h >= 17 && h < 21 ? 'ערב טוב' : 'לילה טוב')
 const WANTS = ['קפה ומפגש', 'רופא או קופת חולים', 'קניות', 'בילוי, הצגה או טיול', 'תיקון בבית', 'הסעה', 'משהו אחר']
 
 /** The client's own screen: big letters, few choices, nothing to get lost in. */
@@ -47,12 +48,12 @@ export default function SeniorApp({ c, reload, preview, signOut }: { c: PortalCl
   return (
     <div className="sr">
       <header className="sr-head">
-        <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} height={52} alt="Family Care — always with you" />
+        <img src={`${import.meta.env.BASE_URL}brand/logo-white.png`} alt="Family Care — always with you" />
         {!preview && <button type="button" className="sr-out" onClick={signOut}>יציאה</button>}
       </header>
       <main className="sr-main">
-        <h1>שלום {first(c.name)}</h1>
-        {c.plan_name && <p className="sr-plan">{c.plan_name}</p>}
+        {c.plan_name && <p className="sr-plan">חברת מועדון {c.plan_name}</p>}
+        <h1>{greeting()} {first(c.name)}</h1>
 
         <section className="sr-card sr-who" aria-labelledby="sr-w">
           <h2 id="sr-w">מי מגיע אליי ומתי</h2>

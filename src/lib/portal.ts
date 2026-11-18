@@ -77,3 +77,12 @@ export async function sendFeedback(taskId: string, contactId: string, rating: nu
   if (error) console.error('feedback failed', error)
   return !error
 }
+
+export type MonthExtras = { hours: { date: string; minutes: number; charge: number }[]; expenses: { id: string; date: string; text: string; amount: number }[] }
+/** Billed extra hours and approved expenses for one client in one month (first day of the month as ISO date). */
+export async function loadMonthExtras(clientId: string, monthISO: string): Promise<MonthExtras | null> {
+  const { data, error } = await supabase.rpc('portal_month_extras', { p_client: clientId, p_month: monthISO })
+  if (error || !data) { if (error) console.error('month extras failed', error); return null }
+  const d = data as MonthExtras
+  return { hours: (d.hours ?? []).map((h) => ({ ...h, charge: Number(h.charge) })), expenses: (d.expenses ?? []).map((e) => ({ ...e, amount: Number(e.amount) })) }
+}

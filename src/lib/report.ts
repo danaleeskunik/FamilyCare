@@ -19,6 +19,8 @@ export type MonthReport = {
   visits: VisitRow[]
   visitCount: number
   totalMinutes: number
+  /** minutes beyond the planned length of each visit */
+  extraMinutes: number
   daysWorked: number
   avgMinutes: number
   missingTimes: number // completed visits with no check-in/out: hours cannot be counted
@@ -64,7 +66,7 @@ export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[]
   }
   const exp: ExpenseRow[] = expenses.map((e) => ({ id: e.id, date: e.expense_date, amount: Number(e.amount), description: e.description, status: e.status, taskId: e.task_id }))
   return {
-    visits, visitCount: visits.length, totalMinutes,
+    visits, visitCount: visits.length, totalMinutes, extraMinutes: visits.reduce((a, v) => a + (v.overMin ?? 0), 0),
     daysWorked: new Set(counted.map((v) => v.date)).size,
     avgMinutes: counted.length ? Math.round(totalMinutes / counted.length) : 0,
     missingTimes: visits.length - counted.length,
@@ -79,7 +81,7 @@ export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[]
 export function payroll(r: MonthReport, wage: number, p: PricingSettings) {
   const hours = r.totalMinutes / 60
   const gross = Math.round(hours * wage * 100) / 100
-  const travel = r.daysWorked * p.travelPerDay
+  const travel = r.visitCount * p.travelPerDay // paid per visit to a client, not per workday
   const total = gross + travel + r.approvedExpenses
   return { hours, wage, gross, travel, expenses: r.approvedExpenses, total, companyCost: Math.round((gross * p.socialFactor + travel + r.approvedExpenses) * 100) / 100 }
 }
