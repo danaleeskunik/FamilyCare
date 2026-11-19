@@ -2350,7 +2350,7 @@ begin
     update public.membership_plans set monthly_price = (r->>'fee')::numeric, monthly_sessions = (r->>'meetings')::int,
       hours_per_session = (r->>'hours')::numeric where id = r->>'id';
   end loop;
-  update public.pricing_settings set companion_hourly_wage = p_wage, travel_per_workday = p_travel;
+  update public.pricing_settings set companion_hourly_wage = p_wage, travel_per_workday = p_travel where id;
   return true;
 end;
 $$;
