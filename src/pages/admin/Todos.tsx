@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Badge, Button, Callout, Card, CardHead, Empty, Ltr, RowActions } from '../../components/ui'
 import { TextAreaField, TextField } from '../../components/Fields'
 import { supabase } from '../../lib/supabase'
@@ -6,9 +7,9 @@ import { useStore } from '../../store/AppStore'
 import { TODAY } from '../../data/model'
 import { formatDM, parseISO } from '../../lib/dates'
 
-type Todo = { id: string; title: string; details: string; dueOn: string | null; done: boolean }
-type Row = { id: string; title: string; details: string | null; due_on: string | null; done: boolean }
-const fromRow = (r: Row): Todo => ({ id: r.id, title: r.title, details: r.details ?? '', dueOn: r.due_on, done: r.done })
+type Todo = { id: string; title: string; details: string; dueOn: string | null; done: boolean; link: string | null }
+type Row = { id: string; title: string; details: string | null; due_on: string | null; done: boolean; link?: string | null }
+const fromRow = (r: Row): Todo => ({ id: r.id, title: r.title, details: r.details ?? '', dueOn: r.due_on, done: r.done, link: r.link ?? null })
 const missing = (e: { code?: string; message?: string } | null) => !!e && (['42P01', 'PGRST205'].includes(e.code ?? '') || /schema cache|does not exist/i.test(e.message ?? ''))
 const blank = { id: null as string | null, title: '', details: '', dueOn: '' }
 
@@ -23,7 +24,7 @@ export default function Todos() {
   const [removing, setRemoving] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.from('admin_todos').select('id, title, details, due_on, done').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('admin_todos').select('*').order('created_at', { ascending: false })
     if (error) { if (missing(error)) setSetup(true); else notify('לא הצלחנו לטעון את המשימות'); setLoading(false); return }
     setItems((data as Row[]).map(fromRow)); setLoading(false)
   }, [notify])
@@ -70,6 +71,7 @@ export default function Todos() {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--ink-2)' : undefined }}>{t.title} {due(t)}</div>
         {t.details && <p className="card-meta" style={{ marginTop: 4, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{t.details}</p>}
+        {t.link && !t.done && <Link className="btn secondary sm" style={{ marginTop: 8 }} to={t.link}>לדוח של המלווה/ת</Link>}
       </div>
       {removing === t.id
         ? <span className="lead-confirm"><Button size="sm" variant="danger" onClick={() => void remove(t.id)}>מחיקה</Button><Button size="sm" variant="quiet" onClick={() => setRemoving(null)}>ביטול</Button></span>

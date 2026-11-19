@@ -2,9 +2,10 @@ import { Fragment, useCallback, useEffect, useState } from 'react'
 import { Badge, Button, Card, CardHead, Ltr, money } from '../../components/ui'
 import { TextField } from '../../components/Fields'
 import { supabase } from '../../lib/supabase'
-import { buildMonthReport, fmtHours, payroll } from '../../lib/report'
+import { buildMonthReport, fmtHours, payroll, type ActivityRow } from '../../lib/report'
 import { PLAN_RATES, RATE_BANDS, applyPriceSheet, pctOf, usePrices, type PlanRate } from '../../data/pricing'
 import { TODAY } from '../../data/model'
+import { formatDM, parseISO } from '../../lib/dates'
 import { useStore } from '../../store/AppStore'
 import { useAuth } from '../../store/AuthStore'
 
@@ -15,7 +16,7 @@ const shekel = (n: number) => money(Number.isInteger(n) ? n : Number(n.toFixed(2
 
 export type WorkerExpense = { id: string; date: string; text: string; amount: number; status: string }
 export type WorkerRow = {
-  id: string; name: string; visits: number; pendingActivities: number; hours: number; extraHours: number; wagePay: number
+  id: string; name: string; visits: number; pendingActivities: number; activities: ActivityRow[]; hours: number; extraHours: number; wagePay: number
   travel: number; expenses: WorkerExpense[]; expensesTotal: number; total: number
 }
 export type FixedRow = { name: string; amount: number }
@@ -43,7 +44,7 @@ export function useMonthData(month: string, version: number): MonthData | null {
         supabase.from('staff_members').select('id, hourly_wage'),
         supabase.from('fixed_expenses').select('name, amount').order('created_at'),
         supabase.from('expense_docs').select('amount').gte('captured_at', t0).lt('captured_at', t1),
-        supabase.from('staff_activities').select('*').gte('work_date', from).lt('work_date', to),
+        supabase.from('staff_activities').select('*, clients(full_name)').gte('work_date', from).lt('work_date', to),
       ])
       if (cancelled) return
       setRaw({
@@ -65,7 +66,7 @@ export function useMonthData(month: string, version: number): MonthData | null {
     const expenses = raw.exp.filter((x) => x.staff_id === id).map((x) => ({ id: x.id as string, date: x.expense_date as string, text: x.description as string, amount: Number(x.amount), status: x.status as string }))
     const extra = rep.extraMinutes
     return {
-      id, name: names.get(id) ?? 'מלווה', visits: rep.travelTrips, pendingActivities: rep.pendingActivities, hours: (rep.totalMinutes - extra) / 60, extraHours: extra / 60,
+      id, name: names.get(id) ?? 'מלווה', visits: rep.travelTrips, pendingActivities: rep.pendingActivities, activities: rep.activities, hours: (rep.totalMinutes - extra) / 60, extraHours: extra / 60,
       wagePay: pay.gross, travel: pay.travel, expenses, expensesTotal: pay.expenses, total: pay.gross + pay.travel + pay.expenses,
     }
   }).sort((a, b) => a.name.localeCompare(b.name, 'he'))
@@ -213,6 +214,11 @@ export function PayrollCard({ data, monthName, onChanged }: { data: MonthData | 
   const { notify } = useStore()
   const { session } = useAuth()
   const [open, setOpen] = useState<string | null>(null)
+  const reviewAct = async (id: string, status: 'approved' | 'rejected') => {
+    const { error } = await supabase.from('staff_activities').update({ status, reviewed_by: session?.user.id ?? null, reviewed_at: new Date().toISOString() }).eq('id', id)
+    if (error) { console.error('activity review failed', error); notify('לא הצלחנו לעדכן את הדיווח. נסי שוב.'); return }
+    onChanged()
+  }
   const [text, setText] = useState('')
   const [amount, setAmount] = useState('')
   const [busy, setBusy] = useState(false)
@@ -254,6 +260,13 @@ export function PayrollCard({ data, monthName, onChanged }: { data: MonthData | 
                     <td colSpan={6}>
                       <div className="stack" style={{ gap: 8, padding: '6px 4px' }}>
                         <div className="kv faint"><span>שכר שעות ({fmtHours((w.hours + w.extraHours) * 60)} שעות)</span><span className="v">{money(w.wagePay)}</span></div>
+                        {w.activities.length > 0 && <div className="card-label" style={{ marginTop: 6 }}>פעילות שלא תוכננה</div>}
+                        {w.activities.map((a) => (
+                          <div key={a.id} className="kv">
+                            <span>{formatDM(parseISO(a.date))}{a.client ? ` · ${a.client}` : ''} · <Ltr>{a.start}–{a.end}</Ltr> · <Ltr>{fmtHours(a.minutes)}</Ltr>{a.travel ? ' · נסיעה' : ''} · {a.description} <Badge tone={a.status === 'approved' ? 'green' : a.status === 'pending' ? 'orange' : 'red'}>{a.status === 'approved' ? 'אושר' : a.status === 'pending' ? 'ממתין' : 'נדחה'}</Badge></span>
+                            {a.status === 'pending' && <span className="row" style={{ gap: 6 }}><Button size="sm" onClick={() => void reviewAct(a.id, 'approved')}>אישור</Button><Button size="sm" variant="secondary" onClick={() => void reviewAct(a.id, 'rejected')}>דחייה</Button></span>}
+                          </div>
+                        ))}
                         {w.expenses.map((x) => (
                           <div key={x.id} className="kv">
                             <span>{x.text} <Badge tone={x.status === 'approved' ? 'green' : x.status === 'pending' ? 'orange' : 'red'}>{x.status === 'approved' ? 'אושר' : x.status === 'pending' ? 'ממתין' : 'נדחה'}</Badge></span>
