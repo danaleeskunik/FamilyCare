@@ -189,7 +189,7 @@ export async function loadAll(): Promise<Loaded> {
   const decisions: Record<string, OvertimeDecision> = {}
   for (const d of decR) decisions[d.task_id] = { decision: d.decision, minutes: d.overtime_minutes, charge: Number(d.client_charge) }
   const pricing: PricingSettings = {
-    wage: Number(ps.companion_hourly_wage ?? 70), socialFactor: Number(ps.social_cost_factor ?? 1.3), travelPerDay: Number(ps.travel_per_workday ?? 30),
+    wage: Number(ps.companion_hourly_wage ?? 100), socialFactor: Number(ps.social_cost_factor ?? 1.3), travelPerDay: Number(ps.travel_per_workday ?? 30),
     graceMinutes: Number(ps.overtime_grace_minutes ?? 15), firstHour: Number(ps.overtime_first_hour ?? 300), additionalHour: Number(ps.overtime_additional_hour ?? 250),
   }
   const items: PlanItem[] = itemsR.map((r) => ({
@@ -290,7 +290,7 @@ async function payRates(asStaffId: string | undefined, staffId: string): Promise
     if (asStaffId) {
       const [ps, st] = await Promise.all([supabase.from('pricing_settings').select('*').maybeSingle(), supabase.from('staff_members').select('hourly_wage').eq('id', staffId).maybeSingle()])
       if (!ps.data) return null
-      return { wage: Number(st.data?.hourly_wage ?? ps.data.companion_hourly_wage ?? 70), travel: Number(ps.data.travel_per_workday ?? 30) }
+      return { wage: Number(st.data?.hourly_wage ?? ps.data.companion_hourly_wage ?? 100), travel: Number(ps.data.travel_per_workday ?? 30) }
     }
     const r = await supabase.rpc('my_pay_rates')
     if (r.error || !r.data) return null

@@ -5,7 +5,7 @@ import Modal from '../../components/Modal'
 import { useStore } from '../../store/AppStore'
 import type { InvoiceRow } from '../../data/model'
 import { SelectField, TextField } from '../../components/Fields'
-import { FixedExpensesEditor, PayrollCard, PriceSheetCard, useMonthData, type MonthData } from './FinanceParts'
+import { CompanionRatesCard, FixedExpensesEditor, PayrollCard, PriceSheetCard, useMonthData, type MonthData } from './FinanceParts'
 import PaymentOptions from '../../components/PaymentOptions'
 import { PLAN_RATES, planFromLabel, usePrices } from '../../data/pricing'
 
@@ -118,6 +118,7 @@ export default function Finance() {
       </div>
 
       <PriceSheetCard onPay={openPay} />
+      <CompanionRatesCard />
 
       <Card flush>
         <CardHead title={`חשבוניות ${monthName}`}><Button variant="secondary" size="sm" icon="export">ייצוא ל-iCount</Button></CardHead>

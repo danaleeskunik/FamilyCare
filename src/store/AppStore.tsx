@@ -65,7 +65,7 @@ type Store = {
 const Ctx = createContext<Store | null>(null)
 const EMPTY = { regions: [] as Region[], plans: [] as Plan[], tasks: [] as Task[], clients: [] as Client[], vendors: [] as Vendor[], staff: [] as Staff[], invoices: [] as InvoiceRow[], slots: [] as Slot[],
   decisions: {} as Record<string, OvertimeDecision>,
-  pricing: { wage: 70, socialFactor: 1.3, travelPerDay: 30, graceMinutes: 15, firstHour: 300, additionalHour: 250 } as PricingSettings,
+  pricing: { wage: 100, socialFactor: 1.3, travelPerDay: 30, graceMinutes: 15, firstHour: 300, additionalHour: 250 } as PricingSettings,
   items: [] as PlanItem[], admins: [] as AdminUser[] }
 const TABLE: Record<FormKind, string> = { task: 'tasks', client: 'clients', vendor: 'vendors', staff: 'staff_members', slot: 'client_visit_slots', item: 'coordination_items' }
 const nul = (s: string) => (s.trim() ? s.trim() : null)

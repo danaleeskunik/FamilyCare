@@ -75,14 +75,14 @@ type Row = Record<string, unknown>
 
 // ---------- price sheet (editable) ----------
 
-type Draft = { plans: PlanRate[]; evening: string; night: string; wage: string; travel: string }
+type Draft = { plans: PlanRate[]; evening: string; night: string }
 
 export function PriceSheetCard({ onPay }: { onPay: (kind: 'monthly' | 'extra') => void }) {
   usePrices()
   const { pricing, notify, reload } = useStore()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [busy, setBusy] = useState(false)
-  const start = () => setDraft({ plans: PLAN_RATES.map((p) => ({ ...p })), evening: String(pctOf(RATE_BANDS[1].mult)), night: String(pctOf(RATE_BANDS[2].mult)), wage: String(pricing.wage), travel: String(pricing.travelPerDay) })
+  const start = () => setDraft({ plans: PLAN_RATES.map((p) => ({ ...p })), evening: String(pctOf(RATE_BANDS[1].mult)), night: String(pctOf(RATE_BANDS[2].mult)) })
   const setPlan = (id: string, k: keyof PlanRate, v: string) => setDraft((d) => d && ({ ...d, plans: d.plans.map((p) => (p.id === id ? { ...p, [k]: v === '' ? ('' as unknown as number) : Number(v) } : p)) }))
   const save = async () => {
     if (!draft) return
@@ -90,7 +90,7 @@ export function PriceSheetCard({ onPay }: { onPay: (kind: 'monthly' | 'extra') =
     if (plans.some((p) => p.meetings <= 0 || p.hours <= 0)) { notify('מספר הפגישות והשעות לפגישה חייבים להיות גדולים מאפס.'); return }
     if (num(draft.evening) < 100 || num(draft.night) < 100) { notify('אחוז ערב ולילה לא יכול להיות מתחת ל-100.'); return }
     setBusy(true)
-    const { data, error } = await supabase.rpc('save_price_sheet', { p_plans: plans, p_evening: num(draft.evening), p_night: num(draft.night), p_wage: num(draft.wage), p_travel: num(draft.travel) })
+    const { data, error } = await supabase.rpc('save_price_sheet', { p_plans: plans, p_evening: num(draft.evening), p_night: num(draft.night), p_wage: pricing.wage, p_travel: pricing.travelPerDay })
     setBusy(false)
     if (error || data !== true) { console.error('save price sheet', error); notify('לא הצלחנו לשמור את המחירון. בדקי שהרצת את 0039.'); return }
     applyPriceSheet({ plans, evening_pct: num(draft.evening), night_pct: num(draft.night) })
@@ -149,15 +149,58 @@ export function PriceSheetCard({ onPay }: { onPay: (kind: 'monthly' | 'extra') =
         </table>
       </div>
       <div className="stack" style={{ padding: '12px 18px 16px', gap: 10 }}>
-        {edit ? (
+        <p className="card-meta" style={{ lineHeight: 1.5 }}>שינוי במחירון מתעדכן מיד באתר החברה ובפורטל הלקוחות. מחיר השעה הנוספת בערב ובלילה מחושב לפי האחוזים.</p>
+      </div>
+    </Card>
+  )
+}
+
+// ---------- companion hour and travel cost (drives payroll) ----------
+
+export function CompanionRatesCard() {
+  usePrices()
+  const { pricing, notify, reload } = useStore()
+  const [draft, setDraft] = useState<{ wage: string; travel: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const save = async () => {
+    if (!draft) return
+    const wage = num(draft.wage), travel = num(draft.travel)
+    if (wage <= 0 || travel < 0) { notify('עלות שעת מלווה חייבת להיות גדולה מאפס.'); return }
+    setBusy(true)
+    // the same function that saves the price sheet: the plans and percentages are sent unchanged
+    const plans = PLAN_RATES.map((p) => ({ id: p.id, name: p.name, fee: p.fee, meetings: p.meetings, hours: p.hours, rate: p.rate }))
+    const { data, error } = await supabase.rpc('save_price_sheet', { p_plans: plans, p_evening: pctOf(RATE_BANDS[1].mult), p_night: pctOf(RATE_BANDS[2].mult), p_wage: wage, p_travel: travel })
+    setBusy(false)
+    if (error || data !== true) { console.error('save companion rates', error); notify('לא הצלחנו לשמור.'); return }
+    setDraft(null)
+    reload()
+    notify('נשמר. השכר של המלווים מחושב לפי המספרים החדשים.')
+  }
+  return (
+    <Card>
+      <CardHead title="שעת מלווה ועלות נסיעה">
+        {draft ? (
+          <>
+            <Button size="sm" variant="secondary" onClick={() => setDraft(null)} disabled={busy}>ביטול</Button>
+            <Button size="sm" onClick={() => void save()} disabled={busy}>{busy ? 'שומרים…' : 'שמירה'}</Button>
+          </>
+        ) : (
+          <Button size="sm" variant="secondary" onClick={() => setDraft({ wage: String(pricing.wage), travel: String(pricing.travelPerDay) })}>עריכה</Button>
+        )}
+      </CardHead>
+      <div className="stack" style={{ padding: '4px 18px 16px', gap: 10 }}>
+        {draft ? (
           <div className="extra-fields">
-            <TextField label="שכר שעה למלווה (₪)" type="number" inputMode="decimal" min="0" dir="ltr" value={draft?.wage} onChange={(e) => setDraft((d) => d && { ...d, wage: e.target.value })} />
-            <TextField label="נסיעות לכל ביקור אצל לקוח (₪)" type="number" inputMode="decimal" min="0" dir="ltr" value={draft?.travel} onChange={(e) => setDraft((d) => d && { ...d, travel: e.target.value })} />
+            <TextField label="עלות שעת מלווה (₪)" type="number" inputMode="decimal" min="0" dir="ltr" value={draft.wage} onChange={(e) => setDraft((d) => d && { ...d, wage: e.target.value })} />
+            <TextField label="עלות נסיעה (₪)" type="number" inputMode="decimal" min="0" dir="ltr" value={draft.travel} onChange={(e) => setDraft((d) => d && { ...d, travel: e.target.value })} />
           </div>
         ) : (
-          <p className="card-meta">שכר שעה למלווה: <Ltr>{shekel(pricing.wage)}</Ltr> · נסיעות לכל ביקור: <Ltr>{shekel(pricing.travelPerDay)}</Ltr></p>
+          <>
+            <div className="kv"><span>עלות שעת מלווה</span><span className="v"><Ltr>{shekel(pricing.wage)}</Ltr></span></div>
+            <div className="kv"><span>עלות נסיעה</span><span className="v"><Ltr>{shekel(pricing.travelPerDay)}</Ltr></span></div>
+          </>
         )}
-        <p className="card-meta" style={{ lineHeight: 1.5 }}>שינוי במחירון מתעדכן מיד באתר החברה, בפורטל הלקוחות ובחישובי השכר. מחיר השעה הנוספת בערב ובלילה מחושב לפי האחוזים.</p>
+        <p className="card-meta" style={{ lineHeight: 1.5 }}>שכר מלווה = שעות בפועל × עלות שעה, ועוד עלות נסיעה על כל ביקור אצל לקוח, ועוד הוצאות מאושרות. מלווה עם שכר שעה אישי בכרטיס שלו מחושב לפי השכר האישי.</p>
       </div>
     </Card>
   )
