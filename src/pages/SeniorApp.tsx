@@ -122,9 +122,8 @@ function WishDialog({ c, preview, onClose, onSent }: { c: PortalClient; preview:
   const send = async (e: FormEvent) => {
     e.preventDefault()
     if (!pick) { setErr('בחרו מה בא לכם'); return }
-    if (preview) { setErr('זו תצוגה מקדימה, הבקשה לא נשלחת.'); return }
     setBusy(true); setErr('')
-    const ok = await sendRequest(c.id, c.my_contact_id, pick, text.trim() || pick, '')
+    const ok = await sendRequest(c.id, c.my_contact_id ?? null, pick, text.trim() || pick, '', preview)
     setBusy(false)
     if (!ok) { setErr('לא הצלחנו לשלוח. אפשר לנסות שוב, או להתקשר אלינו.'); return }
     await onSent()

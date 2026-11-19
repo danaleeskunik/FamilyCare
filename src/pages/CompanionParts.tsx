@@ -111,7 +111,7 @@ export function ReportDialog({ task, staffId, existing, onClose, onSaved }: {
 }
 
 /** External service request (technician, doctor, shopping...) sent to the office on behalf of a client. */
-export function ExternalRequestDialog({ clients, clientId, onClose, flash }: { clients: any[]; clientId?: string; onClose: () => void; flash: (m: string) => void }) {
+export function ExternalRequestDialog({ clients, clientId, onClose, flash, byOffice = false }: { clients: any[]; clientId?: string; onClose: () => void; flash: (m: string) => void; byOffice?: boolean }) {
   const [cid, setCid] = useState(clientId ?? (clients.length === 1 ? clients[0].id : ''))
   const [field, setField] = useState('')
   const [issue, setIssue] = useState('')
@@ -123,7 +123,7 @@ export function ExternalRequestDialog({ clients, clientId, onClose, flash }: { c
     if (!cid || !field || !issue.trim()) { setErr('בחרי לקוח/ה, תחום ותארי את התקלה'); return }
     setBusy(true)
     const { error } = await supabase.from('service_requests').insert({
-      client_id: cid, category: field, description: `${urgent ? '[דחוף] ' : ''}${issue.trim()}`, preferred_date: date || null, status: 'new',
+      client_id: cid, category: field, description: `${urgent ? '[דחוף] ' : ''}${issue.trim()}${byOffice ? '\n(הוזן על ידי המשרד בשם המלווה/ת)' : ''}`, preferred_date: date || null, status: 'new',
     })
     setBusy(false)
     if (error) { console.error('companion request failed', error); setErr('לא הצלחנו לשלוח. נסי שוב, ואם זה חוזר פני למשרד.'); return }

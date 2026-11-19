@@ -38,7 +38,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
   const [profile, setProfile] = useState<string | null>(null)
   const [activity, setActivity] = useState(false)
   const [actVersion, setActVersion] = useState(0)
-  const onActivity = () => (preview ? flash('בתצוגת מנהל אי אפשר לדווח') : setActivity(true))
+  const onActivity = () => setActivity(true)
 
   const load = useCallback(async () => {
     try {
@@ -62,13 +62,19 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
 
   const tabs: [Tab, string][] = [['home', 'ראשי'], ['visits', 'פגישות'], ['clients', 'לקוחות'], ['hours', 'האזור שלי']]
   const first = (data ? shortName(data.me.full_name) : fullName).split(' ')[0]
+  // Visits that are over but have no hours/summary report yet: shown as a reminder on every tab.
+  const nowHM = new Date().toTimeString().slice(0, 5)
+  const unreported = data ? data.tasks
+    .filter((t) => t.status !== 'cancelled' && !data.summaries.some((x) => x.task_id === t.id)
+      && (t.status === 'completed' || !!t.checked_out_at || t.scheduled_date < TODAY || (t.scheduled_date === TODAY && !!t.end_time && String(t.end_time).slice(0, 5) <= nowHM)))
+    .sort((a, b) => (a.scheduled_date + a.start_time).localeCompare(b.scheduled_date + b.start_time)) : []
   const myClients = data ? data.clients.filter((c) => data.slots.some((s) => s.client_id === c.id) || data.tasks.some((t) => t.client_id === c.id)) : []
 
   return (
     <div className="portal companion-app">
       {preview && (
         <div role="status" style={{ background: '#FFF4E5', color: '#7A4A00', padding: '10px 16px', textAlign: 'center', fontWeight: 600, position: 'sticky', top: 0, zIndex: 50 }}>
-          תצוגת מנהל בקריאה בלבד: כך המלווה/ת רואה את האפליקציה. {' '}
+          תצוגת מנהל: כך המלווה/ת רואה את האפליקציה. אפשר לדווח שעות, להזמין שירות ולעדכן ביקורים בשמו/ה. {' '}
           <a href="/admin/staff" style={{ color: 'inherit', textDecoration: 'underline' }}>חזרה למלווים</a>
         </div>
       )}
@@ -86,14 +92,20 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
         </section>
 
         <nav className="pt-tabs" role="tablist" aria-label="האזור שלי">
-          {tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{label}</button>)}
+          {tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{label}{id === 'visits' && unreported.length > 0 && <span aria-label={`${unreported.length} פגישות בלי דיווח`} style={{ marginInlineStart: 6, background: 'var(--warning, #E08A00)', color: '#fff', borderRadius: 10, padding: '0 7px', fontSize: 12, fontWeight: 700 }}>{unreported.length}</span>}</button>)}
         </nav>
+        {unreported.length > 0 && (
+          <div className="pt-note" role="status" style={{ marginTop: 0, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <span><b>שכחת לדווח?</b> {unreported.length === 1 ? 'פגישה אחת הסתיימה' : `${unreported.length} פגישות הסתיימו`} בלי דיווח שעות וסיכום.</span>
+            <button type="button" className="pt-btn" onClick={() => setReport(unreported[0])}>לדיווח</button>
+          </div>
+        )}
         {note && <p className="pt-note" role="status" style={{ marginTop: 0, marginBottom: 12 }}>{note}</p>}
 
         {failed && <p className="pt-note" role="alert">לא הצלחנו לטעון את הנתונים. בדקי את החיבור. <button type="button" className="pt-link" onClick={() => void load()}>ניסיון נוסף</button></p>}
         {data === undefined && !failed && <p className="pt-note" role="status">טוענת…</p>}
         {data === null && <p className="pt-note">החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד.</p>}
-        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} onActivity={onActivity} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(null))} />}
+        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} onActivity={onActivity} onRequest={() => setReq(null)} />}
         {data && tab === 'visits' && <Visits data={data} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} />}
         {data && tab === 'clients' && <ByClient data={data} flash={flash} preview={preview} />}
         {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} onActivity={onActivity} reloadKey={actVersion} />}
@@ -101,11 +113,11 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
 
       {data && profile && (() => {
         const c = data.clients.find((x) => x.id === profile)
-        return c ? <Modal title="תיק הלקוח/ה" onClose={() => setProfile(null)}><ClientProfile c={c} data={data} onRequest={() => { setProfile(null); if (preview) flash('בתצוגת מנהל אי אפשר לשלוח'); else setReq(c.id) }} /></Modal> : null
+        return c ? <Modal title="תיק הלקוח/ה" onClose={() => setProfile(null)}><ClientProfile c={c} data={data} onRequest={() => { setProfile(null); setReq(c.id) }} /></Modal> : null
       })()}
       {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הסיכום נשלח למשפחה ולמשרד'); void load() }} />}
       {data && activity && <ActivityDialog clients={data.clients} staffId={data.me.id} onClose={() => setActivity(false)} onSaved={() => { flash('הדיווח נשלח לאישור המשרד'); setActVersion((n) => n + 1) }} />}
-      {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} />}
+      {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} byOffice={preview} />}
     </div>
   )
 }
@@ -113,7 +125,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
 type Act = (fn: 'check_in' | 'check_out', taskId: string) => Promise<void>
 
 /** One visit with everything the companion needs on the way there. */
-function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { data: Data; t: any; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void }) {
+function VisitDetails({ data, t, act, busy, onReport, onClient }: { data: Data; t: any; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void }) {
   const c = one(t.clients) as any
   const info = data.clients.find((x) => x.id === t.client_id) ?? c
   const orderer = data.contacts.find((x) => x.client_id === t.client_id && x.is_orderer)
@@ -157,10 +169,10 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
         </div>
       )}
       <div className="pt-row" style={{ gap: 8, marginTop: 14, justifyContent: 'flex-start' }}>
-        {!preview && isToday && !done && (t.checked_in_at
+        {isToday && !done && (t.checked_in_at
           ? <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_out', t.id)}>סיום ביקור</button>
           : <button type="button" className="pt-btn" disabled={busy === t.id} onClick={() => act('check_in', t.id)}>התחלת ביקור</button>)}
-        {!preview && <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת שעות וסיכום' : 'דיווח שעות וסיכום פגישה'}</button>}
+        <button type="button" className={`pt-btn ${summary ? 'ghost' : ''}`} onClick={() => onReport(t)}>{summary ? 'עריכת שעות וסיכום' : 'דיווח שעות וסיכום פגישה'}</button>
         {address && <a className="pt-btn ghost" href={mapsUrl(address)} target="_blank" rel="noreferrer">ניווט</a>}
       </div>
       {t.checked_in_at && <p className="pt-sub" style={{ marginTop: 8 }}>נכנסת ב-<Ltr>{localHM(t.checked_in_at)}</Ltr>{t.checked_out_at && <> · יצאת ב-<Ltr>{localHM(t.checked_out_at)}</Ltr></>}</p>}
@@ -185,7 +197,7 @@ function Home({ data, go, act, busy, preview, onReport, onClient, onRequest, onA
         {next ? <div className="co-next"><VisitDetails data={data} t={next} act={act} busy={busy} preview={preview} onReport={onReport} onClient={onClient} /></div> : <p>אין פגישות קרובות. כשהמשרד ישבץ אותך הן יופיעו כאן.</p>}
       </section>
 
-      {missing.length > 0 && !preview && (
+      {missing.length > 0 && (
         <section className="pt-card" aria-labelledby="h-miss" style={{ borderColor: 'var(--danger)' }}>
           <h2 id="h-miss">סיכומי פגישה שעוד לא נשלחו</h2>
           <div className="pt-list">
@@ -264,7 +276,7 @@ function ByClient({ data, flash, preview }: { data: Data; flash: (m: string) => 
         const next = upcoming.filter((t) => t.client_id === c.id).slice(0, 3)
         return (
           <div key={c.id} className="stack" style={{ gap: 8 }}>
-            <ClientProfile c={c} data={data} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(c.id))} />
+            <ClientProfile c={c} data={data} onRequest={() => setReq(c.id)} />
             <Card>
               <div className="card-label" style={{ marginBottom: 4 }}>הביקורים הבאים שלך</div>
               {next.length === 0 ? <p className="muted">אין ביקורים קרובים.</p> : next.map((t) => (
@@ -274,13 +286,13 @@ function ByClient({ data, flash, preview }: { data: Data; flash: (m: string) => 
           </div>
         )
       })}
-      {req && <ExternalRequestDialog clients={myClients} clientId={req} onClose={() => setReq(null)} flash={flash} />}
+      {req && <ExternalRequestDialog clients={myClients} clientId={req} onClose={() => setReq(null)} flash={flash} byOffice={preview} />}
     </>
   )
 }
 
 // ---------------------------------------------------------------- Hours + expenses
-function Hours({ data, flash, preview, onActivity, reloadKey }: { data: Data; flash: (m: string) => void; preview: boolean; onActivity: () => void; reloadKey: number }) {
+function Hours({ data, flash, onActivity, reloadKey }: { data: Data; flash: (m: string) => void; preview: boolean; onActivity: () => void; reloadKey: number }) {
   const [month, setMonth] = useState(() => new Date(parseISO(TODAY).getFullYear(), parseISO(TODAY).getMonth(), 1))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [failed, setFailed] = useState(false)
@@ -416,7 +428,7 @@ function Hours({ data, flash, preview, onActivity, reloadKey }: { data: Data; fl
                 <span><strong>{formatDM(parseISO(a.date))}</strong>{a.client ? ` · ${a.client}` : ''}
                   <div className="card-meta"><Ltr>{a.start}–{a.end}</Ltr> · {a.description} · <Badge tone={EXP[a.status][1]}>{EXP[a.status][0]}</Badge></div></span>
                 <span className="row" style={{ gap: 4 }}><span className="v"><Ltr>{fmtHours(a.minutes)}</Ltr></span>
-                  {!preview && a.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול דיווח: ${a.description}`} onClick={() => removeActivity(a.id)}><Icon name="trash" size={16} /></button>}
+                  {a.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול דיווח: ${a.description}`} onClick={() => removeActivity(a.id)}><Icon name="trash" size={16} /></button>}
                 </span>
               </div>
             ))}
@@ -429,11 +441,11 @@ function Hours({ data, flash, preview, onActivity, reloadKey }: { data: Data; fl
               <div key={x.id} className="kv" style={{ fontSize: 14 }}>
                 <span>{x.description}<div className="card-meta">{formatDM(parseISO(x.date))} · <Badge tone={EXP[x.status][1]}>{EXP[x.status][0]}</Badge></div></span>
                 <span className="row" style={{ gap: 4 }}><span className="v">{money(x.amount)}</span>
-                  {!preview && x.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול הוצאה: ${x.description}`} onClick={() => remove(x.id)}><Icon name="trash" size={16} /></button>}
+                  {x.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול הוצאה: ${x.description}`} onClick={() => remove(x.id)}><Icon name="trash" size={16} /></button>}
                 </span>
               </div>
             ))}
-            {!preview && <form onSubmit={add} noValidate className="stack" style={{ gap: 10, marginTop: 12 }}>
+            <form onSubmit={add} noValidate className="stack" style={{ gap: 10, marginTop: 12 }}>
               <div className="card-label">דיווח על הוצאה חדשה</div>
               <TextField label="מה ההוצאה" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="למשל: ארוחת צהריים בזמן הביקור" />
               <TextField label="סכום (₪)" type="number" inputMode="decimal" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
@@ -441,7 +453,7 @@ function Hours({ data, flash, preview, onActivity, reloadKey }: { data: Data; fl
                 options={report.visits.map((v) => ({ value: v.id, label: `${formatDM(parseISO(v.date))} · ${v.client}` }))} />
               {err && <div role="alert" style={{ color: 'var(--danger)', font: '600 13px var(--font-ui)' }}>{err}</div>}
               <Button type="submit" size="lg">שליחה לאישור</Button>
-            </form>}
+            </form>
           </Card>
         </>
       )}

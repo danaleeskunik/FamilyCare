@@ -50,9 +50,10 @@ export async function sendMessage(clientId: string, name: string, body: string):
   return !error
 }
 
-export async function sendRequest(clientId: string, contactId: string, category: string, description: string, preferredDate: string): Promise<boolean> {
+export const BY_OFFICE = '\n(הוזן על ידי המשרד בשם הלקוח)'
+export async function sendRequest(clientId: string, contactId: string | null, category: string, description: string, preferredDate: string, byOffice = false): Promise<boolean> {
   const { error } = await supabase.from('service_requests').insert({
-    client_id: clientId, requested_by: contactId, category, description: description.trim(), status: 'new', preferred_date: preferredDate || null,
+    client_id: clientId, requested_by: contactId, category, description: description.trim() + (byOffice ? BY_OFFICE : ''), status: 'new', preferred_date: preferredDate || null,
   })
   if (error) console.error('request send failed', error)
   return !error
@@ -66,8 +67,8 @@ export async function decideQuote(id: string, approve: boolean): Promise<boolean
   return !error && data === true
 }
 
-export async function sendHint(clientId: string, body: string, taskId: string | null): Promise<boolean> {
-  const { error } = await supabase.from('family_hints').insert({ client_id: clientId, body: body.trim(), task_id: taskId })
+export async function sendHint(clientId: string, body: string, taskId: string | null, byOffice = false): Promise<boolean> {
+  const { error } = await supabase.from('family_hints').insert({ client_id: clientId, body: body.trim() + (byOffice ? BY_OFFICE : ''), task_id: taskId })
   if (error) console.error('hint send failed', error)
   return !error
 }

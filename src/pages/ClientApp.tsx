@@ -90,7 +90,7 @@ export default function ClientApp({ previewId }: { previewId?: string } = {}) {
       <a className="pt-skip" href="#pt-main">דילוג לתוכן</a>
       {previewId && (
         <div role="status" style={{ background: '#FFF4E5', color: '#7A4A00', padding: '10px 16px', textAlign: 'center', fontWeight: 600, position: 'sticky', top: 0, zIndex: 50 }}>
-          תצוגת מנהל בקריאה בלבד: כך הלקוח רואה את האזור האישי. {' '}
+          תצוגת מנהל: כך הלקוח רואה את האזור האישי. אפשר לשלוח בקשה ודגש בשמו, והם יסומנו כ"הוזן על ידי המשרד". {' '}
           <a href={`/admin/clients/${previewId}`} style={{ color: 'inherit', textDecoration: 'underline' }}>חזרה לתיק הלקוח</a>
         </div>
       )}
@@ -337,7 +337,7 @@ function Orders({ c, reload, go, preview }: { c: PortalClient; reload: () => Pro
     const text = [picked.join(', '), details.trim()].filter(Boolean).join('\n')
     if (!text) { setMsg({ ok: false, text: 'בחרו שירות או כתבו מה צריך' }); return }
     setBusy(true); setMsg(null)
-    const ok = await sendRequest(c.id, c.my_contact_id, catName, text, date)
+    const ok = await sendRequest(c.id, c.my_contact_id ?? null, catName, text, date, !!preview)
     setBusy(false)
     if (!ok) { setMsg({ ok: false, text: 'לא הצלחנו לשלוח. אפשר לנסות שוב, או להתקשר אלינו.' }); return }
     setMsg({ ok: true, text: 'הבקשה נשלחה. נחזור אליכם בהקדם.' })
@@ -349,9 +349,7 @@ function Orders({ c, reload, go, preview }: { c: PortalClient; reload: () => Pro
     <div className="pt-stack">
       <section className="pt-card" aria-labelledby="h-new">
         <h2 id="h-new">הזמנת שירות חדשה</h2>
-        {preview ? (
-          <p>בתצוגת מנהל אי אפשר להזמין שירות. כאן הלקוח בוחר תחום ושירות ושולח בקשה.</p>
-        ) : !c.can_request ? (
+        {!preview && !c.can_request ? (
           <p>לחשבון הזה יש הרשאת צפייה בלבד. אפשר <button type="button" className="pt-link" onClick={() => go('messages')}>לכתוב לנו הודעה</button>.</p>
         ) : (
           <form onSubmit={submit} className="pt-form" noValidate>
@@ -421,7 +419,7 @@ function HintsCard({ c, reload, preview }: { c: PortalClient; reload: () => Prom
     e.preventDefault()
     if (!text.trim()) { setMsg({ ok: false, text: 'כתבו את הדגש' }); return }
     setBusy(true); setMsg(null)
-    const ok = await sendHint(c.id, text, taskId || null)
+    const ok = await sendHint(c.id, text, taskId || null, preview)
     setBusy(false)
     if (!ok) { setMsg({ ok: false, text: 'לא הצלחנו לשלוח. אפשר לנסות שוב.' }); return }
     setText(''); setTaskId(''); setMsg({ ok: true, text: 'הדגש נשלח למלווה.' })
@@ -431,7 +429,7 @@ function HintsCard({ c, reload, preview }: { c: PortalClient; reload: () => Prom
     <section className="pt-card" aria-labelledby="h-hint">
       <h2 id="h-hint">דגשים למלווה</h2>
       <p className="pt-sub">הערה שהמלווה תראה לפני הביקור: לביקור מסוים או באופן כללי.</p>
-      {c.can_request && !preview && (
+      {(c.can_request || preview) && (
         <form onSubmit={send} className="pt-form" noValidate>
           <label>הדגש
             <textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="למשל: אמא מעדיפה תה בלי סוכר, וחשוב לשאול אותה על התור לרופא" />
