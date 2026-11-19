@@ -15,7 +15,7 @@ const shekel = (n: number) => money(Number.isInteger(n) ? n : Number(n.toFixed(2
 
 export type WorkerExpense = { id: string; date: string; text: string; amount: number; status: string }
 export type WorkerRow = {
-  id: string; name: string; visits: number; hours: number; extraHours: number; wagePay: number
+  id: string; name: string; visits: number; pendingActivities: number; hours: number; extraHours: number; wagePay: number
   travel: number; expenses: WorkerExpense[]; expensesTotal: number; total: number
 }
 export type FixedRow = { name: string; amount: number }
@@ -29,7 +29,7 @@ const nextMonth = (month: string) => {
 /** Payroll, fixed expenses and scanned invoices for one month (1st to the end of the month). */
 export function useMonthData(month: string, version: number): MonthData | null {
   const { staff, pricing } = useStore()
-  const [raw, setRaw] = useState<{ tasks: Row[]; exp: Row[]; wages: Row[]; fixed: Row[]; docs: number } | null>(null)
+  const [raw, setRaw] = useState<{ tasks: Row[]; exp: Row[]; act: Row[]; wages: Row[]; fixed: Row[]; docs: number } | null>(null)
   useEffect(() => {
     const from = `${month}-01`
     const to = nextMonth(month)
@@ -37,16 +37,17 @@ export function useMonthData(month: string, version: number): MonthData | null {
     const t1 = new Date(`${to}T00:00:00`).toISOString()
     let cancelled = false
     void (async () => {
-      const [t, e, w, f, d] = await Promise.all([
+      const [t, e, w, f, d, ac] = await Promise.all([
         supabase.from('tasks').select('id, staff_id, client_id, scheduled_date, start_time, end_time, status, checked_in_at, checked_out_at').eq('status', 'completed').gte('scheduled_date', from).lt('scheduled_date', to),
         supabase.from('staff_expenses').select('*').gte('expense_date', from).lt('expense_date', to).order('expense_date'),
         supabase.from('staff_members').select('id, hourly_wage'),
         supabase.from('fixed_expenses').select('name, amount').order('created_at'),
         supabase.from('expense_docs').select('amount').gte('captured_at', t0).lt('captured_at', t1),
+        supabase.from('staff_activities').select('*').gte('work_date', from).lt('work_date', to),
       ])
       if (cancelled) return
       setRaw({
-        tasks: (t.data ?? []) as Row[], exp: (e.data ?? []) as Row[], wages: (w.data ?? []) as Row[], fixed: (f.data ?? []) as Row[],
+        tasks: (t.data ?? []) as Row[], exp: (e.data ?? []) as Row[], act: (ac.data ?? []) as Row[], wages: (w.data ?? []) as Row[], fixed: (f.data ?? []) as Row[],
         docs: ((d.data ?? []) as Row[]).reduce((a, r) => a + Number(r.amount ?? 0), 0),
       })
     })()
@@ -56,15 +57,15 @@ export function useMonthData(month: string, version: number): MonthData | null {
   if (!raw) return null
   const names = new Map(staff.map((s) => [s.id, s.name]))
   const wageOf = new Map(raw.wages.map((r) => [r.id as string, r.hourly_wage != null ? Number(r.hourly_wage) : null]))
-  const ids = [...new Set([...raw.tasks.map((x) => x.staff_id as string), ...raw.exp.map((x) => x.staff_id as string)].filter(Boolean))]
+  const ids = [...new Set([...raw.tasks.map((x) => x.staff_id as string), ...raw.exp.map((x) => x.staff_id as string), ...raw.act.filter((x) => x.status === 'approved' || x.status === 'pending').map((x) => x.staff_id as string)].filter(Boolean))]
   const workers: WorkerRow[] = ids.map((id) => {
-    const rep = buildMonthReport(raw.tasks.filter((x) => x.staff_id === id), raw.exp.filter((x) => x.staff_id === id))
+    const rep = buildMonthReport(raw.tasks.filter((x) => x.staff_id === id), raw.exp.filter((x) => x.staff_id === id), [], raw.act.filter((x) => x.staff_id === id))
     const wage = wageOf.get(id) ?? pricing.wage
     const pay = payroll(rep, wage, pricing)
     const expenses = raw.exp.filter((x) => x.staff_id === id).map((x) => ({ id: x.id as string, date: x.expense_date as string, text: x.description as string, amount: Number(x.amount), status: x.status as string }))
     const extra = rep.extraMinutes
     return {
-      id, name: names.get(id) ?? 'מלווה', visits: rep.visitCount, hours: (rep.totalMinutes - extra) / 60, extraHours: extra / 60,
+      id, name: names.get(id) ?? 'מלווה', visits: rep.travelTrips, pendingActivities: rep.pendingActivities, hours: (rep.totalMinutes - extra) / 60, extraHours: extra / 60,
       wagePay: pay.gross, travel: pay.travel, expenses, expensesTotal: pay.expenses, total: pay.gross + pay.travel + pay.expenses,
     }
   }).sort((a, b) => a.name.localeCompare(b.name, 'he'))
@@ -241,10 +242,10 @@ export function PayrollCard({ data, monthName, onChanged }: { data: MonthData | 
             {(data?.workers ?? []).map((w) => (
               <Fragment key={w.id}>
                 <tr>
-                  <td className="name"><button type="button" className="btn ghost sm" aria-expanded={open === w.id} onClick={() => setOpen(open === w.id ? null : w.id)}>{w.name}</button></td>
+                  <td className="name"><button type="button" className="btn ghost sm" aria-expanded={open === w.id} onClick={() => setOpen(open === w.id ? null : w.id)}>{w.name}</button>{w.pendingActivities > 0 && <> <Badge tone="orange">{w.pendingActivities} פעילויות ממתינות לאישור</Badge></>}</td>
                   <td className="num nowrap"><Ltr>{fmtHours(w.hours * 60)}</Ltr></td>
                   <td className="num nowrap"><Ltr>{fmtHours(w.extraHours * 60)}</Ltr></td>
-                  <td className="num nowrap">{money(w.travel)}<span className="th-sub">{w.visits} ביקורים</span></td>
+                  <td className="num nowrap">{money(w.travel)}<span className="th-sub">{w.visits} נסיעות</span></td>
                   <td className="num nowrap">{money(w.expensesTotal)}</td>
                   <td className="num nowrap" style={{ fontWeight: 700 }}>{money(w.total)}</td>
                 </tr>

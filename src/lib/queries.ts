@@ -273,15 +273,16 @@ export async function fetchStaffForEdit(id: string) {
 export async function loadStaffMonth(staffId: string, monthISO: string) {
   const [y, m] = monthISO.split('-').map(Number)
   const next = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}-01`
-  const [t, e] = await Promise.all([
+  const [t, e, ac] = await Promise.all([
     supabase.from('tasks').select('*, clients(full_name, address, regions(name))').eq('staff_id', staffId).gte('scheduled_date', monthISO).lt('scheduled_date', next).order('scheduled_date').order('start_time'),
     Promise.resolve(supabase.from('staff_expenses').select('*').eq('staff_id', staffId).gte('expense_date', monthISO).lt('expense_date', next).order('expense_date')).then((r) => optional(r, 'staff_expenses')),
+    Promise.resolve(supabase.from('staff_activities').select('*, clients(full_name)').eq('staff_id', staffId).gte('work_date', monthISO).lt('work_date', next).order('work_date')).then((r) => optional(r, 'staff_activities')),
   ])
   if (t.error) throw t.error
   const ids = ((t.data ?? []) as Row[]).map((x) => x.id as string)
   // Decisions are admin-only under RLS; for a companion this simply returns nothing.
   const d = ids.length ? optional(await supabase.from('visit_overtime').select('task_id, decision').in('task_id', ids), 'visit_overtime') : { data: [] as Row[], error: null }
-  return { tasks: (t.data ?? []) as Row[], expenses: (e.data ?? []) as Row[], decisions: (d.data ?? []) as Row[] }
+  return { tasks: (t.data ?? []) as Row[], expenses: (e.data ?? []) as Row[], decisions: (d.data ?? []) as Row[], activities: (ac.data ?? []) as Row[] }
 }
 
 /** The companion's hourly wage and travel allowance. An admin previewing reads the tables directly. */

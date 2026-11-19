@@ -221,3 +221,46 @@ export function ClientProfile({ c, data, onRequest }: { c: any; data: any; onReq
     </Card>
   )
 }
+
+/** Hours for work that was not planned as a visit (an extra escort, an errand). Goes to the office for approval. */
+export function ActivityDialog({ clients, staffId, onClose, onSaved }: { clients: any[]; staffId: string; onClose: () => void; onSaved: () => void }) {
+  const [clientId, setClientId] = useState('')
+  const [date, setDate] = useState(TODAY)
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+  const [desc, setDesc] = useState('')
+  const [travel, setTravel] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const save = async () => {
+    if (!date || date > TODAY) { setErr('בחרי תאריך שכבר עבר, או את היום'); return }
+    if (!start || !end) { setErr('הזיני שעת התחלה ושעת סיום'); return }
+    if (end <= start) { setErr('שעת הסיום חייבת להיות אחרי שעת ההתחלה'); return }
+    if (!desc.trim()) { setErr('כתבי מה עשית'); return }
+    setBusy(true); setErr('')
+    const { error } = await supabase.from('staff_activities').insert({ staff_id: staffId, client_id: clientId || null, work_date: date, start_time: start, end_time: end, description: desc.trim(), travel })
+    setBusy(false)
+    if (error) { console.error('activity failed', error); setErr('לא הצלחנו לשמור. בדקי את החיבור ונסי שוב. אם זה חוזר, ייתכן שהמשרד צריך להשלים הגדרה.'); return }
+    onSaved(); onClose()
+  }
+  return (
+    <Modal title="דיווח שעות על פעילות שלא תוכננה" onClose={onClose}
+      footer={<><Button variant="secondary" onClick={onClose}>ביטול</Button><Button disabled={busy} onClick={save}>{busy ? 'שולחת…' : 'שליחה לאישור המשרד'}</Button></>}>
+      <div className="stack" style={{ gap: 12 }}>
+        <p className="muted">ליווי או פעילות שלא נקבעו מראש ביומן. השעות ייספרו בחישוב החודשי אחרי שהמשרד יאשר.</p>
+        <SelectField label="לקוח/ה (אם יש)" value={clientId} onChange={setClientId} placeholder="ללא לקוח מסוים" options={clients.map((c: any) => ({ value: c.id, label: c.full_name }))} />
+        <TextField label="תאריך" type="date" dir="ltr" max={TODAY} value={date} onChange={(e) => setDate(e.target.value)} />
+        <div className="grid cols-2" style={{ gap: 10 }}>
+          <TextField label="התחלה" type="time" dir="ltr" value={start} onChange={(e) => setStart(e.target.value)} />
+          <TextField label="סיום" type="time" dir="ltr" value={end} onChange={(e) => setEnd(e.target.value)} />
+        </div>
+        <TextAreaField label="מה עשית" value={desc} onChange={setDesc} placeholder="למשל: ליווי לבדיקה שלא נקבעה מראש" />
+        <label className="row" style={{ gap: 10, font: '600 14px var(--font-ui)', minHeight: 44 }}>
+          <input type="checkbox" checked={travel} onChange={(e) => setTravel(e.target.checked)} style={{ width: 20, height: 20 }} />
+          הייתה נסיעה (תיחשב כנסיעה בשכר)
+        </label>
+        {err && <div role="alert" style={{ color: 'var(--danger)', font: '600 13px var(--font-ui)' }}>{err}</div>}
+      </div>
+    </Modal>
+  )
+}

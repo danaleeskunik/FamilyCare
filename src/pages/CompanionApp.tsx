@@ -11,7 +11,7 @@ import { useAuth } from '../store/AuthStore'
 import { ACCESS } from '../lib/contact'
 import { PLAN_RATES, usePrices } from '../data/pricing'
 import Modal from '../components/Modal'
-import { ClientProfile, ExternalRequestDialog, ReportDialog } from './CompanionParts'
+import { ActivityDialog, ClientProfile, ExternalRequestDialog, ReportDialog } from './CompanionParts'
 
 type Data = NonNullable<Awaited<ReturnType<typeof loadCompanion>>>
 type Tab = 'home' | 'visits' | 'clients' | 'hours'
@@ -36,6 +36,9 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
   const [req, setReq] = useState<string | null | undefined>(undefined)
   const [busy, setBusy] = useState<string | null>(null)
   const [profile, setProfile] = useState<string | null>(null)
+  const [activity, setActivity] = useState(false)
+  const [actVersion, setActVersion] = useState(0)
+  const onActivity = () => (preview ? flash('בתצוגת מנהל אי אפשר לדווח') : setActivity(true))
 
   const load = useCallback(async () => {
     try {
@@ -90,10 +93,10 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
         {failed && <p className="pt-note" role="alert">לא הצלחנו לטעון את הנתונים. בדקי את החיבור. <button type="button" className="pt-link" onClick={() => void load()}>ניסיון נוסף</button></p>}
         {data === undefined && !failed && <p className="pt-note" role="status">טוענת…</p>}
         {data === null && <p className="pt-note">החשבון שלך מחובר, אבל עוד לא שויך לכרטיס מלווה/ת. אפשר לפנות למשרד.</p>}
-        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(null))} />}
+        {data && tab === 'home' && <Home data={data} go={setTab} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} onActivity={onActivity} onRequest={() => (preview ? flash('בתצוגת מנהל אי אפשר לשלוח') : setReq(null))} />}
         {data && tab === 'visits' && <Visits data={data} act={act} busy={busy} preview={preview} onReport={setReport} onClient={setProfile} />}
         {data && tab === 'clients' && <ByClient data={data} flash={flash} preview={preview} />}
-        {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} />}
+        {data && tab === 'hours' && <Hours data={data} flash={flash} preview={preview} onActivity={onActivity} reloadKey={actVersion} />}
       </main>
 
       {data && profile && (() => {
@@ -101,6 +104,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
         return c ? <Modal title="תיק הלקוח/ה" onClose={() => setProfile(null)}><ClientProfile c={c} data={data} onRequest={() => { setProfile(null); if (preview) flash('בתצוגת מנהל אי אפשר לשלוח'); else setReq(c.id) }} /></Modal> : null
       })()}
       {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הסיכום נשלח למשפחה ולמשרד'); void load() }} />}
+      {data && activity && <ActivityDialog clients={data.clients} staffId={data.me.id} onClose={() => setActivity(false)} onSaved={() => { flash('הדיווח נשלח לאישור המשרד'); setActVersion((n) => n + 1) }} />}
       {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} />}
     </div>
   )
@@ -165,7 +169,7 @@ function VisitDetails({ data, t, act, busy, preview, onReport, onClient }: { dat
 }
 
 // ---------------------------------------------------------------- Home
-function Home({ data, go, act, busy, preview, onReport, onClient, onRequest }: { data: Data; go: (t: Tab) => void; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void; onRequest: () => void }) {
+function Home({ data, go, act, busy, preview, onReport, onClient, onRequest, onActivity }: { data: Data; go: (t: Tab) => void; act: Act; busy: string | null; preview: boolean; onReport: (t: any) => void; onClient: (id: string) => void; onRequest: () => void; onActivity: () => void }) {
   const live = data.tasks.filter((t) => t.status !== 'cancelled')
   const upcoming = live.filter((t) => t.scheduled_date >= TODAY && t.status !== 'completed' && !t.checked_out_at).sort(cmp)
   const next = upcoming.find((t) => t.status === 'in_progress') ?? upcoming[0]
@@ -205,7 +209,8 @@ function Home({ data, go, act, busy, preview, onReport, onClient, onRequest }: {
       )}
 
       <div className="pt-actions">
-        <button type="button" className="pt-action main" onClick={onRequest}><b>הזמנת שירות חיצוני</b><span>טכנאי, רופא, קניות, הסעה</span></button>
+        <button type="button" className="pt-action main" onClick={onActivity}><b>דיווח שעות</b><span>ליווי או פעילות שלא נקבעו ביומן</span></button>
+        <button type="button" className="pt-action" onClick={onRequest}><b>הזמנת שירות חיצוני</b><span>טכנאי, רופא, קניות, הסעה</span></button>
         <button type="button" className="pt-action" onClick={() => go('clients')}><b>הלקוחות שלי</b><span>תיק, טלפונים והעדפות</span></button>
         <button type="button" className="pt-action" onClick={() => go('hours')}><b>האזור שלי</b><span>שעות, שכר והוצאות</span></button>
         <a className="pt-action" href={ACCESS.tel}><b>התייעצות עם {ACCESS.name}</b><span><Ltr>{ACCESS.phone}</Ltr></span></a>
@@ -275,7 +280,7 @@ function ByClient({ data, flash, preview }: { data: Data; flash: (m: string) => 
 }
 
 // ---------------------------------------------------------------- Hours + expenses
-function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => void; preview: boolean }) {
+function Hours({ data, flash, preview, onActivity, reloadKey }: { data: Data; flash: (m: string) => void; preview: boolean; onActivity: () => void; reloadKey: number }) {
   const [month, setMonth] = useState(() => new Date(parseISO(TODAY).getFullYear(), parseISO(TODAY).getMonth(), 1))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [failed, setFailed] = useState(false)
@@ -298,10 +303,10 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
     let cancelled = false
     setFailed(false)
     loadStaffMonth(data.me.id, ym)
-      .then((m) => { if (!cancelled) setReport(buildMonthReport(m.tasks, m.expenses)) })
+      .then((m) => { if (!cancelled) setReport(buildMonthReport(m.tasks, m.expenses, [], m.activities)) })
       .catch((e) => { console.error('hours failed', e); if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
-  }, [data.me.id, ym, version])
+  }, [data.me.id, ym, version, reloadKey])
 
   const add = async (e: FormEvent) => {
     e.preventDefault()
@@ -316,6 +321,11 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
   const remove = async (id: string) => {
     const { error } = await supabase.from('staff_expenses').delete().eq('id', id)
     if (error) { console.error('delete expense failed', error); flash('לא הצלחנו למחוק. נסי שוב.'); return }
+    setVersion((n) => n + 1)
+  }
+  const removeActivity = async (id: string) => {
+    const { error } = await supabase.from('staff_activities').delete().eq('id', id)
+    if (error) { console.error('delete activity failed', error); flash('לא הצלחנו למחוק. נסי שוב.'); return }
     setVersion((n) => n + 1)
   }
   const step = (n: number) => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + n, 1))
@@ -348,7 +358,7 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
             {pay ? (
               <>
                 <div className="kv"><span>שכר שעות <span className="card-meta">({money(pay.wage)} לשעה)</span></span><span className="v">{money(pay.gross)}</span></div>
-                <div className="kv"><span>החזר נסיעות <span className="card-meta">({report.visitCount} ביקורים)</span></span><span className="v">{money(pay.travel)}</span></div>
+                <div className="kv"><span>החזר נסיעות <span className="card-meta">({report.travelTrips} נסיעות)</span></span><span className="v">{money(pay.travel)}</span></div>
                 {pay.expenses > 0 && <div className="kv"><span>הוצאות שאושרו</span><span className="v">{money(pay.expenses)}</span></div>}
                 <div className="kv total"><span>סה&quot;כ עד כה</span><span className="v">{money(pay.total)}</span></div>
                 <p className="card-meta" style={{ marginTop: 8 }}>הסכום מתאפס בתחילת כל חודש. ניתן לעבור בין חודשים בחצים למעלה.</p>
@@ -391,6 +401,23 @@ function Hours({ data, flash, preview }: { data: Data; flash: (m: string) => voi
                 <span><strong>{DAY_NAMES[parseISO(v.date).getDay()]} {formatDM(parseISO(v.date))}</strong> · {v.client}
                   <div className="card-meta">{v.checkedIn ? <>נכנסת <Ltr>{v.checkedIn}</Ltr> · יצאת <Ltr>{v.checkedOut || '?'}</Ltr></> : 'אין דיווח שעות'}</div></span>
                 <span className="v">{v.actualMin === null ? '—' : <Ltr>{fmtHours(v.actualMin)}</Ltr>}</span>
+              </div>
+            ))}
+          </Card>
+
+          <Card>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+              <div className="card-title">פעילות שלא תוכננה</div>
+              <Button size="sm" onClick={onActivity}>דיווח שעות</Button>
+            </div>
+            {report.activities.length === 0 && <p className="muted">לא דיווחת על פעילות שלא תוכננה בחודש הזה. ליווי שלא נקבע ביומן אפשר לדווח כאן.</p>}
+            {report.activities.map((a) => (
+              <div key={a.id} className="kv" style={{ fontSize: 14 }}>
+                <span><strong>{formatDM(parseISO(a.date))}</strong>{a.client ? ` · ${a.client}` : ''}
+                  <div className="card-meta"><Ltr>{a.start}–{a.end}</Ltr> · {a.description} · <Badge tone={EXP[a.status][1]}>{EXP[a.status][0]}</Badge></div></span>
+                <span className="row" style={{ gap: 4 }}><span className="v"><Ltr>{fmtHours(a.minutes)}</Ltr></span>
+                  {!preview && a.status === 'pending' && <button type="button" className="icon-btn danger" aria-label={`ביטול דיווח: ${a.description}`} onClick={() => removeActivity(a.id)}><Icon name="trash" size={16} /></button>}
+                </span>
               </div>
             ))}
           </Card>

@@ -13,6 +13,7 @@ export type VisitRow = {
   decision: 'billed' | 'waived' | null
 }
 export type ExpenseRow = { id: string; date: string; amount: number; description: string; status: 'pending' | 'approved' | 'rejected'; taskId: string | null }
+export type ActivityRow = { id: string; date: string; clientId: string | null; client: string; start: string; end: string; minutes: number; description: string; travel: boolean; status: 'pending' | 'approved' | 'rejected' }
 export type ClientTotal = { clientId: string; client: string; place: string; visits: number; minutes: number }
 
 export type MonthReport = {
@@ -26,6 +27,12 @@ export type MonthReport = {
   missingTimes: number // completed visits with no check-in/out: hours cannot be counted
   perClient: ClientTotal[]
   expenses: ExpenseRow[]
+  /** work that was not planned as a visit (reported by the companion, counted once approved) */
+  activities: ActivityRow[]
+  activityMinutes: number
+  pendingActivities: number
+  /** trips to a client that are paid: completed visits plus approved activities with a trip */
+  travelTrips: number
   approvedExpenses: number
   pendingExpenses: number
 }
@@ -35,7 +42,7 @@ const toMin = (t: string) => { const [h, m] = t.slice(0, 5).split(':').map(Numbe
 
 export const fmtHours = (m: number) => `${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`
 
-export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[] = []): MonthReport {
+export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[] = [], activityRows: Row[] = []): MonthReport {
   const dec = new Map(decisions.map((d) => [d.task_id as string, d.decision as 'billed' | 'waived']))
   const visits: VisitRow[] = tasks
     .filter((t) => t.status === 'completed')
@@ -55,7 +62,15 @@ export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[]
       }
     })
 
-  const totalMinutes = visits.reduce((a, v) => a + (v.actualMin ?? 0), 0)
+  const toActMin = (a: string, b: string) => toMin(b) - toMin(a)
+  const activities: ActivityRow[] = activityRows.map((r) => {
+    const c = Array.isArray(r.clients) ? r.clients[0] : r.clients
+    return { id: r.id, date: r.work_date, clientId: r.client_id ?? null, client: c?.full_name ?? '', start: String(r.start_time).slice(0, 5), end: String(r.end_time).slice(0, 5),
+      minutes: toActMin(String(r.start_time), String(r.end_time)), description: r.description, travel: !!r.travel, status: r.status }
+  })
+  const okAct = activities.filter((a) => a.status === 'approved')
+  const activityMinutes = okAct.reduce((a, x) => a + x.minutes, 0)
+  const totalMinutes = visits.reduce((a, v) => a + (v.actualMin ?? 0), 0) + activityMinutes
   const counted = visits.filter((v) => v.actualMin !== null)
   const perClientMap = new Map<string, ClientTotal>()
   for (const v of visits) {
@@ -64,6 +79,12 @@ export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[]
     cur.minutes += v.actualMin ?? 0
     perClientMap.set(v.clientId, cur)
   }
+  for (const a of okAct) {
+    if (!a.clientId) continue
+    const cur = perClientMap.get(a.clientId) ?? { clientId: a.clientId, client: a.client, place: '', visits: 0, minutes: 0 }
+    cur.minutes += a.minutes
+    perClientMap.set(a.clientId, cur)
+  }
   const exp: ExpenseRow[] = expenses.map((e) => ({ id: e.id, date: e.expense_date, amount: Number(e.amount), description: e.description, status: e.status, taskId: e.task_id }))
   return {
     visits, visitCount: visits.length, totalMinutes, extraMinutes: visits.reduce((a, v) => a + (v.overMin ?? 0), 0),
@@ -71,7 +92,8 @@ export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[]
     avgMinutes: counted.length ? Math.round(totalMinutes / counted.length) : 0,
     missingTimes: visits.length - counted.length,
     perClient: [...perClientMap.values()].sort((a, b) => b.minutes - a.minutes),
-    expenses: exp,
+    expenses: exp, activities, activityMinutes, pendingActivities: activities.filter((a) => a.status === 'pending').length,
+    travelTrips: visits.length + okAct.filter((a) => a.travel).length,
     approvedExpenses: exp.filter((e) => e.status === 'approved').reduce((a, e) => a + e.amount, 0),
     pendingExpenses: exp.filter((e) => e.status === 'pending').reduce((a, e) => a + e.amount, 0),
   }
@@ -81,7 +103,7 @@ export function buildMonthReport(tasks: Row[], expenses: Row[], decisions: Row[]
 export function payroll(r: MonthReport, wage: number, p: PricingSettings) {
   const hours = r.totalMinutes / 60
   const gross = Math.round(hours * wage * 100) / 100
-  const travel = r.visitCount * p.travelPerDay // paid per visit to a client, not per workday
+  const travel = r.travelTrips * p.travelPerDay // paid per trip to a client (a completed visit or an approved activity with a trip), not per workday
   const total = gross + travel + r.approvedExpenses
   return { hours, wage, gross, travel, expenses: r.approvedExpenses, total, companyCost: Math.round((gross * p.socialFactor + travel + r.approvedExpenses) * 100) / 100 }
 }

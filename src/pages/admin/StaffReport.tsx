@@ -32,7 +32,7 @@ export default function StaffReport() {
     Promise.all([loadStaffMonth(id, ym), fetchStaffForEdit(id)])
       .then(([m, s]) => {
         if (cancelled) return
-        setReport(buildMonthReport(m.tasks, m.expenses, m.decisions))
+        setReport(buildMonthReport(m.tasks, m.expenses, m.decisions, m.activities))
         setWage(s?.staff.hourly_wage != null ? Number(s.staff.hourly_wage) : null)
       })
       .catch((e) => { console.error('staff report failed', e); if (!cancelled) setFailed(true) })
@@ -42,6 +42,12 @@ export default function StaffReport() {
   const review = async (expenseId: string, status: 'approved' | 'rejected') => {
     const { error } = await supabase.from('staff_expenses').update({ status, reviewed_by: session?.user.id ?? null, reviewed_at: new Date().toISOString() }).eq('id', expenseId)
     if (error) { console.error('review failed', error); notify('לא הצלחנו לעדכן את ההוצאה. נסי שוב.'); return }
+    setVersion((n) => n + 1)
+  }
+
+  const reviewActivity = async (id: string, status: 'approved' | 'rejected') => {
+    const { error } = await supabase.from('staff_activities').update({ status, reviewed_by: session?.user.id ?? null, reviewed_at: new Date().toISOString() }).eq('id', id)
+    if (error) { console.error('activity review failed', error); notify('לא הצלחנו לעדכן את הדיווח. נסי שוב.'); return }
     setVersion((n) => n + 1)
   }
 
@@ -120,6 +126,35 @@ export default function StaffReport() {
           </Card>
 
           <Card flush>
+            <div className="card-head"><h2>פעילות שלא תוכננה</h2>{report.pendingActivities > 0 && <Badge tone="orange">{report.pendingActivities} ממתינות לאישור</Badge>}</div>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>תאריך</th><th>לקוח/ה</th><th>שעות</th><th>תיאור</th><th>סטטוס</th><th><span className="sr-only">פעולות</span></th></tr></thead>
+                <tbody>
+                  {report.activities.map((a) => (
+                    <tr key={a.id}>
+                      <td className="nowrap">{formatDM(parseISO(a.date))}</td>
+                      <td>{a.client || '—'}</td>
+                      <td className="nowrap"><Ltr>{a.start}–{a.end}</Ltr> · <Ltr>{fmtHours(a.minutes)}</Ltr>{a.travel ? ' · נסיעה' : ''}</td>
+                      <td>{a.description}</td>
+                      <td><Badge tone={EXP_TONE[a.status]}>{EXP_LABEL[a.status]}</Badge></td>
+                      <td>
+                        {a.status === 'pending' && (
+                          <div className="row" style={{ gap: 6 }}>
+                            <Button size="sm" onClick={() => reviewActivity(a.id, 'approved')}>אישור</Button>
+                            <Button size="sm" variant="secondary" onClick={() => reviewActivity(a.id, 'rejected')}>דחייה</Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {report.activities.length === 0 && <tr><td colSpan={6} className="muted">לא דווחה פעילות שלא תוכננה בחודש הזה.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <Card flush>
             <div className="card-head"><h2>הוצאות נוספות</h2></div>
             <div className="table-wrap">
               <table>
@@ -150,7 +185,7 @@ export default function StaffReport() {
           <Card>
             <div className="card-title" style={{ marginBottom: 6 }}>חישוב שכר — {monthLabel(month)}</div>
             <div className="kv"><span>שעות בפועל <Ltr>{fmtHours(report.totalMinutes)}</Ltr> × {money(rate)} לשעה{wage === null ? ' (ברירת מחדל)' : ''}</span><span className="v">{money(pay.gross)}</span></div>
-            <div className="kv"><span>נסיעות: {report.visitCount} ביקורים × {money(pricing.travelPerDay)}</span><span className="v">{money(pay.travel)}</span></div>
+            <div className="kv"><span>נסיעות: {report.travelTrips} × {money(pricing.travelPerDay)}</span><span className="v">{money(pay.travel)}</span></div>
             <div className="kv"><span>החזר הוצאות שאושרו</span><span className="v">{money(pay.expenses)}</span></div>
             <div className="kv total"><span>סה&quot;כ לתשלום</span><span className="v">{money(pay.total)}</span></div>
             <div className="kv faint"><span>עלות לחברה (מקדם {pricing.socialFactor} על השכר)</span><span className="v">{money(pay.companyCost)}</span></div>
