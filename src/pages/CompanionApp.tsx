@@ -37,6 +37,10 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
   const [busy, setBusy] = useState<string | null>(null)
   const [profile, setProfile] = useState<string | null>(null)
   const [activity, setActivity] = useState(false)
+  const [seen, setSeen] = useState<string[] | null>(null)
+  const seenKey = data ? `fc-req-seen-${data.me.id}` : ''
+  useEffect(() => { if (seenKey) { try { setSeen(JSON.parse(localStorage.getItem(seenKey) ?? '[]')) } catch { setSeen([]) } } }, [seenKey])
+  const markSeen = (ids: string[]) => { const n = [...new Set([...(seen ?? []), ...ids])].slice(-200); setSeen(n); try { localStorage.setItem(seenKey, JSON.stringify(n)) } catch { /* private mode */ } }
   const [actVersion, setActVersion] = useState(0)
   const onActivity = () => setActivity(true)
 
@@ -47,6 +51,11 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
     } catch (e) { console.error('companion load failed', e); setFailed(true) }
   }, [previewId])
   useEffect(() => { void load() }, [load])
+  // New client requests pop up while the app is open: refresh every minute.
+  useEffect(() => {
+    const id = window.setInterval(() => { if (document.visibilityState === 'visible') void load() }, 60000)
+    return () => window.clearInterval(id)
+  }, [load])
 
   const flash = (m: string) => { setNote(m); window.setTimeout(() => setNote(null), 4000) }
   const act = async (fn: 'check_in' | 'check_out', taskId: string) => {
@@ -68,6 +77,7 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
     .filter((t) => t.status !== 'cancelled' && !data.summaries.some((x) => x.task_id === t.id)
       && (t.status === 'completed' || !!t.checked_out_at || t.scheduled_date < TODAY || (t.scheduled_date === TODAY && !!t.end_time && String(t.end_time).slice(0, 5) <= nowHM)))
     .sort((a, b) => (a.scheduled_date + a.start_time).localeCompare(b.scheduled_date + b.start_time)) : []
+  const unseenReqs = data && !preview && seen ? data.requests.filter((r) => !seen.includes(r.id)) : []
   const myClients = data ? data.clients.filter((c) => data.slots.some((s) => s.client_id === c.id) || data.tasks.some((t) => t.client_id === c.id)) : []
 
   return (
@@ -116,6 +126,24 @@ export default function CompanionApp({ previewId }: { previewId?: string } = {})
         return c ? <Modal title="תיק הלקוח/ה" onClose={() => setProfile(null)}><ClientProfile c={c} data={data} onRequest={() => { setProfile(null); setReq(c.id) }} /></Modal> : null
       })()}
       {data && report && <ReportDialog task={report} staffId={data.me.id} existing={data.summaries.find((x) => x.task_id === report.id)} onClose={() => setReport(null)} onSaved={() => { flash('הסיכום נשלח למשפחה ולמשרד'); void load() }} />}
+      {data && unseenReqs.length > 0 && !report && !activity && (() => {
+        const r = unseenReqs[0]
+        const cl = data.clients.find((x) => x.id === r.client_id)
+        const phone = data.contacts.find((x) => x.client_id === r.client_id && x.is_orderer)?.phone
+        return (
+          <Modal title="בקשת שירות חדשה" onClose={() => markSeen([r.id])}
+            footer={<><Button variant="secondary" onClick={() => markSeen([r.id])}>הבנתי</Button>{phone && <a className="btn" href={`tel:${phone}`}>התקשרות למזמין/ה</a>}</>}>
+            <div className="stack" style={{ gap: 8 }}>
+              <div style={{ font: '800 18px var(--font-ui)' }}>{cl?.full_name ?? 'לקוח/ה'}</div>
+              <div><Badge tone="orange">{r.category || 'בקשה'}</Badge></div>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{r.description}</p>
+              {r.preferred_date && <p className="muted">למתי: {formatDM(parseISO(r.preferred_date))}</p>}
+              <p className="muted">המשרד יחזור אליך/אליהם עם התיאום. הבקשה נשארת גם במסך הראשי.</p>
+              {unseenReqs.length > 1 && <p className="muted">ועוד {unseenReqs.length - 1} בקשות חדשות.</p>}
+            </div>
+          </Modal>
+        )
+      })()}
       {data && activity && <ActivityDialog clients={data.clients} staffId={data.me.id} onClose={() => setActivity(false)} onSaved={() => { flash('הדיווח נשלח לאישור המשרד'); setActVersion((n) => n + 1) }} />}
       {data && req !== undefined && <ExternalRequestDialog clients={myClients} clientId={req ?? undefined} onClose={() => setReq(undefined)} flash={flash} byOffice={preview} />}
     </div>
@@ -192,6 +220,25 @@ function Home({ data, go, act, busy, preview, onReport, onClient, onRequest, onA
   const mins = done.reduce((a, t) => a + (t.checked_in_at && t.checked_out_at ? Math.round((+new Date(t.checked_out_at) - +new Date(t.checked_in_at)) / 60000) : 0), 0)
   return (
     <div className="pt-stack">
+      {data.requests.length > 0 && (
+        <section className="pt-card" aria-labelledby="h-reqs" style={{ borderInlineStart: '4px solid var(--warning, #E08A00)' }}>
+          <h2 id="h-reqs">בקשות חדשות מהלקוחות שלך</h2>
+          <div className="pt-list">
+            {data.requests.map((r) => {
+              const cl = data.clients.find((x) => x.id === r.client_id)
+              const d = new Date(r.created_at)
+              return (
+                <div key={r.id} className="stack" style={{ gap: 4, padding: '6px 0' }}>
+                  <div className="row" style={{ justifyContent: 'space-between' }}><b>{cl?.full_name ?? 'לקוח/ה'}</b><span className="pt-sub">{d.getDate()}.{d.getMonth() + 1} · <Ltr>{String(d.getHours()).padStart(2, '0')}:{String(d.getMinutes()).padStart(2, '0')}</Ltr></span></div>
+                  <div><Badge tone="orange">{r.category || 'בקשה'}</Badge>{r.preferred_date ? <span className="pt-sub"> · למתי: {formatDM(parseISO(r.preferred_date))}</span> : null}</div>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{r.description}</p>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       <section className="pt-card pt-next" aria-labelledby="h-next">
         <h2 id="h-next">{next?.status === 'in_progress' ? 'הביקור שלך עכשיו' : 'הפגישה הקרובה'}</h2>
         {next ? <div className="co-next"><VisitDetails data={data} t={next} act={act} busy={busy} preview={preview} onReport={onReport} onClient={onClient} /></div> : <p>אין פגישות קרובות. כשהמשרד ישבץ אותך הן יופיעו כאן.</p>}
