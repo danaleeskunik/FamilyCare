@@ -137,7 +137,7 @@ function ClientForm({ editId, initial, ordererName, ordererPhone }: { editId: st
   const existingTrial = str('trial_ends_on')
   const [v, setV] = useState({
     name: str('full_name'), birthDate: str('birth_date'), regionId: str('region_id'), planId: str('plan_id') || 'basic',
-    trial: editId ? !!existingTrial && existingTrial >= TODAY : true, companionId: str('regular_companion_id'), orderer: ordererName ?? '', ordererPhone: ordererPhone ?? '',
+    trial: editId ? !!existingTrial && existingTrial >= TODAY : false, companionId: str('regular_companion_id'), orderer: ordererName ?? '', ordererPhone: ordererPhone ?? '',
     phone: str('phone'), address: str('address'), buildingCode: str('building_code'), dependency: str('dependency_level'),
     mobilityNotes: str('mobility_notes'), cognitiveNotes: str('cognitive_notes'), cap: str('monthly_budget_cap'), cardLast4: str('card_last4'),
   })
@@ -230,10 +230,6 @@ function ClientForm({ editId, initial, ordererName, ordererPhone }: { editId: st
       <SelectField label="אזור" value={v.regionId} onChange={set('regionId')} options={regions.map((r) => ({ value: String(r.id), label: r.name }))} placeholder="בחרי אזור" error={err.regionId} />
       <SelectField label="מסלול" value={v.planId} onChange={set('planId')} options={plans.map((p) => ({ value: p.id, label: p.name }))} />
       <SelectField label="מלווה קבוע/ה" value={v.companionId} onChange={set('companionId')} options={assignable.map((s) => ({ value: s.id, label: s.name }))} placeholder="עדיין ללא" />
-      <label className="full row" style={{ gap: 10, font: '600 14px var(--font-ui)', minHeight: 44 }}>
-        <input type="checkbox" checked={v.trial} onChange={(e) => set('trial')(e.target.checked)} style={{ width: 20, height: 20 }} />
-        בתקופת היכרות (חודש ראשון ללא התחייבות)
-      </label>
       <div className="full"><TextField label="מזמין/ת השירות" value={v.orderer} onChange={(e) => set('orderer')(e.target.value)} error={err.orderer} hint="בן או בת משפחה שמזמינים ומקבלים את החשבוניות" /></div>
       <div className="full"><TextField label="טלפון המזמין/ת" type="tel" dir="ltr" value={v.ordererPhone} onChange={(e) => set('ordererPhone')(e.target.value)} placeholder="052-000-0000" /></div>
       <TextField label="טלפון" type="tel" dir="ltr" value={v.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="052-000-0000" />

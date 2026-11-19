@@ -34,7 +34,6 @@ export default function Clients() {
   usePrices()
   const { clients, openForm, askDelete, notify } = useStore()
   const exportCsv = () => exportClientsCsv().then((n) => notify(`יוצאו ${n} לקוחות. ת.ז. ואימייל של המשלם צריך להשלים ידנית.`)).catch(() => notify('לא הצלחנו לייצא את הרשימה.'))
-  const trial = clients.filter((c) => c.plan[1] === 'תקופת היכרות').length
   const usage = clients.map((c) => c.used.split('/').map((x) => parseFloat(x))).filter(([u, t]) => t > 0 && !Number.isNaN(u))
   const quota = usage.length ? Math.round((usage.reduce((a, [u, t]) => a + u / t, 0) / usage.length) * 100) : null
   const [q, setQ] = useState('')
@@ -42,9 +41,8 @@ export default function Clients() {
 
   return (
     <>
-      <div className="grid cols-3">
+      <div className="grid cols-2">
         <StatCard label="לקוחות פעילים" figure={clients.length} note="יעד שנתיים: 100 משפחות" />
-        <StatCard label="בתקופת היכרות" figure={trial} note="חודש ראשון ללא התחייבות" />
         <StatCard label="ניצול מכסה ממוצע" figure={quota === null ? '—' : `${quota}%`} note="מהמפגשים שבמסלול נוצלו החודש" />
       </div>
 
